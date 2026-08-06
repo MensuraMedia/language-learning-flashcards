@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<!--
+  ============================================================================
+  DIRECTION 05 — "TACTILE DECK"
+  ----------------------------------------------------------------------------
+  The physical card metaphor taken seriously. Every study set is a real deck
+  with visible thickness, fanned sheets and a contact shadow, shelved on planks
+  and wrapped in a paper obi band that doubles as its progress meter. Cards are
+  picked up, tilted under the cursor and turned over in true 3D — the flip is a
+  hand movement, not a state change.
+  Accent: warm amber #f0b429, used only for progress, live values and the flip.
+  ============================================================================
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tactile Deck — Japanese Practice</title>
+<style>
+/* ═══════════════════════════════════════════════════ TOKENS ═══════════ */
+:root{
+  --bg:        #0d0d0f;
+  --bg-deep:   #09090b;
+  --panel:     #16161a;
+  --panel-2:   #1c1c21;
+  --panel-3:   #23232a;
+  --line:      #26262b;
+  --line-2:    #33333c;
+  --line-3:    #45454f;
+  --ink:       #e8e8ee;
+  --ink-2:     #9a9aa6;
+  --ink-3:     #66666f;
+  --ink-4:     #4a4a53;
+  --amber:     #f0b429;
+  --amber-soft:rgba(240,180,41,.14);
+  --amber-line:rgba(240,180,41,.34);
+  --card-hi:   #262630;
+  --card-lo:   #15151a;
+  --felt:      #101014;
+
+  --ui: ui-sans-serif, system-ui, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  --jp: "Noto Sans CJK JP", "Noto Sans JP", sans-serif;
+
+  --r-sm: 6px;  --r-md: 10px;  --r-lg: 14px;
+  --ease: cubic-bezier(.2,.75,.25,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:
+    radial-gradient(1200px 700px at 15% -8%, #17171d 0%, transparent 62%),
+    radial-gradient(900px 620px at 108% 8%, #14141a 0%, transparent 58%),
+    var(--bg);
+  color:var(--ink);
+  font-family:var(--ui);
+  font-size:13px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:var(--amber-soft);color:var(--ink)}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+:focus-visible{outline:1px solid var(--amber);outline-offset:2px}
+
+/* scrollbars */
+html{scrollbar-color:var(--line-2) var(--bg-deep);scrollbar-width:thin}
+*{scrollbar-color:var(--line-2) var(--bg-deep)}
+*::-webkit-scrollbar{height:8px;width:8px}
+*::-webkit-scrollbar-track{background:var(--bg-deep)}
+*::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:4px}
+*::-webkit-scrollbar-thumb:hover{background:var(--line-3)}
+
+/* ═══════════════════════════════════════════════ TYPE HELPERS ═════════ */
+.lbl{
+  font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:600;
+}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.jp{font-family:var(--jp)}
+.amber{color:var(--amber)}
+
+/* corner-tick motif */
+.ticked{position:relative}
+.ticked::before,.ticked::after{
+  content:"";position:absolute;width:7px;height:7px;pointer-events:none;
+  border-color:var(--amber-line);opacity:.75;
+}
+.ticked::before{top:-1px;left:-1px;border-top:1px solid;border-left:1px solid}
+.ticked::after{bottom:-1px;right:-1px;border-bottom:1px solid;border-right:1px solid}
+
+/* ══════════════════════════════════════════════════ CHROME ════════════ */
+.topbar{
+  position:sticky;top:0;z-index:60;
+  display:flex;align-items:center;gap:18px;
+  height:54px;padding:0 22px;
+  background:linear-gradient(180deg,rgba(13,13,15,.96),rgba(13,13,15,.88));
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:baseline;gap:10px;flex-shrink:0}
+.brand-mark{
+  width:26px;height:26px;border-radius:5px;flex-shrink:0;
+  background:linear-gradient(155deg,var(--card-hi),var(--card-lo));
+  border:1px solid var(--line-2);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 2px 2px 0 -1px var(--panel-2), 4px 4px 0 -2px var(--panel);
+  display:grid;place-items:center;
+  font-family:var(--jp);font-size:13px;color:var(--amber);
+  align-self:center;
+}
+.brand-name{font-size:14px;font-weight:650;letter-spacing:.02em}
+.brand-jp{font-family:var(--jp);font-size:11px;color:var(--ink-3)}
+.brand-dir{
+  margin-left:2px;padding:2px 7px;border:1px solid var(--line-2);border-radius:3px;
+  font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);
+}
+.nav{display:flex;gap:2px;margin-left:14px;padding:3px;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+.nav button{
+  padding:5px 13px;border-radius:5px;font-size:11.5px;font-weight:550;color:var(--ink-2);
+  transition:.16s var(--ease);
+}
+.nav button:hover{color:var(--ink);background:var(--panel-2)}
+.nav button[aria-selected="true"]{
+  color:var(--bg);background:var(--amber);
+  box-shadow:0 1px 0 rgba(255,255,255,.28) inset;
+}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.chip{
+  display:flex;align-items:center;gap:7px;
+  padding:5px 10px;border:1px solid var(--line);border-radius:7px;background:var(--panel);
+}
+.chip .lbl{font-size:9px}
+.chip b{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--ink)}
+.flame{width:11px;height:13px;flex-shrink:0}
+
+.view{display:none;animation:viewIn .34s var(--ease)}
+.view.on{display:block}
+@keyframes viewIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.wrap{max-width:1560px;margin:0 auto;padding:22px 22px 70px}
+
+/* ═════════════════════════════════════════ SECTION HEADINGS ═══════════ */
+.sec{display:flex;align-items:center;gap:12px;margin:0 0 12px;flex-wrap:wrap}
+.sec h2{font-size:12px;font-weight:650;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap}
+.sec .sec-jp{font-family:var(--jp);font-size:11px;color:var(--ink-4)}
+.sec .rule{flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+.sec .sec-act{display:flex;gap:5px}
+.nudge{
+  width:24px;height:24px;border:1px solid var(--line);border-radius:5px;background:var(--panel);
+  display:grid;place-items:center;color:var(--ink-3);transition:.15s var(--ease);
+}
+.nudge:hover{color:var(--amber);border-color:var(--line-3);background:var(--panel-2)}
+.nudge svg{width:11px;height:11px}
+
+/* ══════════════════════════════════════════════ STAT STRIP ════════════ */
+.stats{
+  display:grid;grid-template-columns:repeat(6,1fr);gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:var(--r-md);
+  overflow:hidden;margin-bottom:26px;
+}
+.stat{background:var(--panel);padding:13px 15px 14px;position:relative}
+.stat::after{
+  content:"";position:absolute;left:0;top:0;width:2px;height:0;background:var(--amber);
+  transition:height .3s var(--ease);
+}
+.stat:hover::after{height:100%}
+.stat .lbl{margin-bottom:7px}
+.stat .v{font-family:var(--mono);font-size:23px;font-weight:600;letter-spacing:-.02em;line-height:1}
+.stat .v small{font-size:12px;color:var(--ink-3);font-weight:500;margin-left:2px}
+.stat .sub{
+  margin-top:6px;font-size:10.5px;color:var(--ink-3);display:flex;align-items:center;gap:5px;
+  white-space:nowrap;overflow:hidden;
+}
+.stat .sub>span{overflow:hidden;text-overflow:ellipsis}
+.spark{display:block}
+.delta{font-family:var(--mono);font-size:10px;color:var(--amber)}
+.delta.flat{color:var(--ink-3)}
+
+/* ═══════════════════════════════════════════════════ SHELF ════════════ */
+.shelf{margin-bottom:34px}
+.shelf-rail{position:relative;padding-bottom:20px}
+.shelf-scroll{
+  display:flex;gap:20px;overflow-x:auto;overflow-y:hidden;
+  padding:22px 4px 10px;scroll-snap-type:x proximity;
+  scrollbar-width:none;-ms-overflow-style:none;
+}
+.shelf-scroll::-webkit-scrollbar{display:none;height:0}
+/* the plank the decks stand on */
+.plank{
+  position:absolute;left:0;right:0;bottom:0;height:13px;border-radius:2px;
+  background:linear-gradient(180deg,#2b2b34 0%,#1c1c23 34%,#101015 72%,#0a0a0d 100%);
+  border-top:1px solid #3d3d48;
+  box-shadow:0 1px 0 rgba(255,255,255,.05) inset, 0 12px 26px -12px #000;
+}
+.plank::before,.plank::after{
+  content:"";position:absolute;top:-5px;width:1px;height:23px;background:var(--line-2);
+}
+.plank::before{left:0}.plank::after{right:0}
+
+/* ═════════════════════════════════════════════════ DECK ═══════════════ */
+.deck{
+  position:relative;flex:0 0 236px;width:236px;height:302px;
+  scroll-snap-align:start;text-align:left;
+  transform-style:preserve-3d;
+  transition:transform .3s var(--ease);
+}
+.deck:hover{transform:translateY(-9px)}
+.deck:active{transform:translateY(-3px) scale(.99)}
+/* contact shadow on the plank */
+.deck::after{
+  content:"";position:absolute;left:6%;right:6%;bottom:-14px;height:16px;border-radius:50%;
+  background:radial-gradient(ellipse at center,rgba(0,0,0,.72),transparent 72%);
+  filter:blur(4px);transition:.3s var(--ease);
+}
+.deck:hover::after{bottom:-20px;left:2%;right:2%;opacity:.85;filter:blur(7px)}
+
+/* the sheets behind the face — real stack depth */
+.sheet{
+  position:absolute;inset:0;border-radius:var(--r-lg);
+  background:linear-gradient(160deg,#1e1e25,#131318);
+  border:1px solid var(--line-2);
+  transition:transform .34s var(--ease), opacity .34s var(--ease);
+}
+.sheet.s3{transform:translate(9px,7px) rotate(2.2deg);opacity:.5}
+.sheet.s2{transform:translate(5px,4px) rotate(1.1deg);opacity:.75}
+.deck:hover .sheet.s3{transform:translate(19px,12px) rotate(5.4deg);opacity:.62}
+.deck:hover .sheet.s2{transform:translate(10px,7px) rotate(2.7deg);opacity:.85}
+
+.deck-face{
+  position:absolute;inset:0;border-radius:var(--r-lg);overflow:hidden;
+  display:flex;flex-direction:column;
+  background:
+    linear-gradient(158deg,var(--card-hi) 0%,#1b1b21 46%,var(--card-lo) 100%);
+  border:1px solid var(--line-2);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.075),
+    inset 0 -1px 0 rgba(0,0,0,.6),
+    inset 1px 0 0 rgba(255,255,255,.02),
+    0 18px 32px -18px rgba(0,0,0,.95);
+  transition:box-shadow .3s var(--ease),border-color .3s var(--ease);
+}
+.deck:hover .deck-face{
+  border-color:var(--line-3);
+  box-shadow:
+    inset 0 1px 0 rgba(240,180,41,.3),
+    inset 0 -1px 0 rgba(0,0,0,.6),
+    0 30px 44px -20px rgba(0,0,0,1);
+}
+/* paper grain + vignette */
+.deck-face::before{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.7;
+  background:
+    repeating-linear-gradient(48deg,rgba(255,255,255,.014) 0 1px,transparent 1px 4px),
+    radial-gradient(120% 90% at 50% 0%,transparent 40%,rgba(0,0,0,.4) 100%);
+}
+.deck-top{display:flex;align-items:center;justify-content:space-between;padding:11px 13px 0;position:relative;z-index:2}
+.rung{
+  display:inline-block;min-width:0;max-width:100%;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--amber);padding:3px 6px;border:1px solid var(--amber-line);border-radius:3px;
+  background:var(--amber-soft);
+}
+.deck-count{font-family:var(--mono);font-size:10px;color:var(--ink-3);flex-shrink:0;padding-left:6px}
+
+.deck-glyphs{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:9px;
+  font-family:var(--jp);font-size:46px;line-height:1;color:var(--ink);
+  position:relative;z-index:2;padding:2px 8px 6px;
+  text-shadow:0 2px 12px rgba(0,0,0,.7);
+}
+.deck-glyphs span:nth-child(2){opacity:.62;font-size:38px}
+.deck-glyphs span:nth-child(3){opacity:.34;font-size:31px}
+
+.deck-id{padding:0 13px 8px;position:relative;z-index:2}
+.deck-name{font-size:12.5px;font-weight:620;letter-spacing:.01em;line-height:1.25}
+.deck-jp{font-family:var(--jp);font-size:10.5px;color:var(--ink-3);margin-top:2px}
+
+/* obi — the paper belly band, doubling as progress */
+.obi{
+  position:relative;z-index:2;margin:0 0 0;padding:8px 13px 9px;
+  background:linear-gradient(180deg,#101015,#0b0b0e);
+  border-top:1px solid var(--line-2);border-bottom:1px solid #000;
+  box-shadow:0 -1px 0 rgba(255,255,255,.03) inset;
+}
+.obi-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px}
+.obi-row .lbl{font-size:8.5px}
+.obi-row b{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--amber)}
+.track{height:4px;border-radius:2px;background:#000;border:1px solid #000;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.9)}
+.fill{height:100%;border-radius:2px;background:linear-gradient(90deg,#b8842a,var(--amber));box-shadow:0 0 8px rgba(240,180,41,.4)}
+.obi-sub{display:flex;justify-content:space-between;margin-top:6px;font-family:var(--mono);font-size:9px;color:var(--ink-4)}
+
+.deck-tags{display:flex;flex-wrap:wrap;gap:4px;padding:9px 13px 11px;position:relative;z-index:2;background:rgba(0,0,0,.22)}
+.tag{
+  font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+  padding:3px 6px;border-radius:3px;border:1px solid var(--line-2);color:var(--ink-2);
+  background:rgba(255,255,255,.022);
+}
+.tag.sc{color:var(--ink-3);border-style:dashed}
+
+/* ═══════════════════════════════════════════ PANEL GRID ═══════════════ */
+.grid{display:grid;gap:16px;grid-template-columns:1.55fr 1fr 1fr;align-items:start}
+.panel{
+  background:linear-gradient(180deg,var(--panel),#131317);
+  border:1px solid var(--line);border-radius:var(--r-md);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035), 0 14px 30px -22px #000;
+}
+.panel-h{
+  display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);
+}
+.panel-h h3{font-size:11px;font-weight:650;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-2)}
+.panel-h .hint{margin-left:auto;font-size:10px;color:var(--ink-4);font-family:var(--mono)}
+.panel-b{padding:14px}
+.span-all{grid-column:1/-1}
+
+/* ═══════════════════════════════════════════════ CHART ════════════════ */
+.chart-wrap{position:relative}
+.chart-wrap svg{display:block;width:100%;height:auto;overflow:visible}
+.gridline{stroke:var(--line);stroke-width:1}
+.axis-t{fill:var(--ink-4);font-family:var(--mono);font-size:9px}
+.trend-line{fill:none;stroke:var(--amber);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.trend-dot{fill:var(--bg);stroke:var(--amber);stroke-width:1.5}
+.crosshair{stroke:var(--line-3);stroke-width:1;stroke-dasharray:2 3}
+.hit{fill:transparent;cursor:crosshair}
+.tip{
+  position:absolute;pointer-events:none;opacity:0;transform:translate(-50%,-118%);
+  background:#0a0a0c;border:1px solid var(--line-2);border-radius:var(--r-sm);
+  padding:8px 10px;min-width:150px;box-shadow:0 12px 26px -10px #000;
+  transition:opacity .12s linear;z-index:5;
+}
+.tip.on{opacity:1}
+.tip .t-h{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-bottom:5px}
+.tip .t-r{display:flex;justify-content:space-between;gap:16px;font-size:10.5px;line-height:1.7}
+.tip .t-r b{font-family:var(--mono);color:var(--ink)}
+.tip .t-acc b{color:var(--amber)}
+
+/* ══════════════════════════════════════════ ACCURACY BARS ═════════════ */
+.bars{display:flex;flex-direction:column;gap:11px}
+.bar-row{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center}
+.bar-name{font-size:11px;color:var(--ink-2);display:flex;align-items:center;gap:7px;min-width:0}
+.bar-name .jp{font-size:12px;color:var(--ink-3)}
+.bar-name em{font-style:normal;font-family:var(--mono);font-size:9px;color:var(--ink-4)}
+.bar-val{font-family:var(--mono);font-size:11px;color:var(--ink)}
+.bar-t{grid-column:1/-1;height:6px;border-radius:3px;background:var(--panel-3);overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.7)}
+.bar-f{height:100%;border-radius:3px;background:linear-gradient(90deg,#a5761f,var(--amber));transition:width .8s var(--ease)}
+.bar-f.weak{background:linear-gradient(90deg,#3d3d46,#5d5d68)}
+
+/* ══════════════════════════════════════════ WEAK CHIPS ════════════════ */
+.weak-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:9px}
+.wcard{
+  position:relative;padding:10px 8px 9px;border-radius:8px;text-align:center;
+  background:linear-gradient(158deg,#212128,#141419);
+  border:1px solid var(--line-2);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 2px 3px 0 -1px #101014, 0 8px 16px -12px #000;
+  transition:.22s var(--ease);
+}
+.wcard:nth-child(odd){transform:rotate(-1.1deg)}
+.wcard:nth-child(even){transform:rotate(1.3deg)}
+.wcard:hover{transform:rotate(0) translateY(-4px);border-color:var(--line-3)}
+.wcard .g{font-family:var(--jp);font-size:27px;line-height:1.1;color:var(--ink)}
+.wcard .r{font-size:9.5px;color:var(--ink-3);margin-top:2px;font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wcard .m{font-size:9px;color:var(--ink-4);margin-top:1px}
+.wcard .pct{margin-top:6px;font-family:var(--mono);font-size:10px;color:var(--ink-2)}
+.wcard .wt{height:3px;border-radius:2px;background:#000;margin-top:4px;overflow:hidden}
+.wcard .wt i{display:block;height:100%;background:var(--ink-4)}
+
+/* ══════════════════════════════════════════ STREAK CAL ════════════════ */
+.cal{display:grid;grid-template-columns:repeat(14,1fr);gap:4px}
+.cal i{display:block;aspect-ratio:1;border-radius:2px;background:var(--panel-3);border:1px solid transparent}
+.cal i[data-l="0"]{background:#121216;border-color:var(--line)}
+.cal i[data-l="1"]{background:rgba(240,180,41,.18)}
+.cal i[data-l="2"]{background:rgba(240,180,41,.38)}
+.cal i[data-l="3"]{background:rgba(240,180,41,.62)}
+.cal i[data-l="4"]{background:var(--amber)}
+.cal-legend{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:9.5px;color:var(--ink-4)}
+.cal-legend span{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+/* ══════════════════════════════════════════ SESSION TABLE ═════════════ */
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:11.5px;min-width:760px}
+th{
+  text-align:left;padding:8px 12px;font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-4);font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap;
+}
+th.r,td.r{text-align:right}
+td{padding:9px 12px;border-bottom:1px solid #1c1c21;color:var(--ink-2);white-space:nowrap}
+tbody tr{transition:background .14s linear;cursor:default}
+tbody tr:hover{background:rgba(255,255,255,.022)}
+tbody tr:hover td:first-child{box-shadow:inset 2px 0 0 var(--amber)}
+td.deckname{color:var(--ink);font-weight:520}
+td .num{color:var(--ink)}
+.mini{display:inline-block;vertical-align:middle}
+.pill{
+  display:inline-block;padding:2px 6px;border-radius:3px;border:1px solid var(--line-2);
+  font-size:8.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CARD VIEW — the table
+   ═══════════════════════════════════════════════════════════════════════ */
+.table-view{
+  display:grid;grid-template-columns:280px 1fr 288px;gap:18px;align-items:start;
+}
+.felt{
+  position:relative;border-radius:var(--r-md);overflow:hidden;
+  border:1px solid var(--line);
+  background:
+    radial-gradient(120% 100% at 50% -20%,#1a1a20 0%,var(--felt) 62%,#08080a 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.03), inset 0 -40px 80px -40px #000;
+  padding:26px 20px 22px;min-height:640px;
+  display:flex;flex-direction:column;align-items:center;
+}
+.felt::before{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.008) 0 2px,transparent 2px 5px);
+}
+.felt-head{
+  width:100%;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding-bottom:14px;margin-bottom:6px;border-bottom:1px solid var(--line);position:relative;z-index:2;
+}
+.felt-head h2{font-size:13px;font-weight:640}
+.felt-head .jp{font-size:12px;color:var(--ink-3)}
+.felt-head .spacer{flex:1}
+.counter{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.counter b{color:var(--amber);font-weight:600}
+
+/* — stage ------------------------------------------------------------- */
+.stage{
+  flex:1;width:100%;display:flex;align-items:center;justify-content:center;
+  perspective:1700px;perspective-origin:50% 42%;
+  padding:22px 0 8px;position:relative;z-index:2;
+}
+.deck3d{
+  position:relative;
+  width:clamp(240px,25vw,336px);
+  aspect-ratio:5/7;
+  transform-style:preserve-3d;
+  transform:rotateX(7deg);
+}
+/* under-stack: cards still to come, with real z depth */
+.ghost{
+  position:absolute;inset:0;border-radius:16px;
+  background:linear-gradient(158deg,#1c1c23,#0f0f13);
+  border:1px solid var(--line-2);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04), 0 20px 30px -22px #000;
+}
+.ghost::after{
+  content:"記";position:absolute;inset:0;display:grid;place-items:center;
+  font-family:var(--jp);font-size:34px;color:rgba(240,180,41,.055);
+}
+.g1{transform:translate3d(7px,9px,-14px) rotate(1.4deg)}
+.g2{transform:translate3d(14px,18px,-28px) rotate(2.8deg);opacity:.72}
+.g3{transform:translate3d(21px,27px,-42px) rotate(4.1deg);opacity:.45}
+/* the cut — visible edge thickness under the top card */
+.cut{
+  position:absolute;left:2px;right:2px;bottom:-9px;height:12px;border-radius:0 0 16px 16px;
+  background:repeating-linear-gradient(180deg,#22222a 0 1px,#0d0d11 1px 3px);
+  box-shadow:0 6px 14px -6px #000;transform:translateZ(-4px);
+}
+.contact{
+  position:absolute;left:-4%;right:-4%;bottom:-34px;height:34px;border-radius:50%;
+  background:radial-gradient(ellipse at center,rgba(0,0,0,.85),transparent 70%);
+  filter:blur(9px);transform:translateZ(-60px);
+}
+
+.tilt{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .32s var(--ease)}
+.lift{position:absolute;inset:0;transform-style:preserve-3d}
+.lift.flipping{animation:liftArc 620ms var(--ease)}
+@keyframes liftArc{
+  0%  {transform:translate3d(0,0,0) rotateZ(0)}
+  35% {transform:translate3d(0,-26px,64px) rotateZ(-2.6deg)}
+  70% {transform:translate3d(0,-16px,40px) rotateZ(1.4deg)}
+  100%{transform:translate3d(0,0,0) rotateZ(0)}
+}
+.lift.deal-out{animation:dealOut 340ms cubic-bezier(.5,0,.85,.4) forwards}
+@keyframes dealOut{
+  0%{transform:translate3d(0,0,0) rotateZ(0);opacity:1}
+  100%{transform:translate3d(420px,64px,140px) rotateZ(19deg);opacity:0}
+}
+.lift.deal-in{animation:dealIn 420ms var(--ease)}
+@keyframes dealIn{
+  0%{transform:translate3d(16px,26px,-46px) rotateZ(4.2deg);opacity:0}
+  100%{transform:translate3d(0,0,0) rotateZ(0);opacity:1}
+}
+
+.card3d{
+  position:absolute;inset:0;transform-style:preserve-3d;cursor:pointer;
+  transition:transform 620ms var(--ease);
+}
+.card3d.flipped{transform:rotateY(180deg)}
+.card3d.instant{transition:none}
+/* face swap at the exact edge-on moment — belt & braces for engines with
+   unreliable backface-visibility inside a preserve-3d subtree */
+.card3d .face{transition:opacity 1ms linear 300ms}
+.card3d.instant .face{transition:none}
+.card3d.flipped .face.front{opacity:0}
+.card3d .face.back{opacity:0}
+.card3d.flipped .face.back{opacity:1}
+
+.face{
+  position:absolute;inset:0;border-radius:16px;overflow:hidden;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  background:linear-gradient(158deg,var(--card-hi) 0%,#1c1c22 44%,var(--card-lo) 100%);
+  border:1px solid var(--line-2);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.09),
+    inset 0 -1px 0 rgba(0,0,0,.7),
+    inset 1px 0 0 rgba(255,255,255,.025),
+    inset -1px 0 0 rgba(0,0,0,.4),
+    0 34px 54px -26px rgba(0,0,0,1);
+  display:flex;flex-direction:column;
+}
+.face::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    repeating-linear-gradient(48deg,rgba(255,255,255,.013) 0 1px,transparent 1px 4px),
+    radial-gradient(130% 95% at 30% 0%,rgba(255,255,255,.045) 0%,transparent 46%),
+    radial-gradient(120% 90% at 50% 100%,rgba(0,0,0,.5) 0%,transparent 58%);
+}
+/* inner rule frame — a printed card border */
+.face::after{
+  content:"";position:absolute;inset:11px;border:1px solid rgba(255,255,255,.045);
+  border-radius:9px;pointer-events:none;
+}
+.face.back{transform:rotateY(180deg)}
+
+/* FRONT: the character, alone. */
+.face.front{align-items:center;justify-content:center}
+.glyph{
+  font-family:var(--jp);
+  font-size:clamp(92px,12.5vw,168px);
+  line-height:1;color:var(--ink);
+  text-shadow:0 3px 20px rgba(0,0,0,.75), 0 0 60px rgba(240,180,41,.045);
+  position:relative;z-index:2;user-select:none;
+}
+.glyph.small{font-size:clamp(64px,8.6vw,116px)}
+
+/* BACK */
+.face.back{padding:30px 26px 24px;align-items:center;justify-content:center;text-align:center;gap:0}
+.back-in{position:relative;z-index:2;width:100%;display:flex;flex-direction:column;align-items:center}
+.back-tag{
+  font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-4);
+  padding-bottom:12px;margin-bottom:16px;border-bottom:1px solid var(--line);width:72%;
+}
+.back-mini{font-family:var(--jp);font-size:38px;color:var(--ink-2);line-height:1.1}
+.back-sound{
+  font-family:var(--mono);font-size:clamp(36px,5.6vw,62px);font-weight:600;letter-spacing:.02em;
+  color:var(--amber);line-height:1.1;margin-top:10px;
+}
+.back-meaning{font-size:19px;font-weight:600;color:var(--ink);line-height:1.25;margin-top:8px}
+.readings{width:100%;margin-top:18px;display:flex;flex-direction:column;gap:9px}
+.reading{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:8px 12px;border-radius:7px;background:rgba(0,0,0,.32);border:1px solid var(--line);
+}
+.reading .k{font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-4)}
+.reading .v{font-family:var(--jp);font-size:19px;color:var(--ink)}
+.reading.on .v{color:var(--amber)}
+.back-foot{margin-top:20px;display:flex;align-items:center;gap:12px}
+
+/* — speaker ------------------------------------------------------------ */
+.speaker{
+  position:relative;display:inline-grid;place-items:center;
+  width:52px;height:52px;border-radius:50%;
+  background:linear-gradient(158deg,#26262e,#141418);
+  border:1px solid var(--line-2);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09), 0 6px 14px -8px #000;
+  color:var(--ink-2);transition:.2s var(--ease);
+}
+.speaker:hover{color:var(--amber);border-color:var(--amber-line);transform:translateY(-1px)}
+.speaker:active{transform:translateY(1px) scale(.97)}
+.speaker svg{width:23px;height:23px;position:relative;z-index:2}
+.speaker .body{fill:currentColor}
+.speaker .w{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;opacity:.45}
+.speaker.playing{color:var(--amber);border-color:var(--amber-line)}
+.speaker.playing .w1{animation:wv .5s ease-out 2}
+.speaker.playing .w2{animation:wv .5s ease-out .12s 2}
+@keyframes wv{0%{opacity:.15;transform:translateX(-2px)}40%{opacity:1}100%{opacity:.15;transform:translateX(0)}}
+.speaker .ring{
+  position:absolute;inset:-1px;border-radius:50%;border:1px solid var(--amber);opacity:0;
+}
+.speaker.playing .ring{animation:ripple .9s ease-out}
+@keyframes ripple{0%{opacity:.8;transform:scale(1)}100%{opacity:0;transform:scale(1.6)}}
+.eq{display:flex;align-items:flex-end;gap:3px;height:20px}
+.eq i{display:block;width:3px;height:4px;border-radius:1px;background:var(--line-3);transition:.2s}
+.speaker-on .eq i{background:var(--amber)}
+.speaker-on .eq i:nth-child(1){animation:eq .42s ease-in-out infinite alternate}
+.speaker-on .eq i:nth-child(2){animation:eq .42s ease-in-out .09s infinite alternate}
+.speaker-on .eq i:nth-child(3){animation:eq .42s ease-in-out .18s infinite alternate}
+.speaker-on .eq i:nth-child(4){animation:eq .42s ease-in-out .05s infinite alternate}
+@keyframes eq{from{height:4px}to{height:18px}}
+.spk-note{font-size:9.5px;color:var(--ink-4);letter-spacing:.1em;text-transform:uppercase}
+
+/* — hint + grade bar --------------------------------------------------- */
+.stage-foot{width:100%;position:relative;z-index:2;margin-top:26px;min-height:66px}
+.hint{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  font-size:11px;color:var(--ink-4);letter-spacing:.06em;
+}
+.kbd{
+  font-family:var(--mono);font-size:9.5px;padding:2px 6px;border-radius:4px;
+  border:1px solid var(--line-2);border-bottom-width:2px;background:var(--panel-2);color:var(--ink-3);
+}
+.grade{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;animation:viewIn .26s var(--ease)}
+.gbtn{
+  min-width:96px;padding:10px 16px;border-radius:9px;text-align:center;
+  background:linear-gradient(180deg,var(--panel-3),#17171c);
+  border:1px solid var(--line-2);border-bottom:2px solid #0c0c0f;
+  transition:.15s var(--ease);
+}
+.gbtn:hover{transform:translateY(-2px);border-color:var(--line-3);background:linear-gradient(180deg,#2a2a33,#1a1a20)}
+.gbtn:active{transform:translateY(1px);border-bottom-width:1px}
+.gbtn .t{font-size:11.5px;font-weight:600;display:block}
+.gbtn .s{font-family:var(--mono);font-size:9px;color:var(--ink-4);display:block;margin-top:2px}
+.gbtn.good{border-color:var(--amber-line);background:linear-gradient(180deg,rgba(240,180,41,.16),rgba(240,180,41,.05))}
+.gbtn.good .t{color:var(--amber)}
+.gbtn.good:hover{background:linear-gradient(180deg,rgba(240,180,41,.24),rgba(240,180,41,.08))}
+
+/* — side panels -------------------------------------------------------- */
+.side{display:flex;flex-direction:column;gap:14px}
+.kv{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #1c1c21}
+.kv:last-child{border-bottom:none}
+.kv .k{font-size:10px;color:var(--ink-3);letter-spacing:.06em}
+.kv .v{font-family:var(--mono);font-size:13px;color:var(--ink);font-weight:600}
+.kv .v.big{font-size:19px;color:var(--amber)}
+.badge-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.scheme{
+  margin-top:10px;padding:9px 10px;border-radius:7px;background:#0c0c0f;border:1px solid var(--line);
+  font-family:var(--mono);font-size:10px;color:var(--ink-3);line-height:1.6;
+}
+.scheme b{color:var(--amber);font-weight:600}
+.pips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.pip{width:11px;height:11px;border-radius:3px;background:var(--panel-3);border:1px solid var(--line-2)}
+.pip.hit{background:var(--amber);border-color:var(--amber)}
+.pip.miss{background:transparent;border-color:var(--line-3);position:relative}
+.pip.miss::after{
+  content:"";position:absolute;left:1px;right:1px;top:4px;height:1px;background:var(--line-3);
+}
+.log-list{display:flex;flex-direction:column;max-height:264px;overflow-y:auto}
+.log-row{display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid #1c1c21;font-size:11px}
+.log-row .jp{font-size:17px;width:32px;flex-shrink:0}
+.log-row .rr{color:var(--ink-3);font-family:var(--mono);font-size:10px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.log-row .tm{font-family:var(--mono);font-size:10px;color:var(--ink-4)}
+.log-row .st{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+.log-row .st.hit{background:var(--amber)}
+.log-row .st.miss{background:var(--line-3)}
+.empty{padding:26px 8px;text-align:center;font-size:10.5px;color:var(--ink-4);letter-spacing:.06em}
+
+.deckpick{display:flex;flex-direction:column;gap:2px;max-height:300px;overflow-y:auto;margin:-4px -4px 0}
+.dp{
+  display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:6px;
+  text-align:left;transition:.14s var(--ease);width:100%;
+}
+.dp:hover{background:var(--panel-2)}
+.dp[aria-current="true"]{background:var(--amber-soft);box-shadow:inset 2px 0 0 var(--amber)}
+.dp .g{font-family:var(--jp);font-size:14px;color:var(--ink-2);width:30px;text-align:center;flex-shrink:0;white-space:nowrap}
+.dp .n{flex:1;min-width:0;font-size:11px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dp[aria-current="true"] .n,.dp[aria-current="true"] .g{color:var(--ink)}
+.dp .c{font-family:var(--mono);font-size:9.5px;color:var(--ink-4)}
+
+/* — session recap overlay ---------------------------------------------- */
+.recap{
+  position:absolute;inset:0;z-index:6;display:none;
+  align-items:center;justify-content:center;padding:24px;
+  background:rgba(9,9,11,.86);backdrop-filter:blur(5px);animation:viewIn .3s var(--ease);
+}
+.recap.on{display:flex}
+.recap-card{
+  width:min(400px,100%);border-radius:var(--r-lg);padding:24px;
+  background:linear-gradient(158deg,var(--card-hi),var(--card-lo));
+  border:1px solid var(--line-2);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 34px 60px -30px #000;
+}
+.recap-card h3{font-size:14px;font-weight:650;margin-bottom:3px}
+.recap-card .sub{font-size:10.5px;color:var(--ink-3);margin-bottom:18px}
+.recap-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:18px}
+.recap-grid div{background:#141418;padding:11px 12px}
+.recap-grid .lbl{margin-bottom:5px}
+.recap-grid .v{font-family:var(--mono);font-size:19px;font-weight:600}
+.recap-act{display:flex;gap:9px}
+.btn{
+  flex:1;padding:10px;border-radius:8px;text-align:center;font-size:11.5px;font-weight:600;
+  border:1px solid var(--line-2);background:var(--panel-2);transition:.15s var(--ease);
+}
+.btn:hover{border-color:var(--line-3);background:var(--panel-3)}
+.btn.primary{background:var(--amber);color:#141005;border-color:var(--amber)}
+.btn.primary:hover{background:#ffc63d}
+
+/* ═══════════════════════════════════════════════ RESPONSIVE ═══════════ */
+@media (max-width:1420px){
+  .grid{grid-template-columns:1fr 1fr}
+  .grid .p-trend{grid-column:1/-1}
+}
+@media (max-width:1180px){
+  .table-view{grid-template-columns:250px 1fr}
+  .table-view .side.right{grid-column:1/-1;flex-direction:row;flex-wrap:wrap}
+  .table-view .side.right>*{flex:1 1 300px}
+}
+@media (max-width:1020px){
+  .stats{grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width:900px){
+  .wrap{padding:16px 14px 60px}
+  .topbar{height:auto;flex-wrap:wrap;gap:10px;padding:10px 14px}
+  .nav{margin-left:0}
+  .topbar-right{margin-left:0;width:100%}
+  .grid{grid-template-columns:1fr}
+  .table-view{grid-template-columns:1fr}
+  .table-view .side.right{flex-direction:column}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .deck{flex:0 0 208px;width:208px;height:286px}
+  .felt{padding:18px 12px 16px;min-height:0}
+  .brand-dir{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════ TOP BAR ═══════════ -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark jp">記</div>
+    <div>
+      <div class="brand-name">Kioku <span class="brand-jp">記憶</span></div>
+    </div>
+    <span class="brand-dir">Tactile Deck</span>
+  </div>
+
+  <nav class="nav" role="tablist" aria-label="Views">
+    <button role="tab" id="tab-dash" aria-selected="true" data-view="dash">Deck Shelf</button>
+    <button role="tab" id="tab-card" aria-selected="false" data-view="card">The Table</button>
+  </nav>
+
+  <div class="topbar-right">
+    <div class="chip">
+      <svg class="flame" viewBox="0 0 12 14" aria-hidden="true">
+        <path d="M6 0.5c.6 2.4-.9 3.2-1.9 4.4C3 6.2 2 7.4 2 9.2A4 4 0 0 0 10 9.2c0-2.6-1.6-3.6-2.4-5.1-.3.9-.9 1.4-1.5 1.7.6-1.7.6-3.6-.1-5.3z"
+              fill="#f0b429" opacity=".9"/>
+      </svg>
+      <span class="lbl">Streak</span><b>14</b><span class="lbl">days</span>
+    </div>
+    <div class="chip">
+      <span class="lbl">Sessions</span><b>47</b>
+    </div>
+    <div class="chip">
+      <span class="lbl">Last run</span><b>2026-08-05</b>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════ DASHBOARD ══════════ -->
+<main id="view-dash" class="view on" role="tabpanel" aria-labelledby="tab-dash">
+<div class="wrap">
+
+  <!-- stat strip -->
+  <section class="stats" id="stats"></section>
+
+  <!-- shelves -->
+  <section class="shelf">
+    <div class="sec">
+      <h2>Kana Shelf</h2><span class="sec-jp">仮名</span>
+      <span class="rule"></span>
+      <span class="lbl">gojuon → dakuon → han-dakuon → yoon → 104 mixed</span>
+      <span class="sec-act">
+        <button class="nudge" data-scroll="shelf-kana" data-dir="-1" aria-label="Scroll left">
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7.5 2L3.5 6l4 4"/></svg></button>
+        <button class="nudge" data-scroll="shelf-kana" data-dir="1" aria-label="Scroll right">
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4.5 2l4 4-4 4"/></svg></button>
+      </span>
+    </div>
+    <div class="shelf-rail">
+      <div class="shelf-scroll" id="shelf-kana"></div>
+      <div class="plank"></div>
+    </div>
+  </section>
+
+  <section class="shelf">
+    <div class="sec">
+      <h2>Kanji Shelf — Proficiency</h2><span class="sec-jp">漢字 · 級</span>
+      <span class="rule"></span>
+      <span class="lbl">JLPT N5 → N1 · Joyo complete</span>
+      <span class="sec-act">
+        <button class="nudge" data-scroll="shelf-jlpt" data-dir="-1" aria-label="Scroll left">
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7.5 2L3.5 6l4 4"/></svg></button>
+        <button class="nudge" data-scroll="shelf-jlpt" data-dir="1" aria-label="Scroll right">
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4.5 2l4 4-4 4"/></svg></button>
+      </span>
+    </div>
+    <div class="shelf-rail">
+      <div class="shelf-scroll" id="shelf-jlpt"></div>
+      <div class="plank"></div>
+    </div>
+  </section>
+
+  <section class="shelf">
+    <div class="sec">
+      <h2>Kanji Shelf — Volume &amp; Theme</h2><span class="sec-jp">頻度 · 分野</span>
+      <span class="rule"></span>
+      <span class="lbl">Top 200 → Top 500 → Complete</span>
+      <span class="sec-act">
+        <button class="nudge" data-scroll="shelf-vol" data-dir="-1" aria-label="Scroll left">
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7.5 2L3.5 6l4 4"/></svg></button>
+        <button class="nudge" data-scroll="shelf-vol" data-dir="1" aria-label="Scroll right">
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4.5 2l4 4-4 4"/></svg></button>
+      </span>
+    </div>
+    <div class="shelf-rail">
+      <div class="shelf-scroll" id="shelf-vol"></div>
+      <div class="plank"></div>
+    </div>
+  </section>
+
+  <!-- analytics -->
+  <div class="grid">
+
+    <section class="panel p-trend">
+      <div class="panel-h">
+        <h3>Accuracy per session</h3>
+        <span class="hint">last 14 runs · hover for detail</span>
+      </div>
+      <div class="panel-b">
+        <div class="chart-wrap" id="trend"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h"><h3>Accuracy by set</h3><span class="hint">lifetime</span></div>
+      <div class="panel-b"><div class="bars" id="setbars"></div></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h"><h3>Streak</h3><span class="hint">28 days</span></div>
+      <div class="panel-b">
+        <div style="display:flex;gap:18px;margin-bottom:14px">
+          <div><div class="lbl" style="margin-bottom:5px">Current</div>
+               <div class="num amber" style="font-size:23px;font-weight:600">14<small style="font-size:11px;color:var(--ink-3)"> d</small></div></div>
+          <div><div class="lbl" style="margin-bottom:5px">Best</div>
+               <div class="num" style="font-size:23px;font-weight:600">23<small style="font-size:11px;color:var(--ink-3)"> d</small></div></div>
+          <div><div class="lbl" style="margin-bottom:5px">Cards / day</div>
+               <div class="num" style="font-size:23px;font-weight:600">146</div></div>
+        </div>
+        <div class="cal" id="cal"></div>
+        <div class="cal-legend">
+          <span style="background:#121216;border:1px solid var(--line)"></span>
+          <span style="background:rgba(240,180,41,.18)"></span>
+          <span style="background:rgba(240,180,41,.38)"></span>
+          <span style="background:rgba(240,180,41,.62)"></span>
+          <span style="background:var(--amber)"></span>
+          <em style="font-style:normal;margin-left:4px">0 → 240+ cards</em>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel span-all">
+      <div class="panel-h">
+        <h3>Session history</h3>
+        <span class="hint">every run is recorded — 47 total, 12 shown</span>
+      </div>
+      <div class="tbl-scroll">
+        <table id="history">
+          <thead><tr>
+            <th>Date</th><th>Deck</th><th>Challenge</th><th>Scoring</th><th>Level</th>
+            <th class="r">Cards</th><th class="r">Accuracy</th><th class="r">Avg</th>
+            <th class="r">Best streak</th><th class="r">Score</th><th>Shape</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel span-all">
+      <div class="panel-h">
+        <h3>Cards falling out of the deck</h3>
+        <span class="hint">lowest retention · queued for the next spaced-repetition run</span>
+      </div>
+      <div class="panel-b"><div class="weak-grid" id="weak"></div></div>
+    </section>
+
+  </div>
+</div>
+</main>
+
+<!-- ══════════════════════════════════════════════ CARD VIEW ═══════════ -->
+<main id="view-card" class="view" role="tabpanel" aria-labelledby="tab-card">
+<div class="wrap">
+  <div class="table-view">
+
+    <!-- left: deck picker + scoring -->
+    <aside class="side">
+      <section class="panel">
+        <div class="panel-h"><h3>In hand</h3></div>
+        <div class="panel-b">
+          <div id="hand-name" style="font-size:14px;font-weight:640;margin-bottom:2px"></div>
+          <div id="hand-jp" class="jp" style="font-size:11.5px;color:var(--ink-3);margin-bottom:11px"></div>
+          <div class="badge-row" id="hand-badges"></div>
+          <div class="kv"><span class="k">Difficulty rung</span><span class="v" id="hand-rung"></span></div>
+          <div class="kv"><span class="k">Deck size</span><span class="v" id="hand-size"></span></div>
+          <div class="kv"><span class="k">Dealt this run</span><span class="v" id="hand-dealt"></span></div>
+          <div class="scheme" id="hand-scheme"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-h"><h3>Switch deck</h3></div>
+        <div class="panel-b">
+          <div class="deckpick" id="deckpick"></div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- centre: the felt table -->
+    <section class="felt">
+      <div class="felt-head">
+        <h2 id="felt-title"></h2>
+        <span class="jp" id="felt-jp"></span>
+        <span class="spacer"></span>
+        <span class="counter">card <b id="c-idx">1</b> / <span id="c-tot">24</span></span>
+      </div>
+
+      <div class="stage">
+        <div class="deck3d" id="deck3d">
+          <div class="contact"></div>
+          <div class="ghost g3"></div>
+          <div class="ghost g2"></div>
+          <div class="ghost g1"></div>
+          <div class="cut"></div>
+          <div class="tilt" id="tilt">
+            <div class="lift" id="lift">
+              <div class="card3d" id="card3d" role="button" tabindex="0" aria-label="Flash card — click to flip">
+
+                <!-- FRONT: the character alone -->
+                <div class="face front">
+                  <div class="glyph" id="glyph"></div>
+                </div>
+
+                <!-- BACK: the sound written out -->
+                <div class="face back">
+                  <div class="back-in">
+                    <div class="back-tag" id="back-tag"></div>
+                    <div id="back-body"></div>
+                    <div class="back-foot">
+                      <button class="speaker" id="speaker" aria-label="Play pronunciation">
+                        <span class="ring"></span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path class="body" d="M4.2 9.2h3.1L12 5.2v13.6L7.3 14.8H4.2a.6.6 0 0 1-.6-.6V9.8a.6.6 0 0 1 .6-.6z"/>
+                          <path class="w w1" d="M15.1 9.3a3.7 3.7 0 0 1 0 5.4"/>
+                          <path class="w w2" d="M17.7 6.9a7.3 7.3 0 0 1 0 10.2"/>
+                        </svg>
+                      </button>
+                      <div>
+                        <div class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+                        <div class="spk-note" id="spk-note">Play sound</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage-foot" id="stage-foot"></div>
+
+      <!-- session recap -->
+      <div class="recap" id="recap">
+        <div class="recap-card ticked">
+          <h3>Session recorded</h3>
+          <div class="sub" id="recap-sub"></div>
+          <div class="recap-grid">
+            <div><div class="lbl">Accuracy</div><div class="v amber" id="r-acc">—</div></div>
+            <div><div class="lbl">Score</div><div class="v" id="r-score">—</div></div>
+            <div><div class="lbl">Best streak</div><div class="v" id="r-streak">—</div></div>
+            <div><div class="lbl">Avg response</div><div class="v" id="r-avg">—</div></div>
+          </div>
+          <div class="recap-act">
+            <button class="btn" id="r-shelf">Back to shelf</button>
+            <button class="btn primary" id="r-again">Deal again</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- right: live run stats -->
+    <aside class="side right">
+      <section class="panel">
+        <div class="panel-h"><h3>This run</h3><span class="hint" id="run-clock">00:00</span></div>
+        <div class="panel-b">
+          <div class="kv"><span class="k">Accuracy</span><span class="v big" id="run-acc">—</span></div>
+          <div class="kv"><span class="k">Seen / correct</span><span class="v" id="run-seen">0 / 0</span></div>
+          <div class="kv"><span class="k">Current streak</span><span class="v" id="run-streak">0</span></div>
+          <div class="kv"><span class="k">Best streak</span><span class="v" id="run-best">0</span></div>
+          <div class="kv"><span class="k">Running score</span><span class="v" id="run-score">0</span></div>
+          <div style="margin-top:12px">
+            <div class="lbl" style="margin-bottom:6px">Answer trail</div>
+            <div class="pips" id="pips"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-h"><h3>Table log</h3><span class="hint">this run</span></div>
+        <div class="panel-b" style="padding:6px 14px 12px">
+          <div class="log-list" id="loglist"><div class="empty">No cards turned yet</div></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-h"><h3>Deck history</h3><span class="hint">last 6 runs</span></div>
+        <div class="panel-b"><div class="bars" id="deckhist"></div></div>
+      </section>
+    </aside>
+
+  </div>
+</div>
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   VERIFIED CHARACTER DATA — only pairings from JAPANESE-CONTENT-MODEL.md
+   ═══════════════════════════════════════════════════════════════════════ */
+const H_GOJUON = [
+  ['あ','a'],['い','i'],['う','u'],['え','e'],['お','o'],
+  ['か','ka'],['き','ki'],['く','ku'],['け','ke'],['こ','ko'],
+  ['さ','sa'],['し','shi'],['す','su'],['せ','se'],['そ','so'],
+  ['た','ta'],['ち','chi'],['つ','tsu'],['て','te'],['と','to'],
+  ['な','na'],['に','ni'],['ぬ','nu'],['ね','ne'],['の','no'],
+  ['は','ha'],['ひ','hi'],['ふ','fu'],['へ','he'],['ほ','ho'],
+  ['ま','ma'],['み','mi'],['む','mu'],['め','me'],['も','mo'],
+  ['や','ya'],['ゆ','yu'],['よ','yo'],
+  ['ら','ra'],['り','ri'],['る','ru'],['れ','re'],['ろ','ro'],
+  ['わ','wa'],['を','wo'],['ん','n']
+];
+const H_DAKUON     = [['が','ga'],['ぎ','gi'],['ざ','za'],['じ','ji'],['だ','da'],['ば','ba']];
+const H_HANDAKUON  = [['ぱ','pa']];
+const H_YOON       = [['きゃ','kya'],['きゅ','kyu'],['きょ','kyo'],['しゃ','sha'],['しゅ','shu'],['しょ','sho']];
+const K_GOJUON = [
+  ['ア','a'],['イ','i'],['ウ','u'],['エ','e'],['オ','o'],
+  ['カ','ka'],['キ','ki'],['ク','ku'],['ケ','ke'],['コ','ko'],
+  ['サ','sa'],['シ','shi'],['ス','su'],['セ','se'],['ソ','so'],
+  ['タ','ta'],['チ','chi'],['ツ','tsu'],['テ','te'],['ト','to'],
+  ['ナ','na'],['ニ','ni'],['ヌ','nu'],['ネ','ne'],['ノ','no'],
+  ['ハ','ha'],['ヒ','hi'],['フ','fu'],['ヘ','he'],['ホ','ho'],
+  ['マ','ma'],['ミ','mi'],['ム','mu'],['メ','me'],['モ','mo'],
+  ['ヤ','ya'],['ユ','yu'],['ヨ','yo'],
+  ['ラ','ra'],['リ','ri'],['ル','ru'],['レ','re'],['ロ','ro'],
+  ['ワ','wa'],['ヲ','wo'],['ン','n']
+];
+/* kanji: character · meaning · on'yomi (katakana) · kun'yomi (hiragana) */
+const KANJI_N5 = [
+  ['日','day, sun','ニチ / ジツ','ひ / か'],
+  ['月','month, moon','ゲツ / ガツ','つき'],
+  ['火','fire','カ','ひ'],
+  ['水','water','スイ','みず'],
+  ['木','tree, wood','モク / ボク','き'],
+  ['金','gold, money','キン / コン','かね'],
+  ['土','earth, soil','ド / ト','つち'],
+  ['山','mountain','サン','やま'],
+  ['川','river','セン','かわ'],
+  ['人','person','ジン / ニン','ひと'],
+  ['大','big','ダイ / タイ','おお(きい)'],
+  ['小','small','ショウ','ちい(さい)'],
+  ['中','middle, inside','チュウ','なか'],
+  ['上','up, above','ジョウ','うえ'],
+  ['下','down, below','カ / ゲ','した'],
+  ['一','one','イチ','ひと(つ)'],
+  ['二','two','ニ','ふた(つ)'],
+  ['三','three','サン','みっ(つ)'],
+  ['学','study, learning','ガク','まな(ぶ)'],
+  ['生','life, birth','セイ / ショウ','い(きる) / う(まれる)']
+];
+
+const POOLS = {
+  h_gojuon:H_GOJUON,
+  h_dakuon:H_DAKUON,
+  h_handakuon:H_HANDAKUON,
+  h_yoon:H_YOON,
+  h_all:[...H_GOJUON,...H_DAKUON,...H_HANDAKUON,...H_YOON],
+  k_gojuon:K_GOJUON,
+  k_all:K_GOJUON,
+  kanji:KANJI_N5
+};
+
+/* ═══════════════════════════════════════════════ EXERCISE SEGMENTS ════
+   Each deck is differentiated on three independent axes:
+   challenge type · scoring scheme · difficulty rung (real ladder)
+   ══════════════════════════════════════════════════════════════════════ */
+const SCHEMES = {
+  accuracy:{n:'Accuracy',   f:'SCORE = <b>correct ÷ seen</b> · every card weighs the same'},
+  speed:   {n:'Speed-weighted', f:'SCORE = <b>correct × (1 + 2.0s ÷ t)</b> · answer under 2s for full weight'},
+  streak:  {n:'Streak',     f:'SCORE = <b>base × streak multiplier</b> · a miss resets the multiplier to ×1'},
+  srs:     {n:'Spaced repetition', f:'SCORE = <b>SM-2 recall quality</b> · your grade sets the next interval'}
+};
+
+const DECKS = [
+/* ── kana shelf ───────────────────────────────────────────────────────── */
+ {id:'hg', shelf:'kana', name:'Hiragana · Gojuon', jp:'ひらがな 五十音', rung:'LV 1 · GOJUON',
+  count:46, kind:'kana', pool:'h_gojuon', glyphs:['あ','か','さ'],
+  challenge:'Recognition', scheme:'accuracy', mastered:44, acc:96},
+ {id:'hd', shelf:'kana', name:'Hiragana · Dakuon', jp:'濁音', rung:'LV 2 · DAKUON',
+  count:20, kind:'kana', pool:'h_dakuon', glyphs:['が','ざ','ば'],
+  challenge:'Recall', scheme:'streak', mastered:17, acc:88},
+ {id:'hh', shelf:'kana', name:'Hiragana · Han-dakuon', jp:'半濁音', rung:'LV 3 · HAN-DAKUON',
+  count:5, kind:'kana', pool:'h_handakuon', glyphs:['ぱ','ぴ','ぷ'],
+  challenge:'Recognition', scheme:'accuracy', mastered:5, acc:97},
+ {id:'hy', shelf:'kana', name:'Hiragana · Yoon', jp:'拗音', rung:'LV 4 · YOON',
+  count:33, kind:'kana', pool:'h_yoon', glyphs:['きゃ','しゅ','きょ'],
+  challenge:'Recall', scheme:'speed', mastered:14, acc:74},
+ {id:'ha', shelf:'kana', name:'Hiragana · Full mixed', jp:'ひらがな 全104', rung:'LV 5 · MIXED 104',
+  count:104, kind:'kana', pool:'h_all', glyphs:['ぬ','ふ','ゃ'],
+  challenge:'Mixed', scheme:'srs', mastered:71, acc:83},
+ {id:'kg', shelf:'kana', name:'Katakana · Gojuon', jp:'カタカナ 五十音', rung:'LV 1 · GOJUON',
+  count:46, kind:'kana', pool:'k_gojuon', glyphs:['ア','カ','サ'],
+  challenge:'Recognition', scheme:'accuracy', mastered:38, acc:90},
+ {id:'kd', shelf:'kana', name:'Katakana · Dakuon + Han-dakuon', jp:'濁音・半濁音', rung:'LV 2–3',
+  count:25, kind:'kana', pool:'k_gojuon', glyphs:['ガ','ザ','パ'],
+  challenge:'Timed', scheme:'speed', mastered:12, acc:71},
+ {id:'ky', shelf:'kana', name:'Katakana · Yoon', jp:'拗音', rung:'LV 4 · YOON',
+  count:33, kind:'kana', pool:'k_gojuon', glyphs:['キャ','シュ','チョ'],
+  challenge:'Recall', scheme:'streak', mastered:8, acc:66},
+ {id:'ka', shelf:'kana', name:'Katakana · Full mixed', jp:'カタカナ 全104', rung:'LV 5 · MIXED 104',
+  count:104, kind:'kana', pool:'k_all', glyphs:['ソ','ン','ツ'],
+  challenge:'Listening', scheme:'srs', mastered:49, acc:77},
+/* ── JLPT / Joyo shelf ────────────────────────────────────────────────── */
+ {id:'n5', shelf:'jlpt', name:'Kanji · JLPT N5', jp:'漢字 N5', rung:'N5 · FOUNDATION',
+  count:107, kind:'kanji', pool:'kanji', glyphs:['日','水','山'],
+  challenge:'Recognition', scheme:'accuracy', mastered:88, acc:92},
+ {id:'n4', shelf:'jlpt', name:'Kanji · JLPT N4', jp:'漢字 N4', rung:'N4 · EVERYDAY',
+  count:174, kind:'kanji', pool:'kanji', glyphs:['学','生','中'],
+  challenge:'Recall', scheme:'srs', mastered:96, acc:79},
+ {id:'n3', shelf:'jlpt', name:'Kanji · JLPT N3', jp:'漢字 N3', rung:'N3 · ABSTRACT',
+  count:394, kind:'kanji', pool:'kanji', glyphs:['金','上','下'],
+  challenge:'Mixed', scheme:'speed', mastered:141, acc:68},
+ {id:'n2', shelf:'jlpt', name:'Kanji · JLPT N2', jp:'漢字 N2', rung:'N2 · PROFESSIONAL',
+  count:248, kind:'kanji', pool:'kanji', glyphs:['火','木','土'],
+  challenge:'Timed', scheme:'streak', mastered:52, acc:58},
+ {id:'n1', shelf:'jlpt', name:'Kanji · JLPT N1', jp:'漢字 N1', rung:'N1 · LITERARY',
+  count:382, kind:'kanji', pool:'kanji', glyphs:['川','人','大'],
+  challenge:'Recall', scheme:'srs', mastered:19, acc:41},
+ {id:'jy', shelf:'jlpt', name:'Joyo · Complete', jp:'常用漢字 全1521', rung:'GRADE 1–6 + SECONDARY',
+  count:1521, kind:'kanji', pool:'kanji', glyphs:['月','小','三'],
+  challenge:'Mixed', scheme:'srs', mastered:388, acc:63},
+/* ── volume & theme shelf ─────────────────────────────────────────────── */
+ {id:'t200', shelf:'vol', name:'Top 200 kanji', jp:'頻出 200', rung:'VOL 1 · TOP 200',
+  count:200, kind:'kanji', pool:'kanji', glyphs:['一','二','三'],
+  challenge:'Recognition', scheme:'streak', mastered:163, acc:87},
+ {id:'t500', shelf:'vol', name:'Top 500 kanji', jp:'頻出 500', rung:'VOL 2 · TOP 500',
+  count:500, kind:'kanji', pool:'kanji', glyphs:['中','大','小'],
+  challenge:'Timed', scheme:'speed', mastered:214, acc:72},
+ {id:'tall', shelf:'vol', name:'Complete kanji', jp:'完全 1372', rung:'VOL 3 · COMPLETE 1,372',
+  count:1372, kind:'kanji', pool:'kanji', glyphs:['学','金','川'],
+  challenge:'Mixed', scheme:'srs', mastered:401, acc:61},
+ {id:'th1', shelf:'vol', name:'Numbers & Counting', jp:'数字', rung:'THEME · N5–N4',
+  count:38, kind:'kanji', pool:'kanji', glyphs:['一','二','三'],
+  challenge:'Recall', scheme:'accuracy', mastered:33, acc:91},
+ {id:'th2', shelf:'vol', name:'Nature & Weather', jp:'自然', rung:'THEME · N5–N3',
+  count:52, kind:'kanji', pool:'kanji', glyphs:['山','川','火'],
+  challenge:'Recognition', scheme:'accuracy', mastered:41, acc:85},
+ {id:'th3', shelf:'vol', name:'Time & Calendar', jp:'時間・曜日', rung:'THEME · N5–N4',
+  count:44, kind:'kanji', pool:'kanji', glyphs:['日','月','時'],
+  challenge:'Listening', scheme:'speed', mastered:27, acc:76},
+ {id:'th4', shelf:'vol', name:'People & Family', jp:'人・家族', rung:'THEME · N5–N3',
+  count:47, kind:'kanji', pool:'kanji', glyphs:['人','生','大'],
+  challenge:'Mixed', scheme:'srs', mastered:30, acc:80}
+];
+const DECK_BY_ID = Object.fromEntries(DECKS.map(d=>[d.id,d]));
+
+/* ═══════════════════════════════════════════ PLACEHOLDER HISTORY ══════ */
+const SESSIONS = [
+ {d:'2026-07-14',deck:'hg',  cards:46,acc:81,avg:3.1,streak:11,score:1180},
+ {d:'2026-07-17',deck:'kg',  cards:46,acc:74,avg:3.6,streak:8, score: 940},
+ {d:'2026-07-20',deck:'hd',  cards:32,acc:79,avg:2.9,streak:12,score:1055},
+ {d:'2026-07-23',deck:'n5',  cards:60,acc:83,avg:4.2,streak:14,score:1520},
+ {d:'2026-07-25',deck:'ha',  cards:72,acc:78,avg:2.7,streak:9, score:1610},
+ {d:'2026-07-28',deck:'hy',  cards:33,acc:69,avg:3.4,streak:6, score: 812},
+ {d:'2026-07-30',deck:'kg',  cards:46,acc:86,avg:2.5,streak:17,score:1344},
+ {d:'2026-08-01',deck:'n5',  cards:60,acc:88,avg:3.3,streak:21,score:1902},
+ {d:'2026-08-02',deck:'t200',cards:50,acc:84,avg:2.9,streak:15,score:1688},
+ {d:'2026-08-03',deck:'ka',  cards:64,acc:82,avg:3.0,streak:13,score:1471},
+ {d:'2026-08-04',deck:'n4',  cards:48,acc:76,avg:4.6,streak:10,score:1233},
+ {d:'2026-08-05',deck:'hg',  cards:46,acc:94,avg:2.1,streak:26,score:2044}
+];
+/* two older runs so the trend line has 14 points */
+const TREND = [72,77,...SESSIONS.map(s=>s.acc)];
+const TREND_DATES = ['2026-07-08','2026-07-11',...SESSIONS.map(s=>s.d)];
+
+const SETACC = [
+  {n:'Hiragana · Gojuon', jp:'五十音', c:46,  a:96},
+  {n:'Hiragana · Dakuon', jp:'濁音',   c:20,  a:88},
+  {n:'Hiragana · Han-dakuon', jp:'半濁音', c:5, a:97},
+  {n:'Hiragana · Yoon',   jp:'拗音',   c:33,  a:74},
+  {n:'Katakana · Gojuon', jp:'五十音', c:46,  a:90},
+  {n:'Katakana · Yoon',   jp:'拗音',   c:33,  a:66},
+  {n:'Kanji · JLPT N5',   jp:'N5',     c:107, a:92},
+  {n:'Kanji · JLPT N4',   jp:'N4',     c:174, a:79},
+  {n:'Kanji · JLPT N3',   jp:'N3',     c:394, a:68}
+];
+
+const WEAK = [
+  {g:'ソ',r:'so',   m:'katakana',  a:44,seen:52},
+  {g:'ン',r:'n',    m:'katakana',  a:47,seen:49},
+  {g:'ツ',r:'tsu',  m:'katakana',  a:52,seen:58},
+  {g:'シ',r:'shi',  m:'katakana',  a:55,seen:61},
+  {g:'ぬ',r:'nu',   m:'hiragana',  a:58,seen:44},
+  {g:'ね',r:'ne',   m:'hiragana',  a:61,seen:47},
+  {g:'れ',r:'re',   m:'hiragana',  a:63,seen:45},
+  {g:'を',r:'wo',   m:'hiragana',  a:66,seen:39},
+  {g:'しゅ',r:'shu',m:'yoon',      a:57,seen:33},
+  {g:'きょ',r:'kyo',m:'yoon',      a:60,seen:31},
+  {g:'生',r:'セイ / い(きる)',m:'life, birth',a:49,seen:37},
+  {g:'金',r:'キン / かね',   m:'gold, money',a:54,seen:41},
+  {g:'上',r:'ジョウ / うえ',  m:'up, above',  a:59,seen:36},
+  {g:'下',r:'カ / した',     m:'down, below',a:62,seen:35}
+];
+
+const DAILY = [0,3,2,0,1,4,3,2,0,2,3,4,1,2,4,3,2,3,4,2,3,4,3,2,4,3,4,4];
+
+/* ═══════════════════════════════════════════════════════ HELPERS ══════ */
+const $  = s=>document.querySelector(s);
+const $$ = s=>[...document.querySelectorAll(s)];
+const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
+const fmt = n=>n.toLocaleString('en-US');
+
+/* ═══════════════════════════════════════════════════ STAT STRIP ═══════ */
+function sparkPath(vals,w,h){
+  const mn=Math.min(...vals), mx=Math.max(...vals), sp=(mx-mn)||1;
+  return vals.map((v,i)=>{
+    const x=(i/(vals.length-1))*w, y=h-((v-mn)/sp)*h;
+    return (i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1);
+  }).join(' ');
+}
+function renderStats(){
+  const tiles=[
+    {l:'Sessions run',  v:'47',    s:'since 2026-04-02', d:'+12 this month'},
+    {l:'Cards reviewed',v:'6,842', s:'avg 146 / day',    d:'+1,204 · 30d'},
+    {l:'Overall accuracy',v:'87.4',u:'%',s:'all decks', d:'+2.6 pts · 30d'},
+    {l:'Current streak',v:'14',u:'d',s:'best 23 days',   d:'active'},
+    {l:'Avg response',  v:'2.4',u:'s',s:'across 6,842 cards', d:'−0.4s · 30d'},
+    {l:'Decks in play', v:'22',    s:'8 kana · 14 kanji',d:'3 mastered'}
+  ];
+  const wrap=$('#stats');
+  tiles.forEach((t,i)=>{
+    const n=el('div','stat');
+    n.innerHTML=`<div class="lbl">${t.l}</div>
+      <div class="v">${t.v}${t.u?`<small>${t.u}</small>`:''}</div>
+      <div class="sub"><span class="delta${i===5?' flat':''}">${t.d}</span><span style="color:var(--ink-4)">·</span><span>${t.s}</span></div>`;
+    wrap.appendChild(n);
+  });
+  // sparkline into the accuracy tile
+  const sp=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  sp.setAttribute('viewBox','0 0 68 18'); sp.setAttribute('class','spark');
+  sp.style.width='68px'; sp.style.height='18px'; sp.style.marginLeft='auto';
+  sp.innerHTML=`<path d="${sparkPath(TREND,66,15)}" fill="none" stroke="#f0b429" stroke-width="1.4"
+    stroke-linejoin="round" stroke-linecap="round" transform="translate(1,1.5)"/>`;
+  wrap.children[2].querySelector('.sub').appendChild(sp);
+}
+
+/* ══════════════════════════════════════════════════════ SHELVES ═══════ */
+function deckNode(d){
+  const pct=Math.round(d.mastered/d.count*100);
+  const b=el('button','deck');
+  b.setAttribute('data-deck',d.id);
+  b.setAttribute('aria-label',`${d.name} — ${d.challenge}, ${SCHEMES[d.scheme].n} scoring, ${d.count} cards`);
+  b.innerHTML=`
+    <span class="sheet s3"></span>
+    <span class="sheet s2"></span>
+    <span class="deck-face">
+      <span class="deck-top">
+        <span class="rung">${d.rung}</span>
+        <span class="deck-count">${fmt(d.count)}</span>
+      </span>
+      <span class="deck-glyphs jp">${d.glyphs.map(g=>`<span>${g}</span>`).join('')}</span>
+      <span class="deck-id">
+        <span class="deck-name" style="display:block">${d.name}</span>
+        <span class="deck-jp jp" style="display:block">${d.jp}</span>
+      </span>
+      <span class="obi" style="display:block">
+        <span class="obi-row" style="display:flex">
+          <span class="lbl">Mastered</span><b>${pct}%</b>
+        </span>
+        <span class="track" style="display:block"><span class="fill" style="display:block;width:${pct}%"></span></span>
+        <span class="obi-sub" style="display:flex">
+          <span>${fmt(d.mastered)} / ${fmt(d.count)}</span><span>acc ${d.acc}%</span>
+        </span>
+      </span>
+      <span class="deck-tags" style="display:flex">
+        <span class="tag">${d.challenge}</span>
+        <span class="tag sc">${SCHEMES[d.scheme].n}</span>
+      </span>
+    </span>`;
+  b.addEventListener('click',()=>startDeck(d.id));
+  return b;
+}
+function renderShelves(){
+  ['kana','jlpt','vol'].forEach(s=>{
+    const host=$('#shelf-'+s);
+    DECKS.filter(d=>d.shelf===s).forEach(d=>host.appendChild(deckNode(d)));
+  });
+  $$('.nudge').forEach(n=>n.addEventListener('click',()=>{
+    $('#'+n.dataset.scroll).scrollBy({left:+n.dataset.dir*512,behavior:'smooth'});
+  }));
+}
+
+/* ═══════════════════════════════════════════ TREND CHART (single series) */
+function renderTrend(){
+  const W=760,H=210,PL=34,PR=14,PT=12,PB=26;
+  const iw=W-PL-PR, ih=H-PT-PB;
+  const lo=50, hi=100;
+  const x=i=>PL+(i/(TREND.length-1))*iw;
+  const y=v=>PT+ih-((v-lo)/(hi-lo))*ih;
+
+  let g='';
+  [50,60,70,80,90,100].forEach(v=>{
+    g+=`<line class="gridline" x1="${PL}" x2="${W-PR}" y1="${y(v)}" y2="${y(v)}"/>
+        <text class="axis-t" x="${PL-8}" y="${y(v)+3}" text-anchor="end">${v}</text>`;
+  });
+  const line=TREND.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join(' ');
+  const area=`${line} L ${x(TREND.length-1).toFixed(1)} ${PT+ih} L ${PL} ${PT+ih} Z`;
+
+  let xt='';
+  TREND_DATES.forEach((d,i)=>{
+    if(i%2===0||i===TREND.length-1)
+      xt+=`<text class="axis-t" x="${x(i)}" y="${H-8}" text-anchor="middle">${d.slice(5)}</text>`;
+  });
+  const dots=TREND.map((v,i)=>`<circle class="trend-dot" cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="2.6"/>`).join('');
+  const lastIdx=TREND.length-1;
+
+  const wrap=$('#trend');
+  wrap.innerHTML=`
+  <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Accuracy per session, last 14 runs">
+    <defs>
+      <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"  stop-color="#f0b429" stop-opacity=".22"/>
+        <stop offset="100%" stop-color="#f0b429" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    ${g}
+    <path d="${area}" fill="url(#ag)"/>
+    <path class="trend-line" d="${line}"/>
+    ${dots}
+    <circle cx="${x(lastIdx).toFixed(1)}" cy="${y(TREND[lastIdx]).toFixed(1)}" r="4.5" fill="#f0b429"/>
+    <text x="${(x(lastIdx)-8).toFixed(1)}" y="${(y(TREND[lastIdx])-11).toFixed(1)}" text-anchor="end"
+          fill="#f0b429" font-family="ui-monospace,monospace" font-size="11" font-weight="600">${TREND[lastIdx]}%</text>
+    <line class="crosshair" id="chx" x1="0" x2="0" y1="${PT}" y2="${PT+ih}" style="opacity:0"/>
+    <circle id="chd" r="5" fill="#f0b429" stroke="#0d0d0f" stroke-width="2" style="opacity:0"/>
+    ${xt}
+    <rect class="hit" x="${PL}" y="${PT}" width="${iw}" height="${ih}"/>
+  </svg>
+  <div class="tip" id="ttip"></div>`;
+
+  const svg=wrap.querySelector('svg'), tip=$('#ttip'),
+        chx=$('#chx'), chd=$('#chd'), hit=wrap.querySelector('.hit');
+  hit.addEventListener('mousemove',e=>{
+    const r=svg.getBoundingClientRect();
+    const sx=(e.clientX-r.left)/r.width*W;
+    let i=Math.round((sx-PL)/iw*(TREND.length-1));
+    i=Math.max(0,Math.min(TREND.length-1,i));
+    chx.setAttribute('x1',x(i)); chx.setAttribute('x2',x(i)); chx.style.opacity=1;
+    chd.setAttribute('cx',x(i)); chd.setAttribute('cy',y(TREND[i])); chd.style.opacity=1;
+    const s=SESSIONS[i-2];
+    tip.innerHTML=`<div class="t-h">${TREND_DATES[i]}</div>
+      <div class="t-r t-acc"><span>Accuracy</span><b>${TREND[i]}%</b></div>
+      ${s?`<div class="t-r"><span>Deck</span><b style="font-family:inherit;font-weight:500">${DECK_BY_ID[s.deck].name}</b></div>
+           <div class="t-r"><span>Cards</span><b>${s.cards}</b></div>
+           <div class="t-r"><span>Avg time</span><b>${s.avg.toFixed(1)}s</b></div>
+           <div class="t-r"><span>Score</span><b>${fmt(s.score)}</b></div>`
+          :`<div class="t-r"><span>Deck</span><b style="font-family:inherit;font-weight:500">Mixed warm-up</b></div>`}`;
+    tip.style.left=(x(i)/W*100)+'%';
+    tip.style.top =(y(TREND[i])/H*r.height)+'px';
+    tip.classList.add('on');
+  });
+  hit.addEventListener('mouseleave',()=>{
+    tip.classList.remove('on'); chx.style.opacity=0; chd.style.opacity=0;
+  });
+}
+
+/* ═══════════════════════════════════════════════ SET ACCURACY BARS ════ */
+function barRow(name,jp,meta,val,weak){
+  return `<div class="bar-row">
+      <div class="bar-name">${name}${jp?` <span class="jp">${jp}</span>`:''}${meta?` <em>${meta}</em>`:''}</div>
+      <div class="bar-val">${val}%</div>
+      <div class="bar-t"><div class="bar-f${weak?' weak':''}" style="width:${val}%"></div></div>
+    </div>`;
+}
+function renderSetBars(){
+  $('#setbars').innerHTML=SETACC.map(s=>barRow(s.n,s.jp,fmt(s.c)+' cards',s.a,s.a<70)).join('');
+}
+
+/* ═══════════════════════════════════════════════ STREAK CALENDAR ══════ */
+function renderCal(){
+  const c=$('#cal');
+  DAILY.forEach((l,i)=>{
+    const i2=el('i'); i2.dataset.l=l;
+    i2.title=`day −${DAILY.length-1-i} · ${l===0?'no session':l*60+' cards'}`;
+    c.appendChild(i2);
+  });
+}
+
+/* ═══════════════════════════════════════════════ SESSION TABLE ════════ */
+function renderHistory(){
+  const tb=$('#history tbody');
+  [...SESSIONS].reverse().forEach(s=>{
+    const d=DECK_BY_ID[s.deck];
+    const bars=[...Array(8)].map((_,i)=>{
+      const h=Math.max(2,Math.round(((s.acc-40)/60)*11*(0.62+((i*37+s.cards)%40)/62)));
+      return `<rect x="${i*5}" y="${12-h}" width="3" height="${h}" rx="1.2" fill="${i>5?'#f0b429':'#4a4a53'}"/>`;
+    }).join('');
+    const tr=el('tr');
+    tr.innerHTML=`
+      <td class="num">${s.d}</td>
+      <td class="deckname">${d.name}</td>
+      <td><span class="pill">${d.challenge}</span></td>
+      <td><span class="pill">${SCHEMES[d.scheme].n}</span></td>
+      <td style="font-family:var(--mono);font-size:10px;color:var(--ink-3)">${d.rung}</td>
+      <td class="r num">${s.cards}</td>
+      <td class="r num" style="color:${s.acc>=85?'var(--amber)':'var(--ink)'}">${s.acc}%</td>
+      <td class="r num">${s.avg.toFixed(1)}s</td>
+      <td class="r num">${s.streak}</td>
+      <td class="r num">${fmt(s.score)}</td>
+      <td><svg class="mini" width="40" height="12" aria-hidden="true">${bars}</svg></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+/* ═══════════════════════════════════════════════ WEAK CARDS ═══════════ */
+function renderWeak(){
+  $('#weak').innerHTML=WEAK.map(w=>`
+    <div class="wcard">
+      <div class="g jp">${w.g}</div>
+      <div class="r">${w.r}</div>
+      <div class="m">${w.m}</div>
+      <div class="pct">${w.a}% · ${w.seen}×</div>
+      <div class="wt"><i style="width:${w.a}%"></i></div>
+    </div>`).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   THE TABLE — card view
+   ═══════════════════════════════════════════════════════════════════════ */
+const HAND=24;
+let S={deck:null,queue:[],i:0,flipped:false,seen:0,correct:0,streak:0,best:0,
+       score:0,log:[],trail:[],busy:false,t0:0,cardT:0,timer:null};
+
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[b[i],b[j]]=[b[j],b[i]];}return b;}
+
+function startDeck(id){
+  const d=DECK_BY_ID[id];
+  S.deck=d;
+  const pool=POOLS[d.pool];
+  let q=[];
+  while(q.length<HAND) q=q.concat(shuffle(pool));
+  S.queue=q.slice(0,HAND);
+  S.i=0;S.flipped=false;S.seen=0;S.correct=0;S.streak=0;S.best=0;S.score=0;
+  S.log=[];S.trail=[];S.busy=false;S.t0=Date.now();S.cardT=Date.now();
+  $('#recap').classList.remove('on');
+  $('#card3d').classList.add('instant');
+  $('#card3d').classList.remove('flipped');
+  void $('#card3d').offsetWidth;
+  $('#card3d').classList.remove('instant');
+  renderHand(); renderCard(); renderRun(); renderLog(); renderDeckHist(); renderPicker();
+  setView('card');
+  startClock();
+}
+
+function startClock(){
+  clearInterval(S.timer);
+  const tick=()=>{
+    const t=(Date.now()-S.t0)/1000|0;
+    $('#run-clock').textContent=String(t/60|0).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
+  };
+  tick();
+  S.timer=setInterval(tick,1000);
+}
+
+function renderHand(){
+  const d=S.deck;
+  $('#hand-name').textContent=d.name;
+  $('#hand-jp').textContent=d.jp;
+  $('#hand-badges').innerHTML=
+    `<span class="tag">${d.challenge}</span><span class="tag sc">${SCHEMES[d.scheme].n}</span>`;
+  $('#hand-rung').textContent=d.rung.replace(/ · /,' · ');
+  $('#hand-size').textContent=fmt(d.count);
+  $('#hand-dealt').textContent=HAND;
+  $('#hand-scheme').innerHTML=SCHEMES[d.scheme].f;
+  $('#felt-title').textContent=d.name;
+  $('#felt-jp').textContent=d.jp;
+  $('#c-tot').textContent=HAND;
+}
+
+function renderPicker(){
+  $('#deckpick').innerHTML=DECKS.map(d=>`
+    <button class="dp" data-deck="${d.id}" ${d.id===S.deck.id?'aria-current="true"':''}>
+      <span class="g jp">${d.glyphs[0]}</span>
+      <span class="n">${d.name}</span>
+      <span class="c">${fmt(d.count)}</span>
+    </button>`).join('');
+  $$('#deckpick .dp').forEach(b=>b.addEventListener('click',()=>startDeck(b.dataset.deck)));
+}
+
+function renderCard(){
+  const d=S.deck, item=S.queue[S.i];
+  const g=$('#glyph');
+  g.textContent=item[0];
+  g.classList.toggle('small',item[0].length>1);
+  $('#c-idx').textContent=Math.min(S.i+1,HAND);
+
+  if(d.kind==='kana'){
+    $('#back-tag').textContent='Romaji reading';
+    $('#back-body').innerHTML=`
+      <div class="back-mini jp">${item[0]}</div>
+      <div class="back-sound">${item[1]}</div>`;
+  }else{
+    $('#back-tag').textContent="Meaning · on'yomi · kun'yomi";
+    $('#back-body').innerHTML=`
+      <div class="back-mini jp">${item[0]}</div>
+      <div class="back-meaning">${item[1]}</div>
+      <div class="readings">
+        <div class="reading on"><span class="k">On'yomi</span><span class="v jp">${item[2]}</span></div>
+        <div class="reading"><span class="k">Kun'yomi</span><span class="v jp">${item[3]}</span></div>
+      </div>`;
+  }
+  S.cardT=Date.now();
+  renderFoot();
+}
+
+function renderFoot(){
+  const f=$('#stage-foot');
+  if(!S.flipped){
+    f.innerHTML=`<div class="hint">
+      <span class="kbd">Click</span> or <span class="kbd">Space</span> to turn the card over</div>`;
+    return;
+  }
+  const sc=S.deck.scheme;
+  let btns;
+  if(sc==='srs'){
+    btns=[['Again','&lt; 1 min',0],['Hard','2 days',1],['Good','6 days',1],['Easy','14 days',1]];
+  }else if(sc==='speed'){
+    const t=((Date.now()-S.cardT)/1000);
+    btns=[['Missed','no credit',0],['Got it',`×${(1+2/Math.max(t,.6)).toFixed(2)} speed`,1]];
+  }else if(sc==='streak'){
+    btns=[['Missed','resets ×1',0],['Got it',`×${(1+S.streak*0.1).toFixed(1)} streak`,1]];
+  }else{
+    btns=[['Missed','0 / 1',0],['Got it','1 / 1',1]];
+  }
+  f.innerHTML=`<div class="grade">${btns.map((b,i)=>
+    `<button class="gbtn${b[2]?' good':''}" data-q="${i}" data-ok="${b[2]}">
+       <span class="t">${b[0]}</span><span class="s">${b[1]}</span></button>`).join('')}</div>`;
+  $$('#stage-foot .gbtn').forEach(b=>
+    b.addEventListener('click',()=>grade(b.dataset.ok==='1')));
+}
+
+/* — flip -------------------------------------------------------------- */
+function flip(){
+  if(S.busy) return;
+  const c=$('#card3d'), l=$('#lift');
+  S.flipped=!S.flipped;
+  c.classList.toggle('flipped',S.flipped);
+  l.classList.remove('flipping'); void l.offsetWidth; l.classList.add('flipping');
+  setTimeout(()=>l.classList.remove('flipping'),640);
+  renderFoot();
+}
+$('#card3d').addEventListener('click',e=>{ if(!e.target.closest('.speaker')) flip(); });
+$('#card3d').addEventListener('keydown',e=>{
+  if(e.key===' '||e.key==='Enter'){e.preventDefault();flip();}
+});
+document.addEventListener('keydown',e=>{
+  if($('#view-card').classList.contains('on')&&!$('#recap').classList.contains('on')){
+    if(e.key===' '&&e.target===document.body){e.preventDefault();flip();}
+    if(e.key==='ArrowRight'&&S.flipped){e.preventDefault();grade(true);}
+  }
+});
+
+/* — cursor tilt: the card leans toward your hand ----------------------- */
+const stage=$('.stage'), tilt=$('#tilt');
+stage.addEventListener('pointermove',e=>{
+  if(S.busy) return;
+  const r=$('#deck3d').getBoundingClientRect();
+  const px=(e.clientX-r.left)/r.width-.5, py=(e.clientY-r.top)/r.height-.5;
+  tilt.style.transition='transform .08s linear';
+  tilt.style.transform=`rotateY(${(px*11).toFixed(2)}deg) rotateX(${(-py*9).toFixed(2)}deg)`;
+});
+stage.addEventListener('pointerleave',()=>{
+  tilt.style.transition='transform .4s var(--ease)';
+  tilt.style.transform='';
+});
+
+/* — speaker ------------------------------------------------------------ */
+$('#speaker').addEventListener('click',e=>{
+  e.stopPropagation();
+  const b=e.currentTarget, host=b.closest('.back-foot');
+  const item=S.queue[S.i];
+  const said=S.deck.kind==='kana' ? item[1] : item[2].split(' / ')[0];
+  b.classList.remove('playing'); void b.offsetWidth; b.classList.add('playing');
+  host.classList.add('speaker-on');
+  $('#spk-note').textContent='◂ '+said+' ▸';
+  clearTimeout(b._t);
+  b._t=setTimeout(()=>{
+    b.classList.remove('playing'); host.classList.remove('speaker-on');
+    $('#spk-note').textContent='Play sound';
+  },1100);
+});
+
+/* — grading / dealing -------------------------------------------------- */
+function grade(ok){
+  if(S.busy||!S.flipped) return;
+  const t=(Date.now()-S.cardT)/1000;
+  const item=S.queue[S.i];
+  S.seen++;
+  if(ok){
+    S.correct++; S.streak++; S.best=Math.max(S.best,S.streak);
+    const sc=S.deck.scheme;
+    S.score += sc==='speed'  ? Math.round(50*(1+2/Math.max(t,.6)))
+             : sc==='streak' ? Math.round(50*(1+S.streak*0.1))
+             : sc==='srs'    ? 60 : 50;
+  }else{ S.streak=0; }
+  S.trail.push(ok);
+  S.log.unshift({g:item[0], r:S.deck.kind==='kana'?item[1]:item[1], t:t, ok:ok});
+  renderRun(); renderLog();
+  deal();
+}
+
+function deal(){
+  S.busy=true;
+  const l=$('#lift'), c=$('#card3d');
+  tilt.style.transition='transform .2s var(--ease)'; tilt.style.transform='';
+  l.classList.add('deal-out');
+  setTimeout(()=>{
+    c.classList.add('instant'); c.classList.remove('flipped'); S.flipped=false;
+    void c.offsetWidth; c.classList.remove('instant');
+    S.i++;
+    if(S.i>=HAND){ l.classList.remove('deal-out'); endRun(); S.busy=false; return; }
+    renderCard();
+    l.classList.remove('deal-out'); void l.offsetWidth; l.classList.add('deal-in');
+    setTimeout(()=>{ l.classList.remove('deal-in'); S.busy=false; },430);
+  },350);
+}
+
+function renderRun(){
+  const acc=S.seen?Math.round(S.correct/S.seen*100):null;
+  $('#run-acc').textContent = acc===null?'—':acc+'%';
+  $('#run-seen').textContent=`${S.seen} / ${S.correct}`;
+  $('#run-streak').textContent=S.streak;
+  $('#run-best').textContent=S.best;
+  $('#run-score').textContent=fmt(S.score);
+  $('#pips').innerHTML=[...Array(HAND)].map((_,i)=>{
+    const v=S.trail[i];
+    return `<span class="pip${v===true?' hit':v===false?' miss':''}"></span>`;
+  }).join('');
+}
+
+function renderLog(){
+  const h=$('#loglist');
+  if(!S.log.length){h.innerHTML='<div class="empty">No cards turned yet</div>';return;}
+  h.innerHTML=S.log.map(r=>`
+    <div class="log-row">
+      <span class="st ${r.ok?'hit':'miss'}"></span>
+      <span class="jp">${r.g}</span>
+      <span class="rr">${r.r}</span>
+      <span class="tm">${r.t.toFixed(1)}s</span>
+    </div>`).join('');
+}
+
+function renderDeckHist(){
+  const d=S.deck;
+  const base=d.acc;
+  const runs=[-9,-5,-6,1,3,0].map((o,i)=>({
+    d:['06-28','07-05','07-12','07-19','07-26','08-02'][i],
+    a:Math.max(35,Math.min(99,base+o))
+  }));
+  $('#deckhist').innerHTML=runs.map(r=>barRow(r.d,'','',r.a,r.a<70)).join('');
+}
+
+function endRun(){
+  clearInterval(S.timer);
+  const acc=Math.round(S.correct/S.seen*100);
+  const dur=(Date.now()-S.t0)/1000;
+  $('#recap-sub').textContent=`${S.deck.name} · ${S.deck.challenge} · ${SCHEMES[S.deck.scheme].n} · ${HAND} cards`;
+  $('#r-acc').textContent=acc+'%';
+  $('#r-score').textContent=fmt(S.score);
+  $('#r-streak').textContent=S.best;
+  $('#r-avg').textContent=(dur/S.seen).toFixed(1)+'s';
+  $('#recap').classList.add('on');
+}
+$('#r-again').addEventListener('click',()=>startDeck(S.deck.id));
+$('#r-shelf').addEventListener('click',()=>{$('#recap').classList.remove('on');setView('dash');});
+
+/* ═══════════════════════════════════════════════════ VIEW SWITCH ══════ */
+function setView(v){
+  $$('.nav button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.view===v)));
+  $('#view-dash').classList.toggle('on',v==='dash');
+  $('#view-card').classList.toggle('on',v==='card');
+  window.scrollTo({top:0,behavior:'instant'});
+}
+$$('.nav button').forEach(b=>b.addEventListener('click',()=>{
+  if(b.dataset.view==='card'){
+    if(!S.deck){ startDeck('hg'); return; }
+    if(!S.timer){ S.t0=Date.now(); S.cardT=Date.now(); startClock(); }
+  }
+  setView(b.dataset.view);
+}));
+
+/* ═══════════════════════════════════════════════════════════ BOOT ═════ */
+renderStats();
+renderShelves();
+renderTrend();
+renderSetBars();
+renderCal();
+renderHistory();
+renderWeak();
+/* prime the table with a deck so it is demonstrable immediately */
+(function prime(){
+  const d=DECK_BY_ID['hg'];
+  S.deck=d; S.queue=shuffle(POOLS[d.pool]).slice(0,HAND); S.t0=Date.now(); S.cardT=Date.now();
+  renderHand(); renderCard(); renderRun(); renderLog(); renderDeckHist(); renderPicker();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1030 @@
+<!doctype html>
+<!--
+  DIRECTION 02 — "ZEN FOCUS"
+
+  Radical restraint. The character is enormous and alone on a near-black field;
+  everything else recedes until you ask for it. The dashboard is a slow vertical
+  rhythm of a few large, confident numbers separated by generous silence, rather
+  than a dense grid of small readouts. One muted orange accent (#ff8c3a) is spent
+  sparingly — only on the thing that matters right now.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zen Focus — Japanese Practice</title>
+<style>
+/* ───────────────────────────── tokens ───────────────────────────── */
+:root{
+  --ground:#0a0a0c;
+  --ground-2:#0d0d10;
+  --panel:#121216;
+  --panel-2:#17171c;
+  --line:#212127;
+  --line-soft:#191920;
+  --text:#ececed;
+  --dim:#8b8b94;
+  --faint:#4e4e57;
+  --ghost:#2c2c33;
+  --accent:#ff8c3a;
+  --accent-dim:#8a4c20;
+
+  --sans:"Inter","Helvetica Neue",Helvetica,Arial,"Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono","SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --jp:"Noto Sans CJK JP","Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+
+  --ease:cubic-bezier(.22,.61,.28,1);
+  --slow:820ms;
+  --gutter:clamp(28px,7vw,120px);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--text);
+  font-family:var(--sans);
+  font-size:15px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+body::before{ /* barely-there ambient warmth, top-left */
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(90vw 70vh at 12% -10%, rgba(255,140,58,.045), transparent 60%),
+    radial-gradient(70vw 60vh at 100% 110%, rgba(255,255,255,.018), transparent 65%);
+}
+::selection{background:rgba(255,140,58,.25)}
+
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.jp{font-family:var(--jp)}
+
+.label{
+  font-family:var(--mono);
+  font-size:10px;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--faint);
+}
+
+/* ───────────────────────────── chrome ───────────────────────────── */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:40;
+  height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 var(--gutter);
+  background:linear-gradient(to bottom,rgba(10,10,12,.94),rgba(10,10,12,.72) 60%,transparent);
+  backdrop-filter:blur(8px);
+}
+.mark{display:flex;align-items:center;gap:12px}
+.mark-glyph{
+  font-family:var(--jp);font-size:17px;color:var(--text);
+  width:26px;height:26px;display:grid;place-items:center;
+  border:1px solid var(--line);border-radius:2px;
+  background:var(--panel);
+}
+.mark-text{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim)}
+.mark-text b{color:var(--text);font-weight:500}
+
+.nav{display:flex;gap:26px;align-items:center}
+.nav button{
+  appearance:none;background:none;border:0;padding:6px 0;cursor:pointer;
+  font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--faint);position:relative;transition:color 420ms var(--ease);
+}
+.nav button:hover{color:var(--dim)}
+.nav button.on{color:var(--text)}
+.nav button::after{
+  content:"";position:absolute;left:0;right:100%;bottom:0;height:1px;
+  background:var(--accent);transition:right var(--slow) var(--ease);
+}
+.nav button.on::after{right:0}
+
+/* ───────────────────────────── views ───────────────────────────── */
+.view{display:none;position:relative;z-index:1}
+.view.active{display:block;animation:enter 760ms var(--ease) both}
+@keyframes enter{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+.wrap{max-width:940px;margin:0 auto;padding:0 var(--gutter)}
+
+/* section rhythm — the whole point of this direction */
+section{padding-block:clamp(72px,12vh,148px);border-top:1px solid var(--line-soft)}
+section:first-of-type{border-top:0}
+.sec-head{display:flex;align-items:baseline;gap:18px;margin-bottom:clamp(40px,7vh,84px)}
+.sec-num{font-family:var(--mono);font-size:10px;color:var(--accent-dim);letter-spacing:.1em}
+.sec-title{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--dim);font-weight:400}
+.sec-note{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.12em}
+
+/* ── 00 opening ── */
+.opening{padding-top:clamp(120px,20vh,220px);padding-bottom:clamp(60px,10vh,110px);border:0}
+.opening .kicker{margin-bottom:26px}
+.opening h1{
+  font-size:clamp(26px,4.2vw,42px);font-weight:200;letter-spacing:-.02em;
+  line-height:1.28;margin:0;max-width:20ch;color:var(--text);
+}
+.opening h1 em{font-style:normal;color:var(--faint)}
+.opening .jp-sub{
+  font-family:var(--jp);font-size:13px;color:var(--ghost);
+  letter-spacing:.5em;margin-top:34px;
+}
+
+/* ── big numbers: one per line, a slow vertical rhythm ── */
+.figures{display:grid}
+.figure{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(170px,250px);
+  gap:24px;align-items:baseline;
+  padding:clamp(34px,5.5vh,60px) 0;border-top:1px solid var(--line-soft);
+}
+.figure:first-child{border-top:0;padding-top:0}
+.figure:last-child{padding-bottom:0}
+.fig-n{
+  font-family:var(--mono);font-weight:200;
+  font-size:clamp(64px,11vw,132px);line-height:.9;letter-spacing:-.05em;
+  color:var(--text);display:flex;align-items:baseline;gap:.06em;
+}
+.fig-n .unit{font-size:.24em;letter-spacing:.02em;color:var(--faint);font-weight:400}
+.fig-n.accent{color:var(--accent)}
+.fig-n.wide{font-size:clamp(56px,9vw,118px)}   /* four digits + separator */
+.fig-l{max-width:15ch}
+.fig-sub{margin-top:10px;font-size:12px;color:var(--faint);line-height:1.55}
+
+/* ── trend ── */
+.trend-readout{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:34px}
+.trend-big{
+  font-family:var(--mono);font-weight:200;font-size:clamp(40px,6vw,76px);
+  line-height:1;letter-spacing:-.04em;transition:color 300ms var(--ease);
+}
+.trend-big .unit{font-size:.3em;color:var(--faint)}
+.trend-meta{text-align:right;line-height:1.9}
+.trend-meta .k{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.08em}
+.trend-meta .k b{color:var(--text);font-weight:400}
+
+.chart{position:relative;width:100%;user-select:none;cursor:crosshair}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.grid-line{stroke:var(--line-soft);stroke-width:1;vector-effect:non-scaling-stroke}
+.axis-txt{font-family:var(--mono);font-size:9px;fill:var(--faint);letter-spacing:.1em}
+.spark{fill:none;stroke:#5a5a63;stroke-width:1.5;vector-effect:non-scaling-stroke;
+  stroke-linejoin:round;stroke-linecap:round;transition:stroke 400ms var(--ease)}
+.spark-fill{fill:url(#zf-fade);opacity:.5}
+.dot{fill:var(--ground);stroke:#5a5a63;stroke-width:1.5;vector-effect:non-scaling-stroke;
+  transition:opacity 300ms var(--ease)}
+.dot-last{fill:var(--accent);stroke:none}
+.cursor-line{stroke:var(--accent);stroke-width:1;vector-effect:non-scaling-stroke;opacity:0;
+  transition:opacity 260ms var(--ease)}
+.cursor-dot{fill:var(--accent);opacity:0;transition:opacity 260ms var(--ease)}
+.chart.hot .cursor-line,.chart.hot .cursor-dot{opacity:1}
+.chart.hot .spark{stroke:#75757f}
+
+/* ── per-set accuracy ── */
+.setlist{margin-top:clamp(52px,8vh,92px)}
+.setrow{
+  display:grid;grid-template-columns:1fr auto 132px;align-items:center;gap:20px;
+  padding:22px 0;border-bottom:1px solid var(--line-soft);
+}
+.setrow:first-child{border-top:1px solid var(--line-soft)}
+.setrow .nm{display:flex;align-items:baseline;gap:12px}
+.setrow .nm .en{font-size:14px;color:var(--text);font-weight:400}
+.setrow .nm .ja{font-family:var(--jp);font-size:12px;color:var(--ghost)}
+.setrow .pct{font-family:var(--mono);font-size:15px;color:var(--dim);font-variant-numeric:tabular-nums}
+.meter{height:1px;background:var(--line);position:relative}
+.meter i{position:absolute;inset:0 auto 0 0;background:var(--accent);opacity:.55;display:block}
+.setrow:hover .meter i{opacity:1}
+
+/* ── sessions ── */
+.sessions{border-top:1px solid var(--line-soft)}
+.srow{
+  display:grid;grid-template-columns:104px 1fr auto 92px;align-items:center;gap:24px;
+  padding:26px 0;border-bottom:1px solid var(--line-soft);
+  transition:padding-left 520ms var(--ease);
+}
+.srow:hover{padding-left:12px}
+.srow .date{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.08em}
+.srow .seg{font-size:14px;color:var(--text)}
+.srow .kind{margin-top:6px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--faint)}
+.srow .cards{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.06em}
+.srow .score{font-family:var(--mono);font-size:20px;font-weight:200;text-align:right;color:var(--dim)}
+.srow .score .unit{font-size:11px;color:var(--faint)}
+.srow.best .score{color:var(--accent)}
+.more{margin-top:34px;font-family:var(--mono);font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--faint)}
+
+/* ── segments ── */
+.track-label{
+  display:flex;align-items:center;gap:16px;margin:0 0 8px;
+}
+.track-label span{white-space:nowrap}
+.track-label .rule{height:1px;background:var(--line-soft);flex:1}
+.track+.track{margin-top:clamp(48px,7vh,86px)}
+
+.seg{
+  width:100%;text-align:left;appearance:none;background:none;cursor:pointer;
+  border:0;border-bottom:1px solid var(--line-soft);
+  display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:24px;
+  padding:26px 0 26px 0;color:inherit;font:inherit;position:relative;
+  transition:padding-left 620ms var(--ease),background 620ms var(--ease);
+}
+.seg::before{
+  content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:2px;height:0;background:var(--accent);transition:height 620ms var(--ease);
+}
+.seg:hover,.seg:focus-visible{padding-left:20px;outline:none;
+  background:linear-gradient(90deg,rgba(255,255,255,.022),transparent 65%)}
+.seg:hover::before,.seg:focus-visible::before{height:34px}
+.seg .tier{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.12em}
+.seg:hover .tier{color:var(--accent)}
+.seg .name{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.seg .name .en{font-size:17px;font-weight:300;letter-spacing:-.005em}
+.seg .name .ja{font-family:var(--jp);font-size:13px;color:var(--ghost)}
+.seg .meta{margin-top:9px;font-family:var(--mono);font-size:10px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--faint);display:flex;gap:10px;flex-wrap:wrap}
+.seg .meta .sep{color:var(--ghost)}
+.seg .meta .score{color:var(--dim)}
+.seg .right{display:flex;align-items:center;gap:22px;justify-self:end}
+.seg .count{font-family:var(--mono);font-size:13px;color:var(--dim);text-align:right}
+.seg .count small{display:block;font-size:9px;letter-spacing:.18em;color:var(--faint);margin-top:5px}
+.seg .go{
+  width:34px;height:34px;display:grid;place-items:center;flex:none;
+  border:1px solid var(--line);border-radius:50%;color:var(--faint);
+  transition:all 620ms var(--ease);
+}
+.seg:hover .go,.seg:focus-visible .go{border-color:var(--accent);color:var(--accent);transform:translateX(4px)}
+
+.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line-soft);
+  margin-top:clamp(48px,7vh,86px);border:1px solid var(--line-soft)}
+.tier-card{
+  background:var(--ground);padding:30px 26px;cursor:pointer;border:0;color:inherit;
+  font:inherit;text-align:left;transition:background 620ms var(--ease);
+}
+.tier-card:hover{background:var(--panel)}
+.tier-card .n{font-family:var(--mono);font-weight:200;font-size:34px;letter-spacing:-.04em;color:var(--text)}
+.tier-card:hover .n{color:var(--accent)}
+.tier-card .t{margin-top:14px;font-size:13px;color:var(--dim)}
+.tier-card .d{margin-top:8px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--faint)}
+
+/* ── weak characters ── */
+.weak{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line-soft);
+  border:1px solid var(--line-soft)}
+.weak-cell{
+  background:var(--ground);padding:clamp(26px,4vw,44px) 16px;text-align:center;
+  cursor:pointer;border:0;color:inherit;font:inherit;transition:background 620ms var(--ease);
+}
+.weak-cell:hover{background:var(--panel)}
+.weak-cell .g{font-family:var(--jp);font-size:clamp(38px,5.6vw,62px);font-weight:300;
+  line-height:1;color:var(--dim);transition:color 620ms var(--ease)}
+.weak-cell:hover .g{color:var(--text)}
+.weak-cell .p{margin-top:20px;font-family:var(--mono);font-size:12px;color:var(--accent)}
+.weak-cell .r{margin-top:7px;font-family:var(--mono);font-size:9px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--faint)}
+
+.closer{padding-block:clamp(80px,14vh,170px);text-align:center;border-top:1px solid var(--line-soft)}
+.begin{
+  appearance:none;background:none;border:1px solid var(--line);color:var(--text);
+  font-family:var(--mono);font-size:11px;letter-spacing:.26em;text-transform:uppercase;
+  padding:20px 46px;cursor:pointer;border-radius:2px;
+  transition:border-color var(--slow) var(--ease),color var(--slow) var(--ease),
+             letter-spacing var(--slow) var(--ease);
+}
+.begin:hover{border-color:var(--accent);color:var(--accent);letter-spacing:.34em}
+.closer .sub{margin-top:26px}
+
+/* ═══════════════════════ CARD VIEW ═══════════════════════ */
+#cardview{min-height:100vh}
+.stage{
+  min-height:100vh;display:grid;grid-template-rows:auto 1fr auto;
+  padding:64px var(--gutter) 0;
+}
+.stage-head{display:flex;justify-content:space-between;align-items:flex-start;
+  padding-top:26px;opacity:.75;transition:opacity var(--slow) var(--ease)}
+.stage:hover .stage-head{opacity:1}
+.stage-head .deck-ja{font-family:var(--jp);font-size:12px;color:var(--ghost);margin-top:8px;letter-spacing:.3em}
+.exit{
+  appearance:none;background:none;border:0;cursor:pointer;color:var(--faint);
+  font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  display:flex;align-items:center;gap:10px;padding:4px;transition:color 420ms var(--ease);
+}
+.exit:hover{color:var(--text)}
+
+.card-area{display:grid;place-items:center;padding:clamp(20px,5vh,60px) 0}
+.card-scene{perspective:2200px;width:min(560px,74vw)}
+.card{
+  position:relative;width:100%;aspect-ratio:1/1.18;
+  transform-style:preserve-3d;cursor:pointer;
+  transition:transform 1080ms cubic-bezier(.62,.02,.2,1);
+}
+.card.flipped{transform:rotateY(180deg)}
+.face{
+  position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:1px solid rgba(255,255,255,.045);border-radius:3px;
+  background:
+    radial-gradient(120% 90% at 50% 0%,rgba(255,255,255,.028),transparent 62%),
+    linear-gradient(180deg,#131317,#0d0d10);
+  box-shadow:0 40px 90px -50px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.03);
+  padding:clamp(24px,5vw,54px);
+}
+.face.back{transform:rotateY(180deg)}
+
+/* front: the character, alone */
+.glyph{
+  font-family:var(--jp);font-weight:300;color:var(--text);
+  font-size:clamp(110px,20vw,232px);line-height:1;
+  letter-spacing:.01em;
+  text-shadow:0 0 90px rgba(255,140,58,.07);
+  transition:opacity 600ms var(--ease);
+}
+.glyph.two{font-size:clamp(72px,13vw,152px)}
+
+/* corner ticks — the only ornament */
+.tick{position:absolute;width:9px;height:9px;border:1px solid rgba(255,255,255,.07)}
+.tick.tl{top:14px;left:14px;border-right:0;border-bottom:0}
+.tick.tr{top:14px;right:14px;border-left:0;border-bottom:0}
+.tick.bl{bottom:14px;left:14px;border-right:0;border-top:0}
+.tick.br{bottom:14px;right:14px;border-left:0;border-top:0}
+
+/* back */
+.back .kana-echo{font-family:var(--jp);font-size:clamp(30px,5vw,46px);color:var(--ghost);font-weight:300;line-height:1}
+.back .sound{
+  font-family:var(--mono);font-weight:200;letter-spacing:-.02em;
+  font-size:clamp(40px,7.6vw,80px);line-height:1;margin-top:26px;color:var(--text);
+  transition:color 500ms var(--ease);
+}
+.back .meaning{font-size:clamp(19px,2.6vw,26px);font-weight:300;color:var(--text);text-align:center;margin-top:4px}
+.readings{margin-top:34px;display:grid;gap:16px;width:100%;max-width:300px}
+.reading{display:grid;grid-template-columns:64px 1fr;align-items:baseline;gap:16px;
+  padding-bottom:14px;border-bottom:1px solid var(--line-soft)}
+.reading:last-child{border-bottom:0}
+.reading .rl{font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+.reading .rv{font-family:var(--jp);font-size:20px;color:var(--dim);font-weight:300}
+.reading .rv.on{color:var(--text)}
+
+.speaker{
+  margin-top:38px;position:relative;
+  appearance:none;background:none;border:1px solid var(--line);border-radius:50%;
+  width:56px;height:56px;display:grid;place-items:center;cursor:pointer;color:var(--dim);
+  transition:border-color 500ms var(--ease),color 500ms var(--ease),transform 500ms var(--ease);
+}
+.speaker:hover{border-color:var(--faint);color:var(--text)}
+.speaker svg{width:22px;height:22px;overflow:visible}
+.speaker .w1,.speaker .w2{transform-origin:7px 12px;opacity:.55}
+.speaker.playing{border-color:var(--accent);color:var(--accent);transform:scale(1.05)}
+.speaker.playing .w1{animation:wave .62s var(--ease) 2}
+.speaker.playing .w2{animation:wave .62s var(--ease) .13s 2}
+.speaker.playing .cone{animation:cone .62s var(--ease) 2}
+@keyframes wave{0%{opacity:.2;transform:scale(.72)}45%{opacity:1;transform:scale(1)}100%{opacity:.2;transform:scale(.72)}}
+@keyframes cone{0%,100%{transform:translateX(0)}45%{transform:translateX(-.6px)}}
+.speaker::after{
+  content:"";position:absolute;inset:-1px;border-radius:50%;border:1px solid var(--accent);
+  opacity:0;pointer-events:none;
+}
+.speaker.playing::after{animation:ripple 1.24s var(--ease)}
+@keyframes ripple{0%{opacity:.65;transform:scale(1)}100%{opacity:0;transform:scale(1.9)}}
+.speak-hint{margin-top:16px;font-family:var(--mono);font-size:9px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ghost);height:12px;transition:color 400ms var(--ease)}
+.speaker.playing ~ .speak-hint{color:var(--accent-dim)}
+
+/* stage foot */
+.stage-foot{padding:0 0 44px}
+.judge{display:flex;justify-content:center;gap:14px;height:44px;margin-bottom:36px;
+  opacity:0;pointer-events:none;transition:opacity 620ms var(--ease)}
+.judge.on{opacity:1;pointer-events:auto}
+.judge button{
+  appearance:none;background:none;border:1px solid var(--line);color:var(--dim);
+  font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  padding:0 30px;height:44px;cursor:pointer;border-radius:2px;
+  transition:border-color 480ms var(--ease),color 480ms var(--ease);
+}
+.judge button:hover{color:var(--text);border-color:var(--faint)}
+.judge button.good:hover{color:var(--accent);border-color:var(--accent)}
+
+.progress{display:flex;align-items:center;gap:20px}
+.progress .pos{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.16em}
+.progress .bar{flex:1;height:1px;background:var(--line)}
+.progress .bar i{display:block;height:100%;background:var(--accent);width:0;
+  transition:width 900ms var(--ease)}
+.progress .streak{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.16em}
+.progress .streak b{color:var(--accent);font-weight:400}
+.hint{text-align:center;margin-top:24px;font-family:var(--mono);font-size:9px;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--ghost)}
+.hint kbd{font:inherit;color:var(--faint);border:1px solid var(--line-soft);
+  padding:2px 6px;border-radius:2px;margin:0 2px}
+
+/* ───────────────────────── responsive ───────────────────────── */
+@media (max-width:900px){
+  .figure{grid-template-columns:1fr;gap:16px}
+  .fig-n{font-size:clamp(64px,15vw,104px)}
+  .fig-n.wide{font-size:clamp(52px,12vw,88px)}
+  .weak{grid-template-columns:repeat(2,1fr)}
+  .weak-cell:last-child{grid-column:span 2}
+  .tiers{grid-template-columns:1fr}
+  .setrow{grid-template-columns:1fr auto;gap:8px 18px}
+  .setrow .meter{grid-column:1/-1;margin-top:12px}
+  .srow{grid-template-columns:1fr auto;gap:6px 18px}
+  .srow .date{grid-column:1/-1;margin-bottom:4px}
+  .srow .cards{display:none}
+  .seg{grid-template-columns:34px 1fr;gap:16px}
+  .seg .right{grid-column:2;justify-self:start;margin-top:16px}
+  .trend-readout{flex-direction:column;align-items:flex-start;gap:16px}
+  .trend-meta{text-align:left}
+  .card-scene{width:min(460px,86vw)}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="mark">
+    <div class="mark-glyph jp">練</div>
+    <div class="mark-text"><b>Japanese</b> Practice</div>
+  </div>
+  <nav class="nav">
+    <button id="nav-dash" class="on" data-go="dashboard">Dashboard</button>
+    <button id="nav-card" data-go="card">Practice</button>
+  </nav>
+</div>
+
+<!-- ══════════════════ DASHBOARD ══════════════════ -->
+<main id="dashboard" class="view active">
+  <div class="wrap">
+
+    <section class="opening">
+      <div class="label kicker">Thursday · 6 August 2026</div>
+      <h1>Twelve days unbroken.<br><em>One character at a time.</em></h1>
+      <div class="jp-sub">一文字ずつ</div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <span class="sec-num">01</span>
+        <h2 class="sec-title">Standing</h2>
+        <span class="sec-note">lifetime · 41 sessions</span>
+      </div>
+      <div class="figures">
+        <div class="figure">
+          <div class="fig-n accent">92<span class="unit">%</span></div>
+          <div class="fig-t">
+            <div class="label fig-l">Last session accuracy</div>
+            <div class="fig-sub">Hiragana · gojuon · recognition</div>
+          </div>
+        </div>
+        <div class="figure">
+          <div class="fig-n">12</div>
+          <div class="fig-t">
+            <div class="label fig-l">Day streak</div>
+            <div class="fig-sub">Personal best 19 days · 41 sessions recorded</div>
+          </div>
+        </div>
+        <div class="figure">
+          <div class="fig-n wide">1,438</div>
+          <div class="fig-t">
+            <div class="label fig-l">Cards reviewed</div>
+            <div class="fig-sub">Since 26 June 2026 · 79% mean accuracy</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <span class="sec-num">02</span>
+        <h2 class="sec-title">Trend</h2>
+        <span class="sec-note">last 12 sessions</span>
+      </div>
+
+      <div class="trend-readout">
+        <div>
+          <div class="trend-big mono" id="trend-value">92<span class="unit">%</span></div>
+          <div class="label" style="margin-top:16px" id="trend-caption">6 Aug · Gojuon · Recognition</div>
+        </div>
+        <div class="trend-meta">
+          <div class="k">Mean <b>79%</b></div>
+          <div class="k">Best <b>92%</b></div>
+          <div class="k">Trend <b style="color:var(--accent)">+31 pts</b></div>
+        </div>
+      </div>
+
+      <div class="chart" id="chart">
+        <svg viewBox="0 0 1000 240" preserveAspectRatio="none" aria-label="Accuracy across the last twelve sessions">
+          <defs>
+            <linearGradient id="zf-fade" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#ff8c3a" stop-opacity="0.13"/>
+              <stop offset="100%" stop-color="#ff8c3a" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <line class="grid-line" x1="0" y1="239" x2="1000" y2="239"/>
+          <line class="grid-line" x1="0" y1="1" x2="1000" y2="1"/>
+          <path id="sfill" class="spark-fill" d=""/>
+          <path id="sline" class="spark" d=""/>
+          <g id="sdots"></g>
+          <line id="cline" class="cursor-line" x1="0" y1="0" x2="0" y2="240"/>
+          <circle id="cdot" class="cursor-dot" r="4" cx="0" cy="0"/>
+        </svg>
+        <div style="display:flex;justify-content:space-between;margin-top:14px">
+          <span class="label">18 Jul</span>
+          <span class="label" style="color:var(--ghost)">100% ceiling · 50% floor</span>
+          <span class="label">6 Aug</span>
+        </div>
+      </div>
+
+      <div class="setlist">
+        <div class="label" style="margin-bottom:18px">Accuracy per character set</div>
+        <div id="setrows"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <span class="sec-num">03</span>
+        <h2 class="sec-title">Sessions</h2>
+        <span class="sec-note">most recent first</span>
+      </div>
+      <div class="sessions" id="sessions"></div>
+      <div class="more">+ 35 earlier sessions</div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <span class="sec-num">04</span>
+        <h2 class="sec-title">Practice</h2>
+        <span class="sec-note">challenge · scoring · level</span>
+      </div>
+
+      <div class="track">
+        <div class="track-label">
+          <span class="label">Kana track</span><span class="rule"></span>
+          <span class="label">gojuon → dakuon → han-dakuon → yoon</span>
+        </div>
+        <div id="kana-segs"></div>
+      </div>
+
+      <div class="track">
+        <div class="track-label">
+          <span class="label">Kanji track</span><span class="rule"></span>
+          <span class="label">JLPT N5 → N1</span>
+        </div>
+        <div id="kanji-segs"></div>
+      </div>
+
+      <div class="tiers" id="tiers"></div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <span class="sec-num">05</span>
+        <h2 class="sec-title">Needs attention</h2>
+        <span class="sec-note">lowest recall, last 30 days</span>
+      </div>
+      <div class="weak" id="weak"></div>
+    </section>
+
+    <section class="closer">
+      <button class="begin" data-start="gojuon">Begin today's session</button>
+      <div class="label sub">Hiragana · gojuon · 46 characters · recognition</div>
+    </section>
+
+  </div>
+</main>
+
+<!-- ══════════════════ CARD ══════════════════ -->
+<main id="cardview" class="view">
+  <div class="stage">
+
+    <div class="stage-head">
+      <div>
+        <div class="label" id="deck-name">Hiragana · Gojuon</div>
+        <div class="deck-ja" id="deck-ja">ひらがな</div>
+      </div>
+      <button class="exit" data-go="dashboard">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2">
+          <path d="M1 1l10 10M11 1L1 11"/>
+        </svg>
+        End
+      </button>
+    </div>
+
+    <div class="card-area">
+      <div class="card-scene">
+        <div class="card" id="card" role="button" tabindex="0" aria-label="Flash card — click to reveal the reading">
+
+          <div class="face front">
+            <i class="tick tl"></i><i class="tick tr"></i><i class="tick bl"></i><i class="tick br"></i>
+            <div class="glyph jp" id="glyph">あ</div>
+          </div>
+
+          <div class="face back">
+            <i class="tick tl"></i><i class="tick tr"></i><i class="tick bl"></i><i class="tick br"></i>
+            <div id="back-body" style="display:flex;flex-direction:column;align-items:center"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-foot">
+      <div class="judge" id="judge">
+        <button data-judge="again">Again</button>
+        <button class="good" data-judge="good">Got it</button>
+      </div>
+      <div class="progress">
+        <span class="pos" id="pos">01 / 46</span>
+        <span class="bar"><i id="bar"></i></span>
+        <span class="streak">Streak <b id="streak">0</b></span>
+      </div>
+      <div class="hint">Click the card to reveal · <kbd>space</kbd> flip · <kbd>→</kbd> next · <kbd>esc</kbd> end</div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+/* ─────────────── verified content (JAPANESE-CONTENT-MODEL.md only) ─────────────── */
+function k(c,r){return{t:"kana",c:c,r:r};}
+function j(c,m,on,kun){return{t:"kanji",c:c,m:m,on:on,kun:kun};}
+
+var HIRA_GOJUON=[k("あ","a"),k("い","i"),k("う","u"),k("え","e"),k("お","o"),
+ k("か","ka"),k("き","ki"),k("く","ku"),k("け","ke"),k("こ","ko"),
+ k("さ","sa"),k("し","shi"),k("す","su"),k("せ","se"),k("そ","so"),
+ k("た","ta"),k("ち","chi"),k("つ","tsu"),k("て","te"),k("と","to"),
+ k("な","na"),k("に","ni"),k("ぬ","nu"),k("ね","ne"),k("の","no"),
+ k("は","ha"),k("ひ","hi"),k("ふ","fu"),k("へ","he"),k("ほ","ho"),
+ k("ま","ma"),k("み","mi"),k("む","mu"),k("め","me"),k("も","mo"),
+ k("や","ya"),k("ゆ","yu"),k("よ","yo"),
+ k("ら","ra"),k("り","ri"),k("る","ru"),k("れ","re"),k("ろ","ro"),
+ k("わ","wa"),k("を","wo"),k("ん","n")];
+
+var HIRA_DAKUON=[k("が","ga"),k("ぎ","gi"),k("ざ","za"),k("じ","ji"),k("だ","da"),k("ば","ba"),k("ぱ","pa")];
+var HIRA_YOON=[k("きゃ","kya"),k("きゅ","kyu"),k("きょ","kyo"),k("しゃ","sha"),k("しゅ","shu"),k("しょ","sho")];
+
+var KATA_GOJUON=[k("ア","a"),k("イ","i"),k("ウ","u"),k("エ","e"),k("オ","o"),
+ k("カ","ka"),k("キ","ki"),k("ク","ku"),k("ケ","ke"),k("コ","ko"),
+ k("サ","sa"),k("シ","shi"),k("ス","su"),k("セ","se"),k("ソ","so"),
+ k("タ","ta"),k("チ","chi"),k("ツ","tsu"),k("テ","te"),k("ト","to"),
+ k("ナ","na"),k("ニ","ni"),k("ヌ","nu"),k("ネ","ne"),k("ノ","no"),
+ k("ハ","ha"),k("ヒ","hi"),k("フ","fu"),k("ヘ","he"),k("ホ","ho"),
+ k("マ","ma"),k("ミ","mi"),k("ム","mu"),k("メ","me"),k("モ","mo"),
+ k("ヤ","ya"),k("ユ","yu"),k("ヨ","yo"),
+ k("ラ","ra"),k("リ","ri"),k("ル","ru"),k("レ","re"),k("ロ","ro"),
+ k("ワ","wa"),k("ヲ","wo"),k("ン","n")];
+
+/* Only the verified N5 pairings from the content model are used for every kanji
+   deck in this mockup — the higher JLPT levels are labelled truthfully but drawn
+   from this verified pool rather than fabricating readings. */
+var KANJI_VERIFIED=[
+ j("日","day, sun","ニチ / ジツ","ひ / か"),
+ j("月","month, moon","ゲツ / ガツ","つき"),
+ j("火","fire","カ","ひ"),
+ j("水","water","スイ","みず"),
+ j("木","tree, wood","モク / ボク","き"),
+ j("金","gold, money","キン / コン","かね"),
+ j("土","earth, soil","ド / ト","つち"),
+ j("山","mountain","サン","やま"),
+ j("川","river","セン","かわ"),
+ j("人","person","ジン / ニン","ひと"),
+ j("大","big","ダイ / タイ","おお(きい)"),
+ j("小","small","ショウ","ちい(さい)"),
+ j("中","middle, inside","チュウ","なか"),
+ j("上","up, above","ジョウ","うえ"),
+ j("下","down, below","カ / ゲ","した"),
+ j("一","one","イチ","ひと(つ)"),
+ j("二","two","ニ","ふた(つ)"),
+ j("三","three","サン","みっ(つ)"),
+ j("学","study, learning","ガク","まな(ぶ)"),
+ j("生","life, birth","セイ / ショウ","い(きる) / う(まれる)")
+];
+
+/* ─────────────── exercise segments ─────────────── */
+var SEGMENTS=[
+ {id:"gojuon",track:"kana",tier:"I",en:"Gojuon",ja:"五十音",challenge:"Recognition",
+  scoring:"Accuracy",level:"Kana · Foundation",count:"46",of:"of 104 hiragana",acc:92,deck:HIRA_GOJUON},
+ {id:"dakuon",track:"kana",tier:"II",en:"Dakuon & Han-dakuon",ja:"濁音・半濁音",challenge:"Recall",
+  scoring:"Streak",level:"Kana · Elementary",count:"25",of:"voiced marks",acc:88,deck:HIRA_DAKUON},
+ {id:"yoon",track:"kana",tier:"III",en:"Yoon",ja:"拗音",challenge:"Timed",
+  scoring:"Speed-weighted",level:"Kana · Intermediate",count:"33",of:"contractions",acc:71,deck:HIRA_YOON},
+ {id:"katakana",track:"kana",tier:"IV",en:"Katakana — full set",ja:"カタカナ",challenge:"Mixed",
+  scoring:"Spaced repetition",level:"Kana · Advanced",count:"104",of:"complete set",acc:84,
+  deck:KATA_GOJUON,jasub:"カタカナ"},
+
+ {id:"n5",track:"kanji",tier:"N5",en:"JLPT N5",ja:"日常の基礎",challenge:"Recognition",
+  scoring:"Accuracy",level:"Kanji · Beginner",count:"107",of:"characters",acc:76,deck:KANJI_VERIFIED},
+ {id:"n4",track:"kanji",tier:"N4",en:"JLPT N4",ja:"動作・描写",challenge:"Recall",
+  scoring:"Spaced repetition",level:"Kanji · Elementary",count:"174",of:"characters",acc:58,deck:KANJI_VERIFIED},
+ {id:"n3",track:"kanji",tier:"N3",en:"JLPT N3",ja:"抽象概念",challenge:"Timed",
+  scoring:"Speed-weighted",level:"Kanji · Intermediate",count:"394",of:"characters",acc:34,deck:KANJI_VERIFIED},
+ {id:"n2",track:"kanji",tier:"N2",en:"JLPT N2",ja:"報道・文学",challenge:"Mixed",
+  scoring:"Streak",level:"Kanji · Upper",count:"248",of:"characters",acc:0,deck:KANJI_VERIFIED},
+ {id:"n1",track:"kanji",tier:"N1",en:"JLPT N1",ja:"学術・文語",challenge:"Listening",
+  scoring:"Spaced repetition",level:"Kanji · Advanced",count:"382",of:"characters",acc:0,deck:KANJI_VERIFIED}
+];
+
+var TIERS=[
+ {id:"top200",n:"200",t:"Top 200 kanji",d:"Volume tier · recognition"},
+ {id:"top500",n:"500",t:"Top 500 kanji",d:"Volume tier · mixed"},
+ {id:"joyo",n:"1,521",t:"Joyo complete",d:"Grade 1–6 + secondary"}
+];
+
+var SETS=[
+ {en:"Hiragana",ja:"ひらがな",pct:91},
+ {en:"Katakana",ja:"カタカナ",pct:84},
+ {en:"Kanji — JLPT N5",ja:"漢字",pct:76},
+ {en:"Kanji — JLPT N4",ja:"漢字",pct:58},
+ {en:"Kanji — JLPT N3",ja:"漢字",pct:34}
+];
+
+var TREND=[
+ {d:"18 Jul",v:61,s:"Gojuon · Recognition"},
+ {d:"19 Jul",v:58,s:"Gojuon · Recall"},
+ {d:"21 Jul",v:67,s:"Dakuon · Recall"},
+ {d:"23 Jul",v:64,s:"Katakana · Recognition"},
+ {d:"25 Jul",v:73,s:"JLPT N5 · Recognition"},
+ {d:"27 Jul",v:70,s:"Yoon · Timed"},
+ {d:"29 Jul",v:79,s:"Katakana · Mixed"},
+ {d:"31 Jul",v:88,s:"Dakuon · Recall"},
+ {d:"1 Aug",v:81,s:"JLPT N5 · Recognition"},
+ {d:"2 Aug",v:86,s:"Katakana · Mixed"},
+ {d:"4 Aug",v:71,s:"Yoon · Timed"},
+ {d:"6 Aug",v:92,s:"Gojuon · Recognition"}
+];
+
+var SESSIONS=[
+ {date:"6 Aug",seg:"Hiragana — Gojuon",ja:"五十音",kind:"Recognition · Accuracy · Foundation",cards:"46 cards · 6m 12s",v:92,best:true},
+ {date:"4 Aug",seg:"Hiragana — Yoon",ja:"拗音",kind:"Timed · Speed-weighted · Intermediate",cards:"33 cards · 4m 48s",v:71},
+ {date:"2 Aug",seg:"Katakana — full set",ja:"カタカナ",kind:"Mixed · Spaced repetition · Advanced",cards:"60 cards · 9m 03s",v:86},
+ {date:"1 Aug",seg:"Kanji — JLPT N5",ja:"漢字",kind:"Recognition · Accuracy · Beginner",cards:"40 cards · 7m 31s",v:81},
+ {date:"31 Jul",seg:"Hiragana — Dakuon",ja:"濁音",kind:"Recall · Streak · Elementary",cards:"25 cards · 3m 55s",v:88},
+ {date:"29 Jul",seg:"Katakana — full set",ja:"カタカナ",kind:"Mixed · Spaced repetition · Advanced",cards:"60 cards · 10m 22s",v:79}
+];
+
+var WEAK=[
+ {c:"ぬ",r:"nu",p:41,seg:"gojuon"},
+ {c:"ね",r:"ne",p:47,seg:"gojuon"},
+ {c:"ソ",r:"so",p:52,seg:"katakana"},
+ {c:"シ",r:"shi",p:55,seg:"katakana"},
+ {c:"生",r:"sei · ikiru",p:58,seg:"n5"}
+];
+
+/* ─────────────── helpers ─────────────── */
+var $=function(s){return document.querySelector(s);};
+function el(tag,cls,html){var n=document.createElement(tag);if(cls)n.className=cls;
+  if(html!=null)n.innerHTML=html;return n;}
+function esc(s){return String(s).replace(/[&<>]/g,function(m){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;"}[m];});}
+function pad(n){return n<10?"0"+n:""+n;}
+
+/* ─────────────── render: per-set accuracy ─────────────── */
+(function(){
+  var host=$("#setrows");
+  SETS.forEach(function(s){
+    var r=el("div","setrow");
+    r.innerHTML='<div class="nm"><span class="en">'+esc(s.en)+'</span>'+
+      '<span class="ja">'+esc(s.ja)+'</span></div>'+
+      '<div class="pct">'+s.pct+'%</div>'+
+      '<div class="meter"><i style="width:'+s.pct+'%"></i></div>';
+    host.appendChild(r);
+  });
+})();
+
+/* ─────────────── render: sessions ─────────────── */
+(function(){
+  var host=$("#sessions");
+  SESSIONS.forEach(function(s){
+    var r=el("div","srow"+(s.best?" best":""));
+    r.innerHTML='<div class="date">'+esc(s.date)+'</div>'+
+      '<div><div class="seg">'+esc(s.seg)+' <span class="jp" style="color:var(--ghost);font-size:12px">'+esc(s.ja)+'</span></div>'+
+      '<div class="kind">'+esc(s.kind)+'</div></div>'+
+      '<div class="cards">'+esc(s.cards)+'</div>'+
+      '<div class="score">'+s.v+'<span class="unit">%</span></div>';
+    host.appendChild(r);
+  });
+})();
+
+/* ─────────────── render: segments ─────────────── */
+(function(){
+  var arrow='<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" '+
+    'stroke-width="1.2"><path d="M1 6h9M6.5 2.2L10.4 6l-3.9 3.8"/></svg>';
+  SEGMENTS.forEach(function(s){
+    var b=el("button","seg");
+    b.setAttribute("data-start",s.id);
+    var scoreTxt=s.acc>0?'<span class="score">'+s.acc+'% last</span>':'<span class="score" style="color:var(--ghost)">not started</span>';
+    b.innerHTML='<span class="tier">'+esc(s.tier)+'</span>'+
+      '<span><span class="name"><span class="en">'+esc(s.en)+'</span>'+
+      '<span class="ja">'+esc(s.ja)+'</span></span>'+
+      '<span class="meta"><span>'+esc(s.challenge)+'</span><span class="sep">·</span>'+
+      '<span>'+esc(s.scoring)+'</span><span class="sep">·</span>'+
+      '<span>'+esc(s.level)+'</span><span class="sep">·</span>'+scoreTxt+'</span></span>'+
+      '<span class="right"><span class="count">'+esc(s.count)+'<small>'+esc(s.of).toUpperCase()+'</small></span>'+
+      '<span class="go">'+arrow+'</span></span>';
+    $(s.track==="kana"?"#kana-segs":"#kanji-segs").appendChild(b);
+  });
+
+  TIERS.forEach(function(t){
+    var b=el("button","tier-card");
+    b.setAttribute("data-start","n5");
+    b.innerHTML='<div class="n mono">'+esc(t.n)+'</div><div class="t">'+esc(t.t)+'</div>'+
+      '<div class="d">'+esc(t.d)+'</div>';
+    $("#tiers").appendChild(b);
+  });
+})();
+
+/* ─────────────── render: weak characters ─────────────── */
+(function(){
+  var host=$("#weak");
+  WEAK.forEach(function(w){
+    var b=el("button","weak-cell");
+    b.setAttribute("data-start",w.seg);
+    b.innerHTML='<div class="g jp">'+esc(w.c)+'</div><div class="p">'+w.p+'%</div>'+
+      '<div class="r">'+esc(w.r)+'</div>';
+    host.appendChild(b);
+  });
+})();
+
+/* ─────────────── trend chart ─────────────── */
+(function(){
+  var W=1000,H=240,PAD=8,FLOOR=50,CEIL=100;
+  var pts=TREND.map(function(p,i){
+    var x=(i/(TREND.length-1))*W;
+    var y=H-PAD-((p.v-FLOOR)/(CEIL-FLOOR))*(H-PAD*2);
+    return {x:x,y:y,d:p};
+  });
+  var line=pts.map(function(p,i){return (i?"L":"M")+p.x.toFixed(1)+" "+p.y.toFixed(1);}).join(" ");
+  $("#sline").setAttribute("d",line);
+  $("#sfill").setAttribute("d",line+" L"+W+" "+H+" L0 "+H+" Z");
+
+  var g=$("#sdots"),NS="http://www.w3.org/2000/svg";
+  pts.forEach(function(p,i){
+    var c=document.createElementNS(NS,"circle");
+    c.setAttribute("cx",p.x.toFixed(1));c.setAttribute("cy",p.y.toFixed(1));
+    c.setAttribute("r",i===pts.length-1?"5":"3");
+    c.setAttribute("class",i===pts.length-1?"dot dot-last":"dot");
+    g.appendChild(c);
+  });
+
+  var chart=$("#chart"),val=$("#trend-value"),cap=$("#trend-caption"),
+      cl=$("#cline"),cd=$("#cdot");
+  function show(i){
+    var p=pts[i];
+    val.innerHTML=p.d.v+'<span class="unit">%</span>';
+    cap.textContent=p.d.d+" · "+p.d.s;
+    cl.setAttribute("x1",p.x.toFixed(1));cl.setAttribute("x2",p.x.toFixed(1));
+    cd.setAttribute("cx",p.x.toFixed(1));cd.setAttribute("cy",p.y.toFixed(1));
+  }
+  function at(e){
+    var r=chart.getBoundingClientRect();
+    var x=((e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width;
+    var i=Math.max(0,Math.min(pts.length-1,Math.round(x*(pts.length-1))));
+    show(i);
+  }
+  chart.addEventListener("mousemove",function(e){chart.classList.add("hot");at(e);});
+  chart.addEventListener("touchmove",function(e){chart.classList.add("hot");at(e);},{passive:true});
+  chart.addEventListener("mouseleave",function(){
+    chart.classList.remove("hot");
+    val.innerHTML='92<span class="unit">%</span>';
+    cap.textContent="6 Aug · Gojuon · Recognition";
+  });
+})();
+
+/* ─────────────── view switching ─────────────── */
+function goto(name){
+  var dash=name==="dashboard";
+  $("#dashboard").classList.toggle("active",dash);
+  $("#cardview").classList.toggle("active",!dash);
+  $("#nav-dash").classList.toggle("on",dash);
+  $("#nav-card").classList.toggle("on",!dash);
+  window.scrollTo({top:0,behavior:"auto"});
+}
+
+/* ─────────────── flash card engine ─────────────── */
+var deck=[],pos=0,streak=0,flipped=false,current=SEGMENTS[0];
+
+var card=$("#card"),glyph=$("#glyph"),backBody=$("#back-body"),
+    judge=$("#judge"),bar=$("#bar"),posEl=$("#pos"),streakEl=$("#streak");
+
+var SPEAKER='<button class="speaker" id="speaker" aria-label="Play pronunciation">'+
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" '+
+  'stroke-linecap="round" stroke-linejoin="round">'+
+  '<path class="cone" d="M4 9.2h3.2L11.4 5.4v13.2L7.2 14.8H4z" fill="currentColor" '+
+  'fill-opacity="0.16"/>'+
+  '<path class="w1" d="M14.6 9.4a3.6 3.6 0 0 1 0 5.2"/>'+
+  '<path class="w2" d="M17.2 6.9a7.2 7.2 0 0 1 0 10.2"/>'+
+  '</svg></button><div class="speak-hint" id="speak-hint">Hear it</div>';
+
+function renderBack(item){
+  var html;
+  if(item.t==="kana"){
+    html='<div class="kana-echo jp">'+esc(item.c)+'</div>'+
+         '<div class="sound">'+esc(item.r)+'</div>'+
+         '<div class="label" style="margin-top:18px">romaji</div>'+SPEAKER;
+  }else{
+    html='<div class="label">meaning</div>'+
+         '<div class="meaning" style="margin-top:14px">'+esc(item.m)+'</div>'+
+         '<div class="readings">'+
+           '<div class="reading"><span class="rl">on\'yomi</span>'+
+             '<span class="rv jp on">'+esc(item.on)+'</span></div>'+
+           '<div class="reading"><span class="rl">kun\'yomi</span>'+
+             '<span class="rv jp">'+esc(item.kun)+'</span></div>'+
+         '</div>'+SPEAKER;
+  }
+  backBody.innerHTML=html;
+  var sp=$("#speaker");
+  if(sp){
+    sp.addEventListener("click",function(e){
+      e.stopPropagation();
+      sp.classList.remove("playing");
+      void sp.offsetWidth;              /* restart the animation */
+      sp.classList.add("playing");
+      var hint=$("#speak-hint");
+      if(hint){hint.textContent="Playing…";}
+      window.setTimeout(function(){
+        sp.classList.remove("playing");
+        var h=$("#speak-hint"); if(h) h.textContent="Hear it";
+      },1300);
+    });
+  }
+}
+
+function paint(){
+  var item=deck[pos];
+  glyph.textContent=item.c;
+  glyph.classList.toggle("two",item.c.length>1);
+  renderBack(item);
+  posEl.textContent=pad(pos+1)+" / "+pad(deck.length);
+  bar.style.width=((pos)/deck.length*100).toFixed(2)+"%";
+  streakEl.textContent=streak;
+}
+
+function setFlipped(v){
+  flipped=v;
+  card.classList.toggle("flipped",v);
+  judge.classList.toggle("on",v);
+}
+
+function next(){
+  var wasFlipped=flipped;
+  pos=(pos+1)%deck.length;
+  setFlipped(false);
+  /* let the card finish rotating back before swapping the face content */
+  window.setTimeout(paint,wasFlipped?420:0);
+  posEl.textContent=pad(pos+1)+" / "+pad(deck.length);
+  bar.style.width=((pos)/deck.length*100).toFixed(2)+"%";
+}
+
+function start(id){
+  var seg=null;
+  for(var i=0;i<SEGMENTS.length;i++){if(SEGMENTS[i].id===id)seg=SEGMENTS[i];}
+  if(!seg)seg=SEGMENTS[0];
+  current=seg;
+  deck=seg.deck.slice();
+  pos=0;streak=0;
+  setFlipped(false);
+  $("#deck-name").textContent=(seg.track==="kana"?"Kana":"Kanji")+" · "+seg.en+
+    " · "+seg.challenge;
+  $("#deck-ja").textContent=seg.ja;
+  paint();
+  goto("card");
+}
+
+card.addEventListener("click",function(){setFlipped(!flipped);});
+card.addEventListener("keydown",function(e){
+  if(e.key===" "||e.key==="Enter"){e.preventDefault();setFlipped(!flipped);}
+});
+
+judge.addEventListener("click",function(e){
+  var b=e.target.closest("[data-judge]");
+  if(!b)return;
+  if(b.getAttribute("data-judge")==="good"){streak++;}else{streak=0;}
+  streakEl.textContent=streak;
+  next();
+});
+
+document.addEventListener("click",function(e){
+  var go=e.target.closest("[data-go]");
+  if(go){goto(go.getAttribute("data-go"));if(go.getAttribute("data-go")==="card"&&!deck.length)start("gojuon");return;}
+  var st=e.target.closest("[data-start]");
+  if(st){start(st.getAttribute("data-start"));}
+});
+
+document.addEventListener("keydown",function(e){
+  if(!$("#cardview").classList.contains("active"))return;
+  var onControl=e.target&&e.target!==document.body&&
+    (e.target===card||(e.target.closest&&e.target.closest("button")));
+  if(e.key==="Escape"){goto("dashboard");}
+  else if(e.key===" "){if(onControl)return;e.preventDefault();setFlipped(!flipped);}
+  else if(e.key==="ArrowRight"){next();}
+});
+
+/* prime the deck so the Practice tab is immediately demonstrable */
+deck=SEGMENTS[0].deck.slice();
+paint();
+
+})();
+</script>
+</body>
+</html>

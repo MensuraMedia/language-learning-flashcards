@@ -1,0 +1,1446 @@
+<!--
+  DIRECTION 04 — "DATA STUDIO"
+
+  Thesis: the landing page is not a menu with statistics bolted on, it is a genuine
+  analytics surface — per-session accuracy trend, a per-character heatmap of weak
+  glyphs, a spaced-repetition retention curve and time-of-day performance all sit
+  above the fold, and the flash card is *launched out of the data* rather than the
+  data being a report on the card. Amber (#f5c518) is the single accent on a cool
+  gray ground and is spent only on data marks, active state and key figures.
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Studio — Japanese Practice</title>
+
+<style>
+/* ─── tokens ─────────────────────────────────────────────────────────────── */
+:root{
+  --ground:#0d0e11;
+  --panel:#14151a;
+  --panel-2:#1a1c22;
+  --panel-3:#20232b;
+  --line:#262933;
+  --line-2:#343845;
+  --ink:#e9eaf0;
+  --ink-2:#a2a8b8;
+  --ink-3:#6b7080;
+  --accent:#f5c518;
+  --accent-dim:#8a6f14;
+  --accent-wash:rgba(245,197,24,.10);
+  --series-2:#8b93a6;
+  --ok:#4ade80;
+
+  --sans:"Inter",ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono","JetBrains Mono","DejaVu Sans Mono",Menlo,Consolas,monospace;
+  --jp:"Noto Sans CJK JP","Noto Sans JP",sans-serif;
+
+  --r:3px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:13px;
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+table{border-collapse:collapse;width:100%}
+
+/* ─── HUD primitives ─────────────────────────────────────────────────────── */
+.eyebrow{
+  font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:600;
+}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.panel{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  position:relative;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.022);
+}
+.panel-hd{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 14px 10px;
+  border-bottom:1px solid var(--line);
+  min-height:40px;
+}
+.panel-hd h2{font-size:11px;letter-spacing:.11em;text-transform:uppercase;font-weight:600;color:var(--ink)}
+.panel-hd .sub{font-size:10.5px;color:var(--ink-3);letter-spacing:.02em}
+.panel-hd .spacer{flex:1}
+.panel-bd{padding:14px}
+
+/* corner ticks — technical framing */
+.ticks::before,.ticks::after{
+  content:"";position:absolute;width:7px;height:7px;pointer-events:none;
+  border-color:var(--line-2);border-style:solid;
+}
+.ticks::before{top:-1px;left:-1px;border-width:1px 0 0 1px}
+.ticks::after{bottom:-1px;right:-1px;border-width:0 1px 1px 0}
+
+/* ─── app chrome ─────────────────────────────────────────────────────────── */
+.topbar{
+  display:flex;align-items:center;gap:18px;
+  padding:0 18px;height:46px;
+  background:var(--panel);border-bottom:1px solid var(--line);
+  position:sticky;top:0;z-index:40;
+}
+.brand{display:flex;align-items:baseline;gap:9px;white-space:nowrap}
+.brand .mark{
+  font-family:var(--jp);font-size:15px;color:var(--accent);
+  line-height:1;transform:translateY(1px)
+}
+.brand .name{font-size:12px;font-weight:650;letter-spacing:.09em;text-transform:uppercase}
+.brand .ver{font-family:var(--mono);font-size:9.5px;color:var(--ink-3)}
+
+.tabs{display:flex;gap:2px;background:var(--ground);border:1px solid var(--line);border-radius:var(--r);padding:2px}
+.tabs button{
+  padding:4px 13px;font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+  font-weight:600;color:var(--ink-3);border-radius:2px;
+}
+.tabs button[aria-current="true"]{background:var(--panel-3);color:var(--ink)}
+.tabs button:hover{color:var(--ink)}
+
+.topbar .right{margin-left:auto;display:flex;align-items:center;gap:16px}
+.livedot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--ok);margin-right:6px;vertical-align:middle}
+
+/* filter row — one row, scopes everything below it */
+.filterbar{
+  display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+  padding:9px 18px;border-bottom:1px solid var(--line);background:var(--panel-2);
+}
+.fgroup{display:flex;align-items:center;gap:8px}
+.chips{display:flex;gap:1px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.chips button{
+  padding:3px 10px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+  color:var(--ink-3);background:var(--panel);
+}
+.chips button:hover{color:var(--ink);background:var(--panel-3)}
+.chips button[aria-pressed="true"]{background:var(--accent);color:#14151a;font-weight:700}
+.filterbar .meta{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+.filterbar .meta b{color:var(--ink-2);font-weight:600}
+
+/* ─── grid ───────────────────────────────────────────────────────────────── */
+.wrap{padding:14px 18px 34px;max-width:1680px;margin:0 auto}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;margin-bottom:12px}
+.c3{grid-column:span 3}.c4{grid-column:span 4}.c5{grid-column:span 5}
+.c6{grid-column:span 6}.c7{grid-column:span 7}.c8{grid-column:span 8}.c12{grid-column:span 12}
+
+/* ─── hero + stat tiles ──────────────────────────────────────────────────── */
+.hero{
+  display:flex;align-items:stretch;gap:0;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  overflow:hidden;
+}
+.hero-main{padding:14px 18px 12px;min-width:200px;flex:0 0 auto;border-right:1px solid var(--line)}
+.hero-fig{
+  font-size:47px;font-weight:600;letter-spacing:-.02em;line-height:1.05;
+  color:var(--accent);margin-top:5px;
+}
+.hero-fig small{font-size:19px;font-weight:500;color:var(--ink-2);margin-left:1px}
+.hero-delta{font-family:var(--mono);font-size:10.5px;color:var(--ok);margin-top:3px}
+.hero-delta span{color:var(--ink-3)}
+.hero-spark{flex:1;display:flex;align-items:flex-end;padding:12px 14px 10px;min-width:0}
+
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.tile{padding:11px 13px 12px;display:flex;flex-direction:column;gap:2px}
+.tile .v{font-size:23px;font-weight:600;letter-spacing:-.01em;line-height:1.15}
+.tile .v small{font-size:11px;color:var(--ink-3);font-weight:500;margin-left:2px}
+.tile .d{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);margin-top:1px}
+.tile .d em{font-style:normal;color:var(--ok)}
+.tile .d em.neg{color:var(--series-2)}
+
+/* ─── charts ─────────────────────────────────────────────────────────────── */
+.chartbox{position:relative}
+.chartbox svg{display:block;width:100%;height:auto;overflow:visible}
+.tt{
+  position:absolute;pointer-events:none;opacity:0;transition:opacity .09s;
+  background:#0b0c0f;border:1px solid var(--line-2);border-radius:var(--r);
+  padding:7px 9px;font-family:var(--mono);font-size:10.5px;line-height:1.55;
+  white-space:nowrap;z-index:20;box-shadow:0 6px 22px rgba(0,0,0,.6);
+}
+.tt .k{color:var(--ink-3)}
+.tt .h{color:var(--ink);font-weight:600;letter-spacing:.05em;display:block;margin-bottom:3px}
+.tt .a{color:var(--accent)}
+.legend{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.legend .item{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--ink-2);letter-spacing:.03em}
+.key-line{width:14px;height:2px;border-radius:2px;display:inline-block}
+.key-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+/* toggle for table view */
+.tbtn{
+  font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-3);border:1px solid var(--line);border-radius:2px;padding:2px 7px;
+}
+.tbtn:hover{color:var(--ink);border-color:var(--line-2)}
+.tbtn[aria-pressed="true"]{color:var(--accent);border-color:var(--accent-dim)}
+.tableview{display:none;max-height:250px;overflow:auto}
+.tableview.on{display:block}
+.chartview.off{display:none}
+
+/* data tables */
+.dt{font-size:11.5px}
+.dt th{
+  text-align:left;font-size:9px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:600;padding:7px 9px;
+  border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2;
+}
+.dt td{padding:6px 9px;border-bottom:1px solid rgba(38,41,51,.55);color:var(--ink-2)}
+.dt tbody tr:hover td{background:var(--panel-2);color:var(--ink)}
+.dt .r{text-align:right}
+.dt .n{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+.dt .jp{font-family:var(--jp);font-size:16px;color:var(--ink);line-height:1}
+.scroll{max-height:322px;overflow:auto}
+.scroll,.tableview{scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
+.scroll::-webkit-scrollbar,.tableview::-webkit-scrollbar{width:8px;height:8px}
+.scroll::-webkit-scrollbar-thumb,.tableview::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:4px}
+.scroll::-webkit-scrollbar-track,.tableview::-webkit-scrollbar-track{background:transparent}
+
+/* meters */
+.meter{position:relative;height:4px;background:#2a2617;border-radius:2px;overflow:hidden;min-width:52px}
+.meter i{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:2px;display:block}
+.meterrow{display:flex;align-items:center;gap:8px}
+.meterrow .pct{font-family:var(--mono);font-size:10.5px;color:var(--ink);min-width:30px;text-align:right}
+
+/* badges */
+.badge{
+  display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:.07em;
+  padding:1.5px 6px;border-radius:2px;border:1px solid var(--line-2);color:var(--ink-2);
+  text-transform:uppercase;white-space:nowrap;
+}
+.badge.type{border-color:#3a4050;color:#aab1c2}
+.badge.score{border-color:#33384a;color:#8b93a6}
+.pips{display:inline-flex;gap:2px;vertical-align:middle;margin-right:6px}
+.pips i{width:4px;height:4px;border-radius:50%;background:var(--line-2);display:block}
+.pips i.on{background:var(--accent)}
+
+/* launch button */
+.go{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
+  border:1px solid var(--line-2);border-radius:2px;padding:3px 9px;color:var(--ink-2);
+  white-space:nowrap;transition:.12s;
+}
+.go:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-wash)}
+
+/* ─── heatmap ────────────────────────────────────────────────────────────── */
+.hm{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:3px}
+.hm button{
+  aspect-ratio:1/1;border-radius:2px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--jp);font-size:19px;line-height:1;position:relative;transition:transform .1s;
+}
+.hm button:hover{transform:scale(1.13);z-index:3;box-shadow:0 0 0 1px var(--ink-2)}
+.hm .b0{background:#1b1e26;color:#e9eaf0}
+.hm .b1{background:#33301f;color:#e9eaf0}
+.hm .b2{background:#55481a;color:#f0f1f5}
+.hm .b3{background:#806613;color:#f0f1f5}
+.hm .b4{background:#b8900f;color:#14151a}
+.hm .b5{background:#f5c518;color:#14151a}
+.hm-legend{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+.hm-scale{display:flex;gap:2px}
+.hm-scale i{width:26px;height:8px;border-radius:1px;display:block}
+.setsel{display:flex;gap:1px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.setsel button{padding:2.5px 9px;font-family:var(--mono);font-size:9.5px;color:var(--ink-3);background:var(--panel-2)}
+.setsel button[aria-pressed="true"]{background:var(--panel-3);color:var(--accent)}
+.setsel button:hover{color:var(--ink)}
+.hm-dist{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.hm-dist .chartbox{margin-top:8px}
+
+/* ─── flash card view ────────────────────────────────────────────────────── */
+#view-card{display:none}
+#view-card.on{display:block}
+#view-dash.off{display:none}
+
+.crumb{
+  display:flex;align-items:center;gap:8px;padding:10px 18px;border-bottom:1px solid var(--line);
+  font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);
+  background:var(--panel-2);
+}
+.crumb b{color:var(--accent);font-weight:600}
+.crumb .sep{color:var(--line-2)}
+
+.studio{
+  display:grid;grid-template-columns:246px minmax(0,1fr) 246px;gap:12px;
+  padding:14px 18px 34px;max-width:1680px;margin:0 auto;align-items:start;
+}
+.rail{display:flex;flex-direction:column;gap:12px}
+.rail .row{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid rgba(38,41,51,.6)}
+.rail .row:last-child{border-bottom:0}
+.rail .row .k{font-size:10px;color:var(--ink-3);letter-spacing:.05em}
+.rail .row .v{font-family:var(--mono);font-size:12.5px;color:var(--ink)}
+.rail .row .v.acc{color:var(--accent)}
+
+.stage{display:flex;flex-direction:column;align-items:center;gap:16px;padding:8px 0 0}
+.deckbar{
+  width:100%;display:flex;align-items:center;gap:12px;
+  border:1px solid var(--line);border-radius:var(--r);background:var(--panel);padding:9px 13px;
+}
+.deckbar .nm{font-size:11.5px;font-weight:600;letter-spacing:.04em}
+.deckbar .prog{flex:1;height:3px;background:#2a2617;border-radius:2px;overflow:hidden;min-width:60px}
+.deckbar .prog i{display:block;height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
+.deckbar .ct{font-family:var(--mono);font-size:10.5px;color:var(--ink-2)}
+
+.cardframe{position:relative;width:min(362px,100%);padding:12px}
+.cardframe::before,.cardframe::after{
+  content:"";position:absolute;width:16px;height:16px;border-color:var(--line-2);border-style:solid;pointer-events:none;
+}
+.cardframe::before{top:0;left:0;border-width:1px 0 0 1px}
+.cardframe::after{bottom:0;right:0;border-width:0 1px 1px 0}
+
+.card{perspective:1400px;width:100%;aspect-ratio:5/6;cursor:pointer;outline:none}
+.card:focus-visible .face{border-color:var(--accent)}
+.card-inner{
+  position:relative;width:100%;height:100%;transform-style:preserve-3d;
+  transition:transform .62s cubic-bezier(.22,.85,.28,1);
+}
+.card.flipped .card-inner{transform:rotateY(180deg)}
+.face{
+  position:absolute;inset:0;-webkit-backface-visibility:hidden;backface-visibility:hidden;
+  background:linear-gradient(168deg,#1d2027 0%,#141519 62%);
+  border:1px solid var(--line-2);border-radius:5px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 18px 46px rgba(0,0,0,.55);
+  display:flex;align-items:center;justify-content:center;
+}
+/* FRONT: the character alone. nothing else. */
+.face-front .glyph{
+  font-family:var(--jp);font-size:clamp(92px,16vw,166px);line-height:1;color:var(--ink);
+  font-weight:400;user-select:none;
+}
+.face-back{
+  transform:rotateY(180deg);
+  flex-direction:column;justify-content:center;gap:0;padding:26px 22px;text-align:center;
+}
+.back-sound{font-size:38px;font-weight:600;letter-spacing:-.01em;color:var(--accent);line-height:1.1}
+.back-mean{font-size:26px;font-weight:600;color:var(--accent);line-height:1.2;text-transform:lowercase}
+.back-rule{width:44px;height:1px;background:var(--line-2);margin:16px auto}
+.back-readings{display:flex;flex-direction:column;gap:9px;width:100%;max-width:230px;margin:0 auto}
+.back-readings .rr{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.back-readings .rk{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.back-readings .rv{font-family:var(--jp);font-size:20px;color:var(--ink);line-height:1.2}
+.back-kana{font-family:var(--jp);font-size:30px;color:var(--ink);margin-top:2px}
+
+/* speaker */
+.spk{
+  margin-top:20px;display:inline-flex;align-items:center;gap:9px;
+  border:1px solid var(--line-2);border-radius:20px;padding:6px 14px 6px 11px;
+  color:var(--ink-2);transition:.15s;
+}
+.spk:hover{border-color:var(--accent-dim);color:var(--ink)}
+.spk.playing{border-color:var(--accent);color:var(--accent);background:var(--accent-wash)}
+.spk .lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase}
+.spk svg{display:block}
+.spk .cone{fill:currentColor}
+.spk .arc{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;opacity:.42}
+.spk.playing .arc1{animation:arcp .62s ease-out infinite}
+.spk.playing .arc2{animation:arcp .62s ease-out .16s infinite}
+@keyframes arcp{0%{opacity:.15;transform:translateX(-1px)}40%{opacity:1;transform:translateX(0)}100%{opacity:.15;transform:translateX(-1px)}}
+.spk .arc{transform-origin:left center}
+.wave{display:flex;align-items:center;gap:2px;height:12px}
+.wave i{width:2px;height:3px;background:currentColor;border-radius:1px;display:block;opacity:.35}
+.spk.playing .wave i{animation:wv .58s ease-in-out infinite}
+.spk.playing .wave i:nth-child(2){animation-delay:.09s}
+.spk.playing .wave i:nth-child(3){animation-delay:.18s}
+.spk.playing .wave i:nth-child(4){animation-delay:.27s}
+.spk.playing .wave i:nth-child(5){animation-delay:.36s}
+@keyframes wv{0%,100%{height:3px;opacity:.35}50%{height:12px;opacity:1}}
+
+.flipnote{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.grade{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.grade button{
+  border:1px solid var(--line-2);border-radius:var(--r);padding:7px 15px;min-width:88px;
+  display:flex;flex-direction:column;gap:2px;align-items:center;transition:.12s;
+}
+.grade button:hover{border-color:var(--accent);background:var(--accent-wash)}
+.grade .g{font-size:11px;font-weight:600;letter-spacing:.05em}
+.grade .i{font-family:var(--mono);font-size:9px;color:var(--ink-3)}
+.grade button:hover .i{color:var(--accent)}
+.grade[data-locked="true"]{opacity:.32;pointer-events:none}
+
+.strip{display:flex;gap:2px;flex-wrap:wrap}
+.strip i{width:9px;height:9px;border-radius:1px;display:block;background:var(--line-2)}
+.strip i.ok{background:var(--accent)}
+.strip i.no{background:#3a3040}
+.strip i.pend{background:#1e2129;box-shadow:inset 0 0 0 1px var(--line)}
+
+.hint{font-size:10.5px;color:var(--ink-3);line-height:1.6}
+
+/* ─── responsive ─────────────────────────────────────────────────────────── */
+@media (max-width:1320px){
+  .c8,.c7{grid-column:span 12}
+  .c4,.c5{grid-column:span 12}
+  .c6{grid-column:span 12}
+  .studio{grid-template-columns:216px minmax(0,1fr) 216px}
+}
+@media (max-width:1060px){
+  .tiles{grid-template-columns:repeat(2,1fr)}
+  .hero{flex-direction:column}
+  .hero-main{border-right:0;border-bottom:1px solid var(--line)}
+  .studio{grid-template-columns:minmax(0,1fr);}
+  .rail{flex-direction:row;flex-wrap:wrap}
+  .rail>*{flex:1 1 260px}
+  .stage{order:-1}
+}
+@media (max-width:900px){
+  .wrap,.studio{padding-left:12px;padding-right:12px}
+  .topbar{gap:12px;padding:0 12px}
+  .brand .ver{display:none}
+  .filterbar{padding:9px 12px;gap:12px}
+  .filterbar .meta{width:100%;margin-left:0}
+  .hm{grid-template-columns:repeat(auto-fill,minmax(34px,1fr))}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<header class="topbar">
+  <div class="brand">
+    <span class="mark">日</span>
+    <span class="name">Japanese Practice</span>
+    <span class="ver">/ data studio</span>
+  </div>
+  <nav class="tabs" aria-label="View">
+    <button id="tab-dash" aria-current="true" onclick="setView('dash')">Dashboard</button>
+    <button id="tab-card" aria-current="false" onclick="setView('card')">Flash Card</button>
+  </nav>
+  <div class="right">
+    <span class="eyebrow"><span class="livedot"></span>local · offline</span>
+    <span class="eyebrow num" id="clock">2026-08-06</span>
+  </div>
+</header>
+
+<!-- ─── FILTER ROW — one row, scopes every session-level chart below ─────── -->
+<div class="filterbar" id="filterbar">
+  <div class="fgroup">
+    <span class="eyebrow">Range</span>
+    <div class="chips" id="f-range">
+      <button data-v="14" aria-pressed="false">14D</button>
+      <button data-v="30" aria-pressed="false">30D</button>
+      <button data-v="90" aria-pressed="true">90D</button>
+      <button data-v="all" aria-pressed="false">ALL</button>
+    </div>
+  </div>
+  <div class="fgroup">
+    <span class="eyebrow">Track</span>
+    <div class="chips" id="f-track">
+      <button data-v="all" aria-pressed="true">ALL</button>
+      <button data-v="kana" aria-pressed="false">KANA</button>
+      <button data-v="kanji" aria-pressed="false">KANJI</button>
+    </div>
+  </div>
+  <div class="meta" id="scopemeta"></div>
+</div>
+
+<!-- ══════════════════ DASHBOARD ═════════════════════════════════════════ -->
+<main id="view-dash" class="wrap">
+
+  <!-- hero + stat tiles -->
+  <div class="grid">
+    <div class="c5">
+      <div class="hero ticks">
+        <div class="hero-main">
+          <div class="eyebrow">Weighted accuracy · scope</div>
+          <div class="hero-fig" id="hero-acc">—<small>%</small></div>
+          <div class="hero-delta" id="hero-delta"></div>
+        </div>
+        <div class="hero-spark chartbox" id="hero-spark"></div>
+      </div>
+    </div>
+    <div class="c7">
+      <div class="tiles">
+        <div class="panel tile"><span class="eyebrow">Sessions logged</span><span class="v num" id="t-sessions">—</span><span class="d" id="t-sessions-d"></span></div>
+        <div class="panel tile"><span class="eyebrow">Cards reviewed</span><span class="v num" id="t-cards">—</span><span class="d" id="t-cards-d"></span></div>
+        <div class="panel tile"><span class="eyebrow">Best answer streak</span><span class="v num" id="t-streak">—</span><span class="d" id="t-streak-d"></span></div>
+        <div class="panel tile"><span class="eyebrow">Median response</span><span class="v num" id="t-ms">—</span><span class="d" id="t-ms-d"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- trend + retention -->
+  <div class="grid">
+    <section class="panel ticks c8">
+      <div class="panel-hd">
+        <h2>Accuracy by session</h2>
+        <span class="sub">every logged run, oldest → newest</span>
+        <span class="spacer"></span>
+        <div class="legend">
+          <span class="item"><i class="key-dot" style="background:var(--accent)"></i>Session accuracy</span>
+          <span class="item"><i class="key-line" style="background:var(--series-2)"></i>5-session moving avg</span>
+        </div>
+        <button class="tbtn" aria-pressed="false" onclick="toggleTable(this,'trend')">Table</button>
+      </div>
+      <div class="panel-bd">
+        <div class="chartbox chartview" id="trend-chart"></div>
+        <div class="tableview" id="trend-table"></div>
+      </div>
+    </section>
+
+    <section class="panel ticks c4">
+      <div class="panel-hd">
+        <h2>Retention curve</h2>
+        <span class="sub">recall vs. review interval</span>
+      </div>
+      <div class="panel-bd">
+        <div class="chartbox" id="retention-chart"></div>
+        <p class="hint" style="margin-top:10px">Measured recall on scheduled reviews. The <b style="color:var(--ink-2)">90&#37; target</b> rule is where the spaced-repetition scheduler holds the interval; below it, the interval is cut.</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- heatmap + time of day -->
+  <div class="grid">
+    <section class="panel ticks c7">
+      <div class="panel-hd">
+        <h2>Per-character miss rate</h2>
+        <span class="sub">brighter = weaker</span>
+        <span class="spacer"></span>
+        <span class="eyebrow">Set</span>
+        <div class="setsel" id="hm-set">
+          <button data-v="hira" aria-pressed="true">HIRAGANA</button>
+          <button data-v="kata" aria-pressed="false">KATAKANA</button>
+          <button data-v="kanji" aria-pressed="false">KANJI N5</button>
+        </div>
+        <button class="tbtn" aria-pressed="false" onclick="toggleTable(this,'hm')">Table</button>
+      </div>
+      <div class="panel-bd">
+        <div class="chartview" id="hm-chart">
+          <div class="hm" id="hm-grid"></div>
+          <div class="hm-legend">
+            <span class="eyebrow">Miss rate</span>
+            <span class="num" style="font-size:10px;color:var(--ink-3)">0%</span>
+            <span class="hm-scale">
+              <i style="background:#1b1e26"></i><i style="background:#33301f"></i><i style="background:#55481a"></i>
+              <i style="background:#806613"></i><i style="background:#b8900f"></i><i style="background:#f5c518"></i>
+            </span>
+            <span class="num" style="font-size:10px;color:var(--ink-3)">30%+</span>
+            <span style="flex:1"></span>
+            <span class="eyebrow" id="hm-note"></span>
+          </div>
+          <div class="hm-dist">
+            <span class="eyebrow">Distribution across the set</span>
+            <div class="chartbox" id="hm-hist"></div>
+          </div>
+        </div>
+        <div class="tableview" id="hm-table"></div>
+      </div>
+    </section>
+
+    <section class="panel ticks c5">
+      <div class="panel-hd">
+        <h2>Time-of-day performance</h2>
+        <span class="sub">accuracy by start hour</span>
+      </div>
+      <div class="panel-bd">
+        <div class="chartbox" id="tod-chart"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- weak chars + session log -->
+  <div class="grid">
+    <section class="panel ticks c5">
+      <div class="panel-hd">
+        <h2>Weakest characters</h2>
+        <span class="sub">≥ 20 attempts</span>
+        <span class="spacer"></span>
+        <button class="go" onclick="launchWeak()">Drill all 8 →</button>
+      </div>
+      <div class="panel-bd" style="padding:0">
+        <div class="scroll"><table class="dt" id="weak-table"></table></div>
+        <p class="hint" id="weak-note" style="padding:11px 14px;border-top:1px solid var(--line)"></p>
+      </div>
+    </section>
+
+    <section class="panel ticks c7">
+      <div class="panel-hd">
+        <h2>Session log</h2>
+        <span class="sub">one row per run of the app</span>
+        <span class="spacer"></span>
+        <span class="eyebrow" id="log-count"></span>
+      </div>
+      <div class="panel-bd" style="padding:0">
+        <div class="scroll"><table class="dt" id="log-table"></table></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- segments -->
+  <div class="grid">
+    <section class="panel ticks c12">
+      <div class="panel-hd">
+        <h2>Exercise segments</h2>
+        <span class="sub">challenge type × scoring scheme × difficulty tier</span>
+        <span class="spacer"></span>
+        <span class="eyebrow">Launch a segment to open the flash card · demo decks seeded from the verified sample set</span>
+      </div>
+      <div class="panel-bd" style="padding:0">
+        <table class="dt" id="seg-table"></table>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- ══════════════════ FLASH CARD ════════════════════════════════════════ -->
+<main id="view-card">
+  <div class="crumb">
+    <button onclick="setView('dash')" style="color:var(--ink-3);letter-spacing:.09em">Dashboard</button>
+    <span class="sep">▸</span>
+    <span id="crumb-src">Exercise segments</span>
+    <span class="sep">▸</span>
+    <b id="crumb-deck">—</b>
+  </div>
+
+  <div class="studio">
+    <!-- LEFT RAIL — live session telemetry -->
+    <aside class="rail">
+      <section class="panel ticks">
+        <div class="panel-hd"><h2>Live session</h2></div>
+        <div class="panel-bd" style="padding:10px 13px">
+          <div class="row"><span class="k">Accuracy</span><span class="v acc" id="lv-acc">—</span></div>
+          <div class="row"><span class="k">Answered</span><span class="v" id="lv-ans">0</span></div>
+          <div class="row"><span class="k">Current streak</span><span class="v" id="lv-streak">0</span></div>
+          <div class="row"><span class="k">Avg response</span><span class="v" id="lv-ms">—</span></div>
+          <div class="row"><span class="k">Session score</span><span class="v" id="lv-score">0</span></div>
+        </div>
+      </section>
+      <section class="panel ticks">
+        <div class="panel-hd"><h2>Answer strip</h2><span class="spacer"></span><span class="sub">last 24</span></div>
+        <div class="panel-bd" style="padding:12px 13px">
+          <div class="strip" id="lv-strip"></div>
+          <p class="hint" style="margin-top:10px">Amber = correct · plum = missed · outline = not yet seen.</p>
+        </div>
+      </section>
+      <section class="panel ticks">
+        <div class="panel-hd"><h2>Scoring scheme</h2></div>
+        <div class="panel-bd" style="padding:10px 13px">
+          <div class="row"><span class="k">Mode</span><span class="v" id="lv-scheme" style="font-size:11px">—</span></div>
+          <div class="row"><span class="k">Challenge</span><span class="v" id="lv-type" style="font-size:11px">—</span></div>
+          <div class="row"><span class="k">Difficulty</span><span class="v" id="lv-diff" style="font-size:11px">—</span></div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- CENTER — the card -->
+    <div class="stage">
+      <div class="deckbar">
+        <span class="nm" id="deck-name">—</span>
+        <span class="badge type" id="deck-type">—</span>
+        <span class="prog"><i id="deck-prog" style="width:0%"></i></span>
+        <span class="ct num" id="deck-ct">0 / 0</span>
+      </div>
+
+      <div class="cardframe">
+        <div class="card" id="card" tabindex="0" role="button" aria-label="Flash card — activate to flip">
+          <div class="card-inner">
+            <div class="face face-front"><span class="glyph" id="cf-glyph">あ</span></div>
+            <div class="face face-back" id="cf-back"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flipnote" id="flipnote">Click the card · or press Space to flip</div>
+
+      <div class="grade" id="grade" data-locked="true">
+        <button onclick="grade(0)"><span class="g">Again</span><span class="i">&lt; 1 m</span></button>
+        <button onclick="grade(1)"><span class="g">Hard</span><span class="i">1 d</span></button>
+        <button onclick="grade(2)"><span class="g">Good</span><span class="i">4 d</span></button>
+        <button onclick="grade(3)"><span class="g">Easy</span><span class="i">11 d</span></button>
+      </div>
+    </div>
+
+    <!-- RIGHT RAIL — the analytics for THIS card -->
+    <aside class="rail">
+      <section class="panel ticks">
+        <div class="panel-hd"><h2>This character</h2></div>
+        <div class="panel-bd" style="padding:10px 13px">
+          <div class="row"><span class="k">Attempts</span><span class="v" id="cd-att">—</span></div>
+          <div class="row"><span class="k">Accuracy</span><span class="v" id="cd-acc">—</span></div>
+          <div class="row"><span class="k">Miss rate rank</span><span class="v" id="cd-rank">—</span></div>
+          <div class="row"><span class="k">Last seen</span><span class="v" id="cd-seen">—</span></div>
+          <div class="row"><span class="k">Next interval</span><span class="v" id="cd-int">—</span></div>
+          <div class="row"><span class="k">Ease factor</span><span class="v" id="cd-ease">—</span></div>
+        </div>
+      </section>
+      <section class="panel ticks">
+        <div class="panel-hd"><h2>Recall history</h2><span class="spacer"></span><span class="sub">last 12</span></div>
+        <div class="panel-bd" style="padding:12px 13px 10px">
+          <div class="chartbox" id="cd-spark"></div>
+        </div>
+      </section>
+      <section class="panel ticks">
+        <div class="panel-hd"><h2>Confusable with</h2></div>
+        <div class="panel-bd" style="padding:10px 13px">
+          <div id="cd-conf" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+          <p class="hint" style="margin-top:10px">Characters most often chosen instead of this one, from the recognition error matrix.</p>
+        </div>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<div class="tt" id="tt"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   DATA — realistic placeholder. All Japanese readings are taken verbatim from
+   the authoritative content model; nothing here is invented.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Per-session history — one row per run of the app. */
+const SESSIONS = [
+ {n:1, d:'2026-06-24', deck:'Hiragana · Gojuon',      track:'kana', type:'Recognition', scheme:'Accuracy',          diff:'gojuon',     cards:46,  acc:68.5, run:9,  ms:2740, hour:21},
+ {n:2, d:'2026-06-25', deck:'Hiragana · Gojuon',      track:'kana', type:'Recognition', scheme:'Accuracy',          diff:'gojuon',     cards:46,  acc:71.2, run:11, ms:2610, hour:9},
+ {n:3, d:'2026-06-27', deck:'Katakana · Gojuon',      track:'kana', type:'Recognition', scheme:'Accuracy',          diff:'gojuon',     cards:46,  acc:69.8, run:8,  ms:2820, hour:22},
+ {n:4, d:'2026-06-28', deck:'Hiragana · Gojuon',      track:'kana', type:'Recall',      scheme:'Streak',            diff:'gojuon',     cards:60,  acc:74.0, run:14, ms:2480, hour:10},
+ {n:5, d:'2026-06-30', deck:'Kana · Dakuon',          track:'kana', type:'Recognition', scheme:'Accuracy',          diff:'dakuon',     cards:40,  acc:76.3, run:13, ms:2350, hour:13},
+ {n:6, d:'2026-07-01', deck:'Katakana · Gojuon',      track:'kana', type:'Timed',       scheme:'Speed-weighted',    diff:'gojuon',     cards:72,  acc:73.1, run:12, ms:1980, hour:19},
+ {n:7, d:'2026-07-02', deck:'Kana · Sound Match',     track:'kana', type:'Listening',   scheme:'Accuracy',          diff:'gojuon',     cards:46,  acc:78.6, run:17, ms:2260, hour:9},
+ {n:8, d:'2026-07-04', deck:'Kana · Han-dakuon',      track:'kana', type:'Recognition', scheme:'Accuracy',          diff:'han-dakuon', cards:30,  acc:80.2, run:16, ms:2140, hour:11},
+ {n:9, d:'2026-07-05', deck:'Kanji · JLPT N5 Core',   track:'kanji',type:'Recognition', scheme:'Accuracy',          diff:'JLPT N5',    cards:60,  acc:77.4, run:12, ms:3120, hour:16},
+ {n:10,d:'2026-07-07', deck:'Kana · Yoon',            track:'kana', type:'Recall',      scheme:'Streak',            diff:'yoon',       cards:44,  acc:82.0, run:21, ms:2080, hour:10},
+ {n:11,d:'2026-07-08', deck:'Kanji · JLPT N5 Core',   track:'kanji',type:'Recall',      scheme:'Spaced-repetition', diff:'JLPT N5',    cards:55,  acc:79.3, run:15, ms:2980, hour:20},
+ {n:12,d:'2026-07-10', deck:'Kana · Full Mixed 104',  track:'kana', type:'Mixed',       scheme:'Spaced-repetition', diff:'full 104',   cards:104, acc:84.1, run:24, ms:1920, hour:9},
+ {n:13,d:'2026-07-11', deck:'Katakana · Gojuon',      track:'kana', type:'Timed',       scheme:'Speed-weighted',    diff:'gojuon',     cards:80,  acc:85.6, run:22, ms:1760, hour:11},
+ {n:14,d:'2026-07-13', deck:'Kanji · JLPT N4',        track:'kanji',type:'Recognition', scheme:'Accuracy',          diff:'JLPT N4',    cards:64,  acc:81.9, run:18, ms:2870, hour:14},
+ {n:15,d:'2026-07-14', deck:'Kana · Full Mixed 104',  track:'kana', type:'Mixed',       scheme:'Spaced-repetition', diff:'full 104',   cards:104, acc:86.4, run:27, ms:1840, hour:10},
+ {n:16,d:'2026-07-16', deck:'Volume · Top 200',       track:'kanji',type:'Timed',       scheme:'Speed-weighted',    diff:'Top 200',    cards:96,  acc:88.0, run:29, ms:1690, hour:9},
+ {n:17,d:'2026-07-17', deck:'Kanji · JLPT N4',        track:'kanji',type:'Recall',      scheme:'Spaced-repetition', diff:'JLPT N4',    cards:70,  acc:84.7, run:20, ms:2760, hour:19},
+ {n:18,d:'2026-07-19', deck:'Kana · Yoon',            track:'kana', type:'Recognition', scheme:'Accuracy',          diff:'yoon',       cards:44,  acc:87.2, run:26, ms:1880, hour:12},
+ {n:19,d:'2026-07-21', deck:'Kanji · JLPT N3',        track:'kanji',type:'Timed',       scheme:'Speed-weighted',    diff:'JLPT N3',    cards:88,  acc:89.5, run:31, ms:1640, hour:10},
+ {n:20,d:'2026-07-23', deck:'Kana · Sound Match',     track:'kana', type:'Listening',   scheme:'Accuracy',          diff:'full 104',   cards:104, acc:86.1, run:25, ms:1810, hour:21},
+ {n:21,d:'2026-07-26', deck:'Volume · Top 500',       track:'kanji',type:'Mixed',       scheme:'Streak',            diff:'Top 500',    cards:110, acc:90.3, run:34, ms:1720, hour:11},
+ {n:22,d:'2026-07-29', deck:'Kanji · JLPT N3',        track:'kanji',type:'Recall',      scheme:'Spaced-repetition', diff:'JLPT N3',    cards:92,  acc:88.4, run:28, ms:2540, hour:16},
+ {n:23,d:'2026-08-02', deck:'Kana · Full Mixed 104',  track:'kana', type:'Mixed',       scheme:'Spaced-repetition', diff:'full 104',   cards:104, acc:91.6, run:38, ms:1580, hour:9},
+ {n:24,d:'2026-08-05', deck:'Kanji · JLPT N5 Core',   track:'kanji',type:'Timed',       scheme:'Speed-weighted',    diff:'JLPT N5',    cards:84,  acc:89.8, run:33, ms:1610, hour:10},
+];
+const TODAY = new Date('2026-08-06T00:00:00Z');
+
+/* Retention: measured recall at each scheduled interval. */
+const RETENTION = [{iv:1,r:96.2},{iv:3,r:91.4},{iv:7,r:84.0},{iv:14,r:78.3},{iv:30,r:69.1},{iv:60,r:57.8}];
+
+/* Time-of-day buckets. */
+const TOD = [
+  {b:'06–09',acc:88.9,s:3},{b:'09–12',acc:91.4,s:9},{b:'12–15',acc:84.2,s:2},
+  {b:'15–18',acc:82.7,s:2},{b:'18–21',acc:87.5,s:4},{b:'21–24',acc:79.1,s:4},
+];
+
+/* ── Characters. Readings verbatim from the content model. ───────────────── */
+const HIRA = [
+ ['あ','a'],['い','i'],['う','u'],['え','e'],['お','o'],['か','ka'],['き','ki'],['く','ku'],['け','ke'],['こ','ko'],
+ ['さ','sa'],['し','shi'],['す','su'],['せ','se'],['そ','so'],['た','ta'],['ち','chi'],['つ','tsu'],['て','te'],['と','to'],
+ ['な','na'],['に','ni'],['ぬ','nu'],['ね','ne'],['の','no'],['は','ha'],['ひ','hi'],['ふ','fu'],['へ','he'],['ほ','ho'],
+ ['ま','ma'],['み','mi'],['む','mu'],['め','me'],['も','mo'],['や','ya'],['ゆ','yu'],['よ','yo'],
+ ['ら','ra'],['り','ri'],['る','ru'],['れ','re'],['ろ','ro'],['わ','wa'],['を','wo'],['ん','n'],
+];
+const HIRA_DAKUON = [['が','ga'],['ぎ','gi'],['ざ','za'],['じ','ji'],['だ','da'],['ば','ba']];
+const HIRA_HANDAKUON = [['ぱ','pa']];
+const HIRA_YOON = [['きゃ','kya'],['きゅ','kyu'],['きょ','kyo'],['しゃ','sha'],['しゅ','shu'],['しょ','sho']];
+const KATA = [
+ ['ア','a'],['イ','i'],['ウ','u'],['エ','e'],['オ','o'],['カ','ka'],['キ','ki'],['ク','ku'],['ケ','ke'],['コ','ko'],
+ ['サ','sa'],['シ','shi'],['ス','su'],['セ','se'],['ソ','so'],['タ','ta'],['チ','chi'],['ツ','tsu'],['テ','te'],['ト','to'],
+ ['ナ','na'],['ニ','ni'],['ヌ','nu'],['ネ','ne'],['ノ','no'],['ハ','ha'],['ヒ','hi'],['フ','fu'],['ヘ','he'],['ホ','ho'],
+ ['マ','ma'],['ミ','mi'],['ム','mu'],['メ','me'],['モ','mo'],['ヤ','ya'],['ユ','yu'],['ヨ','yo'],
+ ['ラ','ra'],['リ','ri'],['ル','ru'],['レ','re'],['ロ','ro'],['ワ','wa'],['ヲ','wo'],['ン','n'],
+];
+/* char · meaning · on'yomi · kun'yomi — JLPT N5 */
+const KANJI = [
+ ['日','day, sun','ニチ/ジツ','ひ/か'],   ['月','month, moon','ゲツ/ガツ','つき'],
+ ['火','fire','カ','ひ'],                 ['水','water','スイ','みず'],
+ ['木','tree, wood','モク/ボク','き'],     ['金','gold, money','キン/コン','かね'],
+ ['土','earth, soil','ド/ト','つち'],      ['山','mountain','サン','やま'],
+ ['川','river','セン','かわ'],             ['人','person','ジン/ニン','ひと'],
+ ['大','big','ダイ/タイ','おお(きい)'],    ['小','small','ショウ','ちい(さい)'],
+ ['中','middle, inside','チュウ','なか'],  ['上','up, above','ジョウ','うえ'],
+ ['下','down, below','カ/ゲ','した'],      ['一','one','イチ','ひと(つ)'],
+ ['二','two','ニ','ふた(つ)'],             ['三','three','サン','みっ(つ)'],
+ ['学','study, learning','ガク','まな(ぶ)'],['生','life, birth','セイ/ショウ','い(きる)/う(まれる)'],
+];
+
+/* Hand-set weak spots reflect real confusion pairs (ぬ/め, ソ/ン, シ/ツ). */
+const WEAK_SET = {
+ 'ぬ':.58,'ね':.61,'め':.63,'わ':.66,'れ':.67,'る':.70,'さ':.72,'き':.74,'あ':.82,'ふ':.84,'ま':.86,'も':.87,
+ 'ソ':.51,'ン':.54,'シ':.57,'ツ':.59,'ノ':.66,'ヲ':.68,'ヌ':.70,'ネ':.72,'ワ':.74,'ク':.76,'ケ':.83,'マ':.85,
+ '生':.55,'金':.62,'上':.66,'下':.68,'中':.72,'学':.74,'土':.83,'小':.86,
+};
+const CONFUSE = {
+ 'ぬ':['め','ね'],'ね':['れ','わ'],'め':['ぬ','あ'],'わ':['れ','ね'],'れ':['わ','ね'],'る':['ろ','ぬ'],
+ 'さ':['き','ち'],'き':['さ','ま'],'ま':['も','ほ'],'も':['ま','む'],'ふ':['ら','う'],'あ':['お','め'],
+ 'ソ':['ン','ノ'],'ン':['ソ','シ'],'シ':['ツ','ン'],'ツ':['シ','ソ'],'ノ':['ソ','メ'],'ヲ':['ワ','フ'],
+ 'ヌ':['ス','メ'],'ネ':['ホ','ヲ'],'ワ':['ウ','ク'],'ク':['ワ','タ'],'ケ':['タ','サ'],'マ':['ム','ア'],
+ /* kanji confusions are drawn only from the verified N5 sample — no glyph appears
+    here that the app cannot also show a correct reading for */
+ '生':['土','中'],'金':['木','人'],'上':['下','土'],'下':['上','木'],'中':['日','山'],'学':['小','人'],
+ '土':['上','木'],'小':['川','水'],
+};
+
+/* deterministic PRNG so figures are stable across reloads */
+function prng(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+function buildStats(list,seedBase,setLabel,kind){
+  const rnd=prng(seedBase);
+  return list.map((row,i)=>{
+    const c=row[0];
+    /* most characters are well-learned; only the hand-set confusion pairs run hot,
+       so the heatmap reads as "a few glowing weak spots" rather than an even wash */
+    const acc = WEAK_SET[c]!==undefined ? WEAK_SET[c] : 0.885+rnd()*0.110;
+    const att = 22+Math.floor(rnd()*104);
+    return {c, kind, set:setLabel,
+      reading: kind==='kana'?row[1]:null,
+      meaning: kind==='kanji'?row[1]:null,
+      on: kind==='kanji'?row[2]:null,
+      kun: kind==='kanji'?row[3]:null,
+      acc, att, seen: 1+Math.floor(rnd()*9), ease:(1.9+rnd()*1.0)};
+  });
+}
+const S_HIRA = buildStats(HIRA,1337,'Hiragana','kana');
+const S_KATA = buildStats(KATA,4242,'Katakana','kana');
+const S_KANJI= buildStats(KANJI,9001,'Kanji N5','kanji');
+const S_ALL = [...S_HIRA,...S_KATA,...S_KANJI];
+const RANKED = [...S_ALL].sort((a,b)=>a.acc-b.acc);
+const WEAKEST = RANKED.filter(x=>x.att>=20).slice(0,8);
+
+/* ── Exercise segments — challenge × scoring × real difficulty ladder ─── */
+const SEGMENTS = [
+ {name:'Hiragana · Gojuon',            track:'kana', type:'Recognition', scheme:'Accuracy',      tier:'gojuon',           lvl:1, size:46,  sizeNote:'of 104', mastery:.94, last:'2026-06-28', deck:'hira-gojuon'},
+ {name:'Hiragana · Dakuon + Han-dakuon',track:'kana',type:'Recall',      scheme:'Streak',        tier:'dakuon→han-dakuon',lvl:2, size:25,  sizeNote:'of 104', mastery:.81, last:'2026-07-04', deck:'hira-dakuon'},
+ {name:'Hiragana · Yoon',              track:'kana', type:'Recognition', scheme:'Accuracy',      tier:'yoon',             lvl:3, size:33,  sizeNote:'of 104', mastery:.69, last:'2026-07-19', deck:'hira-yoon'},
+ {name:'Katakana · Gojuon',            track:'kana', type:'Timed',       scheme:'Speed-weighted',tier:'gojuon',           lvl:1, size:46,  sizeNote:'of 104', mastery:.88, last:'2026-07-11', deck:'kata-gojuon'},
+ {name:'Katakana · Dakuon + Yoon',     track:'kana', type:'Recall',      scheme:'Streak',        tier:'dakuon→yoon',      lvl:3, size:58,  sizeNote:'of 104', mastery:.73, last:'2026-07-11', deck:'kata-gojuon'},
+ {name:'Kana · Full Mixed',        track:'kana', type:'Mixed',       scheme:'Spaced-repetition', tier:'full 104 ×2', lvl:4, size:208,  sizeNote:'both syllabaries', mastery:.76, last:'2026-08-02', deck:'kana-mixed'},
+ {name:'Kana · Sound Match',       track:'kana', type:'Listening',   scheme:'Accuracy',          tier:'gojuon→yoon', lvl:4, size:104,  sizeNote:'hiragana', mastery:.64, last:'2026-07-23', deck:'kana-mixed'},
+ {name:'Kanji · JLPT N5 Core',     track:'kanji',type:'Recognition', scheme:'Accuracy',          tier:'JLPT N5',     lvl:1, size:107,  sizeNote:'kanji',  mastery:.83, last:'2026-08-05', deck:'kanji-n5'},
+ {name:'Kanji · JLPT N4 Everyday', track:'kanji',type:'Recall',      scheme:'Spaced-repetition', tier:'JLPT N4',     lvl:2, size:174,  sizeNote:'kanji',  mastery:.58, last:'2026-07-17', deck:'kanji-n5'},
+ {name:'Kanji · JLPT N3 Abstract', track:'kanji',type:'Timed',       scheme:'Speed-weighted',    tier:'JLPT N3',     lvl:3, size:394,  sizeNote:'kanji',  mastery:.31, last:'2026-07-29', deck:'kanji-n5'},
+ {name:'Kanji · JLPT N2 Register', track:'kanji',type:'Mixed',       scheme:'Streak',            tier:'JLPT N2',     lvl:4, size:248,  sizeNote:'kanji',  mastery:.12, last:'—',          deck:'kanji-n5'},
+ {name:'Kanji · JLPT N1 Literary', track:'kanji',type:'Recall',      scheme:'Spaced-repetition', tier:'JLPT N1',     lvl:5, size:382,  sizeNote:'kanji',  mastery:.03, last:'—',          deck:'kanji-n5'},
+ {name:'Volume · Top 200',         track:'kanji',type:'Timed',       scheme:'Speed-weighted',    tier:'Top 200',     lvl:2, size:200,  sizeNote:'by frequency', mastery:.71, last:'2026-07-16', deck:'kanji-n5'},
+ {name:'Volume · Top 500',         track:'kanji',type:'Mixed',       scheme:'Spaced-repetition', tier:'Top 500',     lvl:3, size:500,  sizeNote:'by frequency', mastery:.44, last:'2026-07-26', deck:'kanji-n5'},
+ {name:'Volume · Joyo Complete',   track:'kanji',type:'Recall',      scheme:'Spaced-repetition', tier:'Joyo 1,521',  lvl:5, size:1521, sizeNote:'Grade 1–6 + Secondary', mastery:.18, last:'—', deck:'kanji-n5'},
+];
+
+const DECKS = {
+ 'hira-gojuon':   {label:'Hiragana · Gojuon',       cards:HIRA,           kind:'kana'},
+ 'hira-dakuon':   {label:'Hiragana · Dakuon',       cards:[...HIRA_DAKUON,...HIRA_HANDAKUON], kind:'kana'},
+ 'hira-yoon':     {label:'Hiragana · Yoon',         cards:HIRA_YOON,      kind:'kana'},
+ 'kata-gojuon':   {label:'Katakana · Gojuon',       cards:KATA,           kind:'kana'},
+ 'kana-mixed':    {label:'Kana · Full Mixed',       cards:[...HIRA,...KATA,...HIRA_DAKUON,...HIRA_YOON], kind:'kana'},
+ 'kanji-n5':      {label:'Kanji · JLPT N5 Core',    cards:KANJI,          kind:'kanji'},
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SVG chart helpers
+   ══════════════════════════════════════════════════════════════════════════ */
+const A='#f5c518', S2='#8b93a6', GRID='#22252e', AXIS='#2c303a', INK3='#6b7080', INK2='#a2a8b8';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const el=id=>document.getElementById(id);
+const fmt=(v,d=1)=>Number(v).toFixed(d);
+
+/* Charts are drawn at 1:1 with their container — the viewBox width is measured from
+   the host, not fixed. A fixed viewBox stretched to 100% width scales the *type* with
+   the box, so the same chart shows 9px labels in a wide panel and 24px labels in a
+   narrow stacked one. Measuring instead keeps one SVG unit == one CSS pixel at every
+   breakpoint, and renderAll() re-runs on resize. */
+function svgOpen(w,h){return `<svg viewBox="0 0 ${w} ${h}" role="img" style="width:100%;height:auto">`;}
+function hostW(host,fallback){
+  const cs=getComputedStyle(host);
+  const w=host.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0);
+  return Math.round(Math.max(300, w>10? w : fallback));
+}
+
+/* ── tooltip ── */
+const tt=el('tt');
+function showTT(host,x,y,html){
+  tt.innerHTML=html; tt.style.opacity='1';
+  const hb=host.getBoundingClientRect();
+  const tw=tt.offsetWidth, th=tt.offsetHeight;
+  let L=hb.left+window.scrollX+x+14, T=hb.top+window.scrollY+y-th-10;
+  if(L+tw>window.scrollX+window.innerWidth-8) L=hb.left+window.scrollX+x-tw-14;
+  if(T<window.scrollY+4) T=hb.top+window.scrollY+y+16;
+  tt.style.left=L+'px'; tt.style.top=T+'px';
+}
+function hideTT(){tt.style.opacity='0';}
+
+/* ══════════════ state ══════════════ */
+let RANGE='90', TRACK='all', HMSET='hira';
+
+function scoped(){
+  let rows=SESSIONS.slice();
+  if(TRACK!=='all') rows=rows.filter(r=>r.track===TRACK);
+  if(RANGE!=='all'){
+    const cut=new Date(TODAY.getTime()-Number(RANGE)*864e5);
+    rows=rows.filter(r=>new Date(r.d+'T00:00:00Z')>=cut);
+  }
+  return rows;
+}
+
+/* ══════════════ header stats ══════════════ */
+function renderStats(rows){
+  const cards=rows.reduce((s,r)=>s+r.cards,0);
+  const wacc = cards? rows.reduce((s,r)=>s+r.acc*r.cards,0)/cards : 0;
+  const half=Math.max(1,Math.floor(rows.length/2));
+  const early=rows.slice(0,half), late=rows.slice(-half);
+  const mean=a=>a.length? a.reduce((s,r)=>s+r.acc,0)/a.length : 0;
+  const delta=mean(late)-mean(early);
+  const msSorted=rows.map(r=>r.ms).sort((a,b)=>a-b);
+  const med=msSorted.length?msSorted[Math.floor(msSorted.length/2)]:0;
+  const bestRun=rows.reduce((m,r)=>Math.max(m,r.run),0);
+  const bestSess=rows.reduce((m,r)=>r.acc>m.acc?r:m,{acc:-1});
+
+  el('hero-acc').innerHTML = fmt(wacc,1)+'<small>%</small>';
+  el('hero-delta').innerHTML = (delta>=0?'▲ +':'▼ ')+fmt(Math.abs(delta),1)+' pts <span>second half vs. first</span>';
+  el('hero-delta').style.color = delta>=0? 'var(--ok)':'var(--series-2)';
+
+  el('t-sessions').textContent=rows.length;
+  el('t-sessions-d').innerHTML = rows.length? 'last run '+rows[rows.length-1].d : 'no runs in scope';
+  el('t-cards').textContent=cards.toLocaleString();
+  el('t-cards-d').innerHTML = rows.length? Math.round(cards/rows.length)+' avg per run' : '—';
+  el('t-streak').innerHTML=bestRun+'<small> correct</small>';
+  el('t-streak-d').innerHTML = bestSess.acc>0? 'peak session <em>'+fmt(bestSess.acc,1)+'%</em>' : '—';
+  el('t-ms').innerHTML=(med/1000).toFixed(2)+'<small>s</small>';
+  const msDelta = rows.length>3 ? (rows.slice(0,2).reduce((s,r)=>s+r.ms,0)/2 - rows.slice(-2).reduce((s,r)=>s+r.ms,0)/2) : 0;
+  el('t-ms-d').innerHTML = msDelta>0? '<em>−'+(msDelta/1000).toFixed(2)+'s</em> vs. scope start' : 'stable across scope';
+
+  el('scopemeta').innerHTML='Scope <b>'+rows.length+'</b> sessions · <b>'+cards.toLocaleString()+
+    '</b> cards · '+(rows.length?rows[0].d+' → '+rows[rows.length-1].d:'—');
+  el('log-count').textContent=rows.length+' rows';
+}
+
+/* ══════════════ hero sparkline ══════════════ */
+function renderHeroSpark(rows){
+  const host=el('hero-spark'); const H=62,P=4, W=hostW(host,300);
+  if(rows.length<2){host.innerHTML='<span class="hint">Not enough sessions in scope.</span>';return;}
+  const lo=Math.min(...rows.map(r=>r.acc))-3, hi=Math.max(...rows.map(r=>r.acc))+3;
+  const X=i=>P+i*(W-2*P)/(rows.length-1), Y=v=>H-P-((v-lo)/(hi-lo))*(H-2*P);
+  const pts=rows.map((r,i)=>[X(i),Y(r.acc)]);
+  const line=pts.map((p,i)=>(i?'L':'M')+fmt(p[0],1)+' '+fmt(p[1],1)).join(' ');
+  const area=line+` L${fmt(W-P,1)} ${H} L${fmt(P,1)} ${H} Z`;
+  const last=pts[pts.length-1];
+  host.innerHTML=svgOpen(W,H)+
+    `<path d="${area}" fill="${A}" fill-opacity=".10"/>`+
+    `<path d="${line}" fill="none" stroke="${A}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`+
+    `<circle cx="${fmt(last[0],1)}" cy="${fmt(last[1],1)}" r="4" fill="${A}" stroke="#14151a" stroke-width="2"/>`+
+    `<text x="${P}" y="${H-1}" font-family="ui-monospace,monospace" font-size="8" fill="${INK3}" letter-spacing=".08em">SESSION ${rows[0].n}</text>`+
+    `<text x="${W-P}" y="${H-1}" text-anchor="end" font-family="ui-monospace,monospace" font-size="8" fill="${INK3}" letter-spacing=".08em">${rows.length} RUNS</text>`+
+    `</svg>`;
+}
+
+/* ══════════════ accuracy-by-session trend ══════════════ */
+function renderTrend(rows){
+  const host=el('trend-chart');
+  if(rows.length<2){host.innerHTML='<p class="hint">Not enough sessions in scope to draw a trend.</p>';return;}
+  const H=250,L=40,R=54,T=14,B=34, W=hostW(host,760);
+  const pw=W-L-R, ph=H-T-B;
+  const lo=55,hi=100;
+  const X=i=>L+(rows.length===1?pw/2:i*pw/(rows.length-1));
+  const Y=v=>T+ph-((v-lo)/(hi-lo))*ph;
+
+  /* 5-session moving average */
+  const ma=rows.map((_,i)=>{const s=Math.max(0,i-4);const w=rows.slice(s,i+1);return w.reduce((a,r)=>a+r.acc,0)/w.length;});
+
+  let g='';
+  for(let v=60;v<=100;v+=10){
+    g+=`<line x1="${L}" y1="${fmt(Y(v),1)}" x2="${L+pw}" y2="${fmt(Y(v),1)}" stroke="${GRID}" stroke-width="1"/>`+
+       `<text x="${L-9}" y="${fmt(Y(v)+3.5,1)}" text-anchor="end" font-family="ui-monospace,monospace" font-size="9.5" fill="${INK3}">${v}%</text>`;
+  }
+  const pts=rows.map((r,i)=>[X(i),Y(r.acc)]);
+  const line=pts.map((p,i)=>(i?'L':'M')+fmt(p[0],1)+' '+fmt(p[1],1)).join(' ');
+  const area=line+` L${fmt(X(rows.length-1),1)} ${T+ph} L${fmt(X(0),1)} ${T+ph} Z`;
+  const maLine=ma.map((v,i)=>(i?'L':'M')+fmt(X(i),1)+' '+fmt(Y(v),1)).join(' ');
+
+  let ticks='';
+  const step=Math.max(1,Math.ceil(rows.length/8));
+  rows.forEach((r,i)=>{ if(i%step===0||i===rows.length-1)
+    ticks+=`<text x="${fmt(X(i),1)}" y="${H-14}" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="${INK3}">${r.d.slice(5)}</text>`;});
+
+  const dots=pts.map((p,i)=>`<circle cx="${fmt(p[0],1)}" cy="${fmt(p[1],1)}" r="3.6" fill="${A}" stroke="#14151a" stroke-width="2"/>`).join('');
+  const lastP=pts[pts.length-1], lastR=rows[rows.length-1];
+  const bestI=rows.reduce((m,r,i)=>r.acc>rows[m].acc?i:m,0);
+
+  host.innerHTML=svgOpen(W,H)+
+    g+
+    `<line x1="${L}" y1="${T+ph}" x2="${L+pw}" y2="${T+ph}" stroke="${AXIS}" stroke-width="1"/>`+
+    `<path d="${area}" fill="${A}" fill-opacity=".10"/>`+
+    `<path d="${maLine}" fill="none" stroke="${S2}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`+
+    `<path d="${line}" fill="none" stroke="${A}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`+
+    dots+
+    /* selective direct labels: the endpoint and the peak only */
+    `<text x="${fmt(lastP[0]+9,1)}" y="${fmt(lastP[1]+3.5,1)}" font-family="ui-monospace,monospace" font-size="10.5" fill="${INK2}">${fmt(lastR.acc,1)}%</text>`+
+    (bestI!==rows.length-1?`<text x="${fmt(X(bestI),1)}" y="${fmt(Y(rows[bestI].acc)-11,1)}" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="${INK2}">peak ${fmt(rows[bestI].acc,1)}%</text>`:'')+
+    ticks+
+    `<line id="tr-cross" x1="0" y1="${T}" x2="0" y2="${T+ph}" stroke="${AXIS}" stroke-width="1" opacity="0"/>`+
+    `<rect id="tr-hit" x="${L}" y="${T}" width="${pw}" height="${ph}" fill="transparent"/>`+
+    `</svg>`;
+
+  const hit=host.querySelector('#tr-hit'), cross=host.querySelector('#tr-cross'), svg=host.querySelector('svg');
+  function nearest(ev){
+    const b=svg.getBoundingClientRect();
+    const sx=(ev.clientX-b.left)/b.width*W;
+    let bi=0,bd=1e9;
+    rows.forEach((_,i)=>{const d=Math.abs(X(i)-sx); if(d<bd){bd=d;bi=i;}});
+    return bi;
+  }
+  hit.addEventListener('mousemove',ev=>{
+    const i=nearest(ev), r=rows[i];
+    cross.setAttribute('x1',X(i)); cross.setAttribute('x2',X(i)); cross.setAttribute('opacity','1');
+    const b=svg.getBoundingClientRect();
+    showTT(host,(X(i)/W)*b.width,(Y(r.acc)/H)*b.height,
+      `<span class="h">SESSION ${r.n} · ${r.d}</span>`+
+      `<span class="k">deck</span> ${esc(r.deck)}<br>`+
+      `<span class="k">accuracy</span> <span class="a">${fmt(r.acc,1)}%</span> · ${r.cards} cards<br>`+
+      `<span class="k">5-sess avg</span> ${fmt(ma[i],1)}%<br>`+
+      `<span class="k">best run</span> ${r.run} · <span class="k">avg</span> ${(r.ms/1000).toFixed(2)}s`);
+  });
+  hit.addEventListener('mouseleave',()=>{cross.setAttribute('opacity','0');hideTT();});
+
+  /* table twin */
+  el('trend-table').innerHTML='<table class="dt"><thead><tr><th>#</th><th>Date</th><th>Deck</th>'+
+    '<th class="r">Accuracy</th><th class="r">5-sess avg</th><th class="r">Cards</th></tr></thead><tbody>'+
+    rows.map((r,i)=>`<tr><td class="n">${r.n}</td><td class="n">${r.d}</td><td>${esc(r.deck)}</td>`+
+      `<td class="r n">${fmt(r.acc,1)}%</td><td class="r n">${fmt(ma[i],1)}%</td><td class="r n">${r.cards}</td></tr>`).join('')+
+    '</tbody></table>';
+}
+
+/* ══════════════ retention curve ══════════════ */
+function renderRetention(){
+  const host=el('retention-chart');
+  const H=250,L=38,R=18,T=14,B=34, W=hostW(host,340), pw=W-L-R, ph=H-T-B;
+  const xs=RETENTION.map(d=>Math.log(d.iv));
+  const x0=Math.min(...xs), x1=Math.max(...xs);
+  const X=iv=>L+((Math.log(iv)-x0)/(x1-x0))*pw;
+  const Y=v=>T+ph-((v-50)/50)*ph;
+  let g='';
+  for(let v=50;v<=100;v+=10){
+    g+=`<line x1="${L}" y1="${fmt(Y(v),1)}" x2="${L+pw}" y2="${fmt(Y(v),1)}" stroke="${GRID}" stroke-width="1"/>`+
+       `<text x="${L-8}" y="${fmt(Y(v)+3.5,1)}" text-anchor="end" font-family="ui-monospace,monospace" font-size="9.5" fill="${INK3}">${v}%</text>`;
+  }
+  const pts=RETENTION.map(d=>[X(d.iv),Y(d.r)]);
+  const line=pts.map((p,i)=>(i?'L':'M')+fmt(p[0],1)+' '+fmt(p[1],1)).join(' ');
+  const area=line+` L${fmt(pts[pts.length-1][0],1)} ${T+ph} L${fmt(pts[0][0],1)} ${T+ph} Z`;
+  host.innerHTML=svgOpen(W,H)+g+
+    `<line x1="${L}" y1="${T+ph}" x2="${L+pw}" y2="${T+ph}" stroke="${AXIS}" stroke-width="1"/>`+
+    `<line x1="${L}" y1="${fmt(Y(90),1)}" x2="${L+pw}" y2="${fmt(Y(90),1)}" stroke="${S2}" stroke-width="1"/>`+
+    `<text x="${L+pw}" y="${fmt(Y(90)-6,1)}" text-anchor="end" font-family="ui-monospace,monospace" font-size="9" fill="${INK3}">90% TARGET</text>`+
+    `<path d="${area}" fill="${A}" fill-opacity=".10"/>`+
+    `<path d="${line}" fill="none" stroke="${A}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`+
+    RETENTION.map((d,i)=>`<circle class="rt-dot" data-i="${i}" cx="${fmt(pts[i][0],1)}" cy="${fmt(pts[i][1],1)}" r="4" fill="${A}" stroke="#14151a" stroke-width="2"/>`).join('')+
+    RETENTION.map((d,i)=>`<circle class="rt-hit" data-i="${i}" cx="${fmt(pts[i][0],1)}" cy="${fmt(pts[i][1],1)}" r="15" fill="transparent"/>`).join('')+
+    RETENTION.map(d=>`<text x="${fmt(X(d.iv),1)}" y="${H-14}" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="${INK3}">${d.iv}d</text>`).join('')+
+    `<text x="${fmt(pts[0][0]+8,1)}" y="${fmt(pts[0][1]-8,1)}" font-family="ui-monospace,monospace" font-size="10" fill="${INK2}">${fmt(RETENTION[0].r,1)}%</text>`+
+    `<text x="${fmt(pts[pts.length-1][0],1)}" y="${fmt(pts[pts.length-1][1]+16,1)}" text-anchor="end" font-family="ui-monospace,monospace" font-size="10" fill="${INK2}">${fmt(RETENTION[RETENTION.length-1].r,1)}%</text>`+
+    `</svg>`;
+  const svg=host.querySelector('svg');
+  host.querySelectorAll('.rt-hit').forEach(n=>{
+    n.addEventListener('mouseenter',()=>{
+      const d=RETENTION[+n.dataset.i], b=svg.getBoundingClientRect();
+      showTT(host,(X(d.iv)/W)*b.width,(Y(d.r)/H)*b.height,
+        `<span class="h">INTERVAL ${d.iv} DAY${d.iv>1?'S':''}</span><span class="k">recall</span> <span class="a">${fmt(d.r,1)}%</span><br><span class="k">vs target</span> ${fmt(d.r-90,1)} pts`);
+    });
+    n.addEventListener('mouseleave',hideTT);
+  });
+}
+
+/* ══════════════ time-of-day ══════════════
+   A DOT PLOT, not columns. The interesting range is 79–92%, and a bar's length
+   only means something from a zero baseline — cutting the axis under a bar would
+   inflate a 12-point spread into a 5× difference. Dots carry position only, so a
+   clipped scale is honest. */
+function renderTOD(){
+  const host=el('tod-chart');
+  const H=248,L=38,R=12,T=18,B=58, W=hostW(host,380), pw=W-L-R, ph=H-T-B;
+  const best=TOD.reduce((m,d)=>d.acc>m.acc?d:m,TOD[0]);
+  const worst=TOD.reduce((m,d)=>d.acc<m.acc?d:m,TOD[0]);
+  const band=pw/TOD.length;
+  const Y=v=>T+ph-((v-75)/20)*ph;
+  let g='';
+  for(let v=75;v<=95;v+=5){
+    g+=`<line x1="${L}" y1="${fmt(Y(v),1)}" x2="${L+pw}" y2="${fmt(Y(v),1)}" stroke="${GRID}" stroke-width="1"/>`+
+       `<text x="${L-8}" y="${fmt(Y(v)+3.5,1)}" text-anchor="end" font-family="ui-monospace,monospace" font-size="9.5" fill="${INK3}">${v}%</text>`;
+  }
+  const marks=TOD.map((d,i)=>{
+    const cx=L+band*i+band/2, y=Y(d.acc), on=d===best;
+    return `<line x1="${fmt(cx,1)}" y1="${T}" x2="${fmt(cx,1)}" y2="${T+ph}" stroke="${GRID}" stroke-width="1"/>`+
+      `<circle cx="${fmt(cx,1)}" cy="${fmt(y,1)}" r="5.5" fill="${on?A:'#8b93a6'}" stroke="#14151a" stroke-width="2"/>`+
+      ((on||d===worst)?`<text x="${fmt(cx,1)}" y="${fmt(y-11,1)}" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="${INK2}">${fmt(d.acc,1)}%</text>`:'')+
+      `<text x="${fmt(cx,1)}" y="${H-40}" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="${on?INK2:INK3}">${d.b}</text>`+
+      `<text x="${fmt(cx,1)}" y="${H-28}" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="${INK3}">n=${d.s}</text>`+
+      `<rect class="tod-hit" data-i="${i}" x="${fmt(L+band*i,1)}" y="${T}" width="${fmt(band,1)}" height="${ph}" fill="transparent"/>`;
+  }).join('');
+  host.innerHTML=svgOpen(W,H)+g+
+    `<line x1="${L}" y1="${T+ph}" x2="${L+pw}" y2="${T+ph}" stroke="${AXIS}" stroke-width="1"/>`+marks+
+    `<text x="${L}" y="${H-6}" font-family="ui-monospace,monospace" font-size="8.5" fill="${INK3}" letter-spacing=".1em">START HOUR (LOCAL)</text>`+
+    `<text x="${W-R}" y="${H-6}" text-anchor="end" font-family="ui-monospace,monospace" font-size="8.5" fill="${INK3}" letter-spacing=".1em">SPREAD ${fmt(best.acc-worst.acc,1)} PTS</text>`+
+    `</svg>`;
+  const svg=host.querySelector('svg');
+  host.querySelectorAll('.tod-hit').forEach(n=>{
+    n.addEventListener('mouseenter',()=>{
+      const d=TOD[+n.dataset.i], b=svg.getBoundingClientRect();
+      const cx=L+band*(+n.dataset.i)+band/2;
+      showTT(host,(cx/W)*b.width,(Y(d.acc)/H)*b.height,
+        `<span class="h">${d.b}</span><span class="k">accuracy</span> <span class="a">${fmt(d.acc,1)}%</span><br>`+
+        `<span class="k">sessions</span> ${d.s}<br><span class="k">vs best</span> ${fmt(d.acc-best.acc,1)} pts`);
+    });
+    n.addEventListener('mouseleave',hideTT);
+  });
+}
+
+/* ══════════════ heatmap ══════════════ */
+function hmBin(miss){ return miss<.05?0:miss<.10?1:miss<.15?2:miss<.20?3:miss<.30?4:5; }
+function renderHeatmap(){
+  const src = HMSET==='hira'?S_HIRA:HMSET==='kata'?S_KATA:S_KANJI;
+  const grid=el('hm-grid');
+  grid.innerHTML=src.map((s,i)=>{
+    const miss=1-s.acc;
+    return `<button class="b${hmBin(miss)}" data-set="${HMSET}" data-i="${i}" title="">${esc(s.c)}</button>`;
+  }).join('');
+  const worst=[...src].sort((a,b)=>a.acc-b.acc)[0];
+  const avg=src.reduce((a,s)=>a+s.acc,0)/src.length;
+  el('hm-note').innerHTML=`${src.length} characters · set mean ${fmt(avg*100,1)}% · weakest ${esc(worst.c)}`;
+  renderHmHist(src);
+  grid.querySelectorAll('button').forEach(n=>{
+    const s=src[+n.dataset.i];
+    n.addEventListener('mouseenter',ev=>{
+      const b=n.getBoundingClientRect(), hb=grid.getBoundingClientRect();
+      showTT(grid,b.left-hb.left+b.width/2,b.top-hb.top,
+        `<span class="h">${esc(s.c)}${s.reading?' · '+esc(s.reading):' · '+esc(s.meaning)}</span>`+
+        `<span class="k">accuracy</span> <span class="a">${fmt(s.acc*100,1)}%</span><br>`+
+        `<span class="k">miss rate</span> ${fmt((1-s.acc)*100,1)}%<br>`+
+        `<span class="k">attempts</span> ${s.att} · <span class="k">seen</span> ${s.seen}d ago<br>`+
+        `<span class="k">click to drill</span>`);
+    });
+    n.addEventListener('mouseleave',hideTT);
+    n.addEventListener('click',()=>{hideTT();launchChar(s);});
+  });
+  el('hm-table').innerHTML='<table class="dt"><thead><tr><th>Char</th><th>Reading</th>'+
+    '<th class="r">Attempts</th><th class="r">Accuracy</th><th class="r">Miss</th></tr></thead><tbody>'+
+    [...src].sort((a,b)=>a.acc-b.acc).map(s=>
+      `<tr><td class="jp">${esc(s.c)}</td><td>${esc(s.reading||s.meaning)}</td>`+
+      `<td class="r n">${s.att}</td><td class="r n">${fmt(s.acc*100,1)}%</td><td class="r n">${fmt((1-s.acc)*100,1)}%</td></tr>`).join('')+
+    '</tbody></table>';
+}
+
+/* Distribution across the miss-rate bins. Counts start at zero, so bars are
+   legitimate here; the fills use the ordered ramp because the categories ARE the
+   value bins, which is the one case where a ramp on bars is correct. */
+const BIN_FILL=['#1b1e26','#33301f','#55481a','#806613','#b8900f','#f5c518'];
+const BIN_LABEL=['0–5%','5–10%','10–15%','15–20%','20–30%','30%+'];
+function renderHmHist(src){
+  const counts=[0,0,0,0,0,0];
+  src.forEach(s=>counts[hmBin(1-s.acc)]++);
+  const max=Math.max(...counts,1);
+  const H=92,L=6,R=6,T=14,B=26, W=hostW(el('hm-hist'),560), pw=W-L-R, ph=H-T-B;
+  const band=pw/6, bw=Math.min(72,band-10);
+  const bars=counts.map((c,i)=>{
+    const cx=L+band*i+band/2, h=Math.max(c?3:0,(c/max)*ph), y=T+ph-h;
+    return (c?`<path d="M${fmt(cx-bw/2,1)} ${fmt(T+ph,1)} L${fmt(cx-bw/2,1)} ${fmt(y+4,1)} Q${fmt(cx-bw/2,1)} ${fmt(y,1)} ${fmt(cx-bw/2+4,1)} ${fmt(y,1)} L${fmt(cx+bw/2-4,1)} ${fmt(y,1)} Q${fmt(cx+bw/2,1)} ${fmt(y,1)} ${fmt(cx+bw/2,1)} ${fmt(y+4,1)} L${fmt(cx+bw/2,1)} ${fmt(T+ph,1)} Z" fill="${BIN_FILL[i]}"/>`:'')+
+      `<text x="${fmt(cx,1)}" y="${fmt((c?y:T+ph)-6,1)}" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="${i>=4&&c?INK2:INK3}">${c}</text>`+
+      `<text x="${fmt(cx,1)}" y="${H-8}" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="${INK3}">${BIN_LABEL[i]}</text>`;
+  }).join('');
+  el('hm-hist').innerHTML=svgOpen(W,H)+
+    `<line x1="${L}" y1="${T+ph}" x2="${L+pw}" y2="${T+ph}" stroke="${AXIS}" stroke-width="1"/>`+bars+`</svg>`;
+}
+
+/* ══════════════ weak characters ══════════════ */
+function miniSpark(seed,acc){
+  const rnd=prng(seed); const W=58,H=16;
+  const v=Array.from({length:10},(_,i)=>{
+    const drift=(i/9)*0.10;
+    return Math.max(.35,Math.min(.99, acc-0.09+drift+ (rnd()-0.5)*0.13 ));
+  });
+  const X=i=>1+i*(W-2)/9, Y=x=>H-1-((x-.3)/.7)*(H-2);
+  const d=v.map((x,i)=>(i?'L':'M')+fmt(X(i),1)+' '+fmt(Y(x),1)).join(' ');
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="display:block"><path d="${d}" fill="none" stroke="${A}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" opacity=".85"/></svg>`;
+}
+function renderWeak(){
+  el('weak-table').innerHTML='<thead><tr><th>Char</th><th>Reading</th><th>Set</th>'+
+    '<th class="r">Att.</th><th class="r">Acc.</th><th>Trend</th><th></th></tr></thead><tbody>'+
+    WEAKEST.map((s,i)=>`<tr>
+      <td class="jp">${esc(s.c)}</td>
+      <td>${esc(s.reading||s.meaning)}</td>
+      <td style="color:var(--ink-3);font-size:10.5px">${esc(s.set)}</td>
+      <td class="r n">${s.att}</td>
+      <td class="r n" style="color:var(--accent)">${fmt(s.acc*100,1)}%</td>
+      <td>${miniSpark(700+i*31,s.acc)}</td>
+      <td class="r"><button class="go" data-w="${i}">Drill</button></td></tr>`).join('')+'</tbody>';
+  el('weak-table').querySelectorAll('button[data-w]').forEach(b=>
+    b.addEventListener('click',()=>launchChar(WEAKEST[+b.dataset.w])));
+  const below=RANKED.filter(s=>s.acc<0.65).length;
+  el('weak-note').innerHTML=`<b style="color:var(--ink-2)">${below}</b> of ${RANKED.length} tracked characters sit below 65&#37; ` +
+    `and are front-loaded into the next spaced-repetition run. Katakana <span style="font-family:var(--jp)">ソ</span> / ` +
+    `<span style="font-family:var(--jp)">ン</span> and <span style="font-family:var(--jp)">シ</span> / ` +
+    `<span style="font-family:var(--jp)">ツ</span> account for the largest share of misses.`;
+}
+
+/* ══════════════ session log ══════════════ */
+function renderLog(rows){
+  el('log-table').innerHTML='<thead><tr><th>#</th><th>Date</th><th>Deck</th><th>Challenge</th><th>Scoring</th>'+
+    '<th class="r">Cards</th><th class="r">Run</th><th class="r">Avg</th><th class="r">Accuracy</th></tr></thead><tbody>'+
+    rows.slice().reverse().map(r=>`<tr>
+      <td class="n" style="color:var(--ink-3)">${r.n}</td>
+      <td class="n">${r.d}</td>
+      <td>${esc(r.deck)}</td>
+      <td><span class="badge type">${esc(r.type)}</span></td>
+      <td><span class="badge score">${esc(r.scheme)}</span></td>
+      <td class="r n">${r.cards}</td>
+      <td class="r n">${r.run}</td>
+      <td class="r n">${(r.ms/1000).toFixed(2)}s</td>
+      <td class="r"><div class="meterrow" style="justify-content:flex-end"><span class="meter" style="width:52px"><i style="width:${fmt(r.acc,0)}%"></i></span><span class="pct">${fmt(r.acc,1)}</span></div></td>
+    </tr>`).join('')+'</tbody>';
+}
+
+/* ══════════════ segments ══════════════ */
+function pips(n){return '<span class="pips">'+[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')+'</span>';}
+function renderSegments(){
+  const list = TRACK==='all'? SEGMENTS : SEGMENTS.filter(s=>s.track===TRACK);
+  el('seg-table').innerHTML='<thead><tr><th>Segment</th><th>Challenge type</th><th>Scoring scheme</th>'+
+    '<th>Difficulty tier</th><th class="r">Set size</th><th>Mastery</th><th class="r">Last run</th><th></th></tr></thead><tbody>'+
+    list.map((s,i)=>`<tr>
+      <td style="color:var(--ink);font-weight:600">${esc(s.name)}</td>
+      <td><span class="badge type">${esc(s.type)}</span></td>
+      <td><span class="badge score">${esc(s.scheme)}</span></td>
+      <td>${pips(s.lvl)}<span style="font-family:var(--mono);font-size:10.5px">${esc(s.tier)}</span></td>
+      <td class="r n">${s.size.toLocaleString()}<span style="color:var(--ink-3);font-size:9.5px"> ${esc(s.sizeNote)}</span></td>
+      <td><div class="meterrow"><span class="meter" style="flex:1;max-width:120px"><i style="width:${Math.round(s.mastery*100)}%"></i></span><span class="pct">${Math.round(s.mastery*100)}%</span></div></td>
+      <td class="r n" style="color:var(--ink-3)">${esc(s.last)}</td>
+      <td class="r"><button class="go" data-seg="${SEGMENTS.indexOf(s)}">Launch →</button></td>
+    </tr>`).join('')+'</tbody>';
+  el('seg-table').querySelectorAll('button[data-seg]').forEach(b=>
+    b.addEventListener('click',()=>launchSegment(SEGMENTS[+b.dataset.seg])));
+}
+
+/* ══════════════ table toggles ══════════════ */
+function toggleTable(btn,which){
+  const on = btn.getAttribute('aria-pressed')!=='true';
+  btn.setAttribute('aria-pressed',String(on));
+  el(which+'-table').classList.toggle('on',on);
+  el(which+'-chart').classList.toggle('off',on);
+}
+
+/* ══════════════ render-all ══════════════ */
+function renderAll(){
+  const rows=scoped();
+  renderStats(rows); renderHeroSpark(rows); renderTrend(rows);
+  renderRetention(); renderTOD(); renderHeatmap(); renderWeak();
+  renderLog(rows); renderSegments();
+}
+
+/* filters */
+function wireChips(id,setter){
+  el(id).querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    el(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));
+    b.setAttribute('aria-pressed','true'); setter(b.dataset.v); renderAll();
+  }));
+}
+wireChips('f-range',v=>RANGE=v);
+wireChips('f-track',v=>TRACK=v);
+el('hm-set').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+  el('hm-set').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));
+  b.setAttribute('aria-pressed','true'); HMSET=b.dataset.v; renderHeatmap();
+}));
+
+/* ══════════════════════════════════════════════════════════════════════════
+   FLASH CARD
+   ══════════════════════════════════════════════════════════════════════════ */
+let deck=[], di=0, flipped=false, answered=0, correct=0, streak=0, bestStreak=0,
+    msTotal=0, score=0, strip=[], meta={label:'—',type:'Recognition',scheme:'Accuracy',diff:'gojuon'};
+
+function speakerSVG(){
+  return `<svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
+    <path class="cone" d="M7.4 2.2 4.3 4.9H2.2a.8.8 0 0 0-.8.8v4.6c0 .44.36.8.8.8h2.1l3.1 2.7a.6.6 0 0 0 1-.45V2.65a.6.6 0 0 0-1-.45Z"/>
+    <path class="arc arc1" d="M10.6 5.9a3 3 0 0 1 0 4.2"/>
+    <path class="arc arc2" d="M12.6 3.9a5.9 5.9 0 0 1 0 8.2"/>
+  </svg>`;
+}
+function backHTML(c){
+  if(c.kind==='kanji'){
+    return `<div class="eyebrow">Meaning</div>
+      <div class="back-mean">${esc(c.meaning)}</div>
+      <div class="back-rule"></div>
+      <div class="back-readings">
+        <div class="rr"><span class="rk">On'yomi</span><span class="rv">${esc(c.on)}</span></div>
+        <div class="rr"><span class="rk">Kun'yomi</span><span class="rv">${esc(c.kun)}</span></div>
+      </div>
+      <button class="spk" onclick="playSound(event)">${speakerSVG()}<span class="wave"><i></i><i></i><i></i><i></i><i></i></span><span class="lbl">Play</span></button>`;
+  }
+  return `<div class="eyebrow">Romaji</div>
+    <div class="back-sound">${esc(c.reading)}</div>
+    <div class="back-rule"></div>
+    <div class="eyebrow">Kana</div>
+    <div class="back-kana">${esc(c.char)}</div>
+    <button class="spk" onclick="playSound(event)">${speakerSVG()}<span class="wave"><i></i><i></i><i></i><i></i><i></i></span><span class="lbl">Play</span></button>`;
+}
+function playSound(ev){
+  ev.stopPropagation();
+  const b=ev.currentTarget;
+  b.classList.add('playing');
+  b.querySelector('.lbl').textContent='Playing';
+  clearTimeout(b._t);
+  b._t=setTimeout(()=>{b.classList.remove('playing');b.querySelector('.lbl').textContent='Play';},1450);
+}
+
+function buildDeck(key,limit){
+  const d=DECKS[key];
+  const src=d.cards.slice(0,limit||d.cards.length);
+  return src.map(row=> d.kind==='kanji'
+    ? {kind:'kanji',char:row[0],meaning:row[1],on:row[2],kun:row[3]}
+    : {kind:'kana',char:row[0],reading:row[1]});
+}
+function statFor(ch){ return S_ALL.find(s=>s.c===ch); }
+
+function launchSegment(seg){
+  meta={label:seg.name,type:seg.type,scheme:seg.scheme,diff:seg.tier};
+  deck=buildDeck(seg.deck,20);
+  el('crumb-src').textContent='Exercise segments';
+  startDeck();
+}
+function launchChar(s){
+  meta={label:'Targeted drill · '+s.set,type:'Recognition',scheme:'Spaced-repetition',diff:'weak-character queue'};
+  deck=[ s.kind==='kanji'
+      ? {kind:'kanji',char:s.c,meaning:s.meaning,on:s.on,kun:s.kun}
+      : {kind:'kana',char:s.c,reading:s.reading} ];
+  const pool=RANKED.filter(x=>x.c!==s.c).slice(0,11);
+  pool.forEach(x=>deck.push(x.kind==='kanji'
+      ? {kind:'kanji',char:x.c,meaning:x.meaning,on:x.on,kun:x.kun}
+      : {kind:'kana',char:x.c,reading:x.reading}));
+  el('crumb-src').textContent='Per-character miss rate';
+  startDeck();
+}
+function launchWeak(){
+  meta={label:'Weakest 8 · targeted drill',type:'Mixed',scheme:'Spaced-repetition',diff:'weak-character queue'};
+  deck=WEAKEST.map(x=>x.kind==='kanji'
+      ? {kind:'kanji',char:x.c,meaning:x.meaning,on:x.on,kun:x.kun}
+      : {kind:'kana',char:x.c,reading:x.reading});
+  el('crumb-src').textContent='Weakest characters';
+  startDeck();
+}
+function startDeck(){
+  di=0;answered=0;correct=0;streak=0;bestStreak=0;msTotal=0;score=0;
+  strip=new Array(deck.length).fill(null);
+  el('crumb-deck').textContent=meta.label;
+  setView('card'); showCard();
+}
+function showCard(){
+  if(di>=deck.length) di=0;
+  const c=deck[di];
+  const card=el('card');
+  const wasFlipped=card.classList.contains('flipped');
+  flipped=false;
+  card.classList.remove('flipped');
+  el('grade').dataset.locked='true';
+  el('flipnote').textContent='Click the card · or press Space to flip';
+  /* if the card is flipping back, swap the faces mid-rotation so the change is unseen */
+  setTimeout(()=>{ el('cf-glyph').textContent=c.char; el('cf-back').innerHTML=backHTML(c); },
+             wasFlipped?330:0);
+  el('deck-name').textContent=meta.label;
+  el('deck-type').textContent=meta.type;
+  el('deck-ct').textContent=(di+1)+' / '+deck.length;
+  el('deck-prog').style.width=((di)/deck.length*100)+'%';
+  el('lv-scheme').textContent=meta.scheme;
+  el('lv-type').textContent=meta.type;
+  el('lv-diff').textContent=meta.diff;
+  renderCardStats(c);
+  renderLive();
+}
+function flip(){
+  flipped=!flipped;
+  el('card').classList.toggle('flipped',flipped);
+  el('grade').dataset.locked = flipped?'false':'true';
+  el('flipnote').textContent = flipped? 'Grade your recall to record the answer' : 'Click the card · or press Space to flip';
+}
+el('card').addEventListener('click',flip);
+el('card').addEventListener('keydown',e=>{
+  if(e.key===' '||e.key==='Enter'){e.preventDefault();flip();}
+});
+document.addEventListener('keydown',e=>{
+  if(el('view-card').classList.contains('on') && e.key===' ' && e.target===document.body){e.preventDefault();flip();}
+});
+
+function grade(g){
+  const ok=g>0;
+  strip[di]=ok;
+  answered++; if(ok){correct++;streak++;bestStreak=Math.max(bestStreak,streak);} else streak=0;
+  msTotal += 1200+Math.round(Math.random()*1600);
+  score += ok? (10+g*6+streak*2) : 0;
+  di++;
+  if(di>=deck.length){di=0;}
+  showCard();
+}
+function renderLive(){
+  el('lv-acc').textContent = answered? fmt(correct/answered*100,1)+'%' : '—';
+  el('lv-ans').textContent = answered+' / '+deck.length;
+  el('lv-streak').textContent = streak+(bestStreak?'  (best '+bestStreak+')':'');
+  el('lv-ms').textContent = answered? (msTotal/answered/1000).toFixed(2)+'s' : '—';
+  el('lv-score').textContent = score.toLocaleString();
+  el('lv-strip').innerHTML = strip.slice(0,24).map(v=>
+    `<i class="${v===null?'pend':(v?'ok':'no')}"></i>`).join('');
+}
+function renderCardStats(c){
+  const s=statFor(c.char);
+  const rank = s? RANKED.indexOf(s)+1 : null;
+  el('cd-att').textContent = s? s.att : '—';
+  el('cd-acc').textContent = s? fmt(s.acc*100,1)+'%' : '—';
+  el('cd-rank').textContent = s? '#'+rank+' of '+RANKED.length : '—';
+  el('cd-seen').textContent = s? s.seen+'d ago' : '—';
+  const iv = s? Math.max(1,Math.round(s.acc*s.acc*22)) : 1;
+  el('cd-int').textContent = iv+' d';
+  el('cd-ease').textContent = s? s.ease.toFixed(2) : '—';
+
+  /* recall history sparkline for this character */
+  const host=el('cd-spark');
+  const base = s? s.acc : .8, rnd=prng((c.char.codePointAt(0)||1)*97);
+  const hist=Array.from({length:12},(_,i)=>rnd() < (base-0.10+i*0.012) ? 1 : 0);
+  const H=54,P=6,gap=6, W=hostW(host,200);
+  const bw=Math.max(8,Math.min(22,(W-2*P-11*gap)/12));
+  const x0=(W-(12*bw+11*gap))/2;
+  host.innerHTML=svgOpen(W,H)+
+    hist.map((v,i)=>{
+      const x=x0+i*(bw+gap), h=v?26:11, y=H-16-h;
+      return `<rect x="${fmt(x,1)}" y="${fmt(y,1)}" width="${bw}" height="${h}" rx="3" fill="${v?A:'#3b4152'}"/>`;
+    }).join('')+
+    `<text x="${P}" y="${H-3}" font-family="ui-monospace,monospace" font-size="8" fill="${INK3}" letter-spacing=".08em">OLDEST</text>`+
+    `<text x="${W-P}" y="${H-3}" text-anchor="end" font-family="ui-monospace,monospace" font-size="8" fill="${INK3}" letter-spacing=".08em">${hist.filter(Boolean).length}/12 RECALLED</text>`+
+    `</svg>`;
+
+  const conf=CONFUSE[c.char]||[];
+  el('cd-conf').innerHTML = conf.length
+    ? conf.map(x=>`<span style="font-family:var(--jp);font-size:22px;color:var(--ink);border:1px solid var(--line-2);border-radius:3px;padding:4px 11px;line-height:1">${esc(x)}</span>`).join('')
+    : '<span class="hint">No significant confusions recorded.</span>';
+}
+
+/* ══════════════ view switching ══════════════ */
+function setView(v){
+  const dash=v==='dash';
+  el('view-dash').classList.toggle('off',!dash);
+  el('view-card').classList.toggle('on',!dash);
+  el('tab-dash').setAttribute('aria-current',String(dash));
+  el('tab-card').setAttribute('aria-current',String(!dash));
+  el('filterbar').style.display = dash? '' : 'none';
+  window.scrollTo(0,0);
+  if(!dash && deck.length===0) launchSegment(SEGMENTS[0]);
+  /* charts measure their container, so re-draw once the view is actually laid out */
+  if(dash) renderAll(); else renderCardStats(deck[di]);
+  /* deep-link the two views; file:// can reject replaceState, so never let it throw */
+  try{ if(location.hash!==(dash?'':'#card')) history.replaceState(null,'',dash?'#':'#card'); }catch(e){}
+  hideTT();
+}
+
+/* boot */
+renderAll();
+deck=buildDeck('hira-gojuon',20);
+meta={label:'Hiragana · Gojuon',type:'Recognition',scheme:'Accuracy',diff:'gojuon'};
+strip=new Array(deck.length).fill(null);
+el('crumb-deck').textContent=meta.label;
+showCard();
+setView(location.hash==='#card'?'card':'dash');
+let _rz;
+window.addEventListener('resize',()=>{
+  hideTT(); clearTimeout(_rz);
+  _rz=setTimeout(()=>{
+    if(el('view-card').classList.contains('on')) renderCardStats(deck[di]);
+    else renderAll();
+  },140);
+});
+</script>

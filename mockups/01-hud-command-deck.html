@@ -1,0 +1,1608 @@
+<!--
+  DIRECTION 01 — "HUD COMMAND DECK"
+  Thesis: Study is treated as instrumentation. The interface is a dense telemetry
+  console — corner ticks, thin rules, small uppercase labels and monospace numerals
+  packed into a tight grid — where character-set mastery reads as a live gauge bank
+  rather than a set of friendly cards. Every number is a readout, every exercise is
+  an armed segment, and the flash card sits inside the instrument frame like a
+  target on a scope.
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HUD Command Deck — Japanese Practice</title>
+
+<style>
+/* ============================================================ TOKENS */
+:root{
+  --ground:#0b0b0e;
+  --ground-2:#0e0e12;
+  --panel:#111116;
+  --panel-2:#16161c;
+  --panel-3:#1c1c23;
+  --line:#22222a;
+  --line-2:#31313b;
+  --line-3:#43434f;
+  --ink:#e8e8ee;
+  --ink-2:#a4a4b0;
+  --dim:#7a7a87;
+  --faint:#55555f;
+  --amber:#f5c518;
+  --amber-dim:rgba(245,197,24,.16);
+  --amber-glow:rgba(245,197,24,.30);
+  --ok:#4ade80;
+  --warn:#ff8c3a;
+  --mono:"DejaVu Sans Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --jp:"Noto Sans CJK JP","Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+  --tk:var(--line-3);
+  --tkl:8px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:13px;
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+/* faint instrument grid over the whole ground */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.016) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.016) 1px,transparent 1px);
+  background-size:48px 48px;
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(1100px 600px at 50% -10%,rgba(245,197,24,.05),transparent 70%);
+}
+#app{position:relative;z-index:1}
+
+::selection{background:var(--amber);color:#000}
+
+/* ============================================================ UTIL */
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+.lbl{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--dim);white-space:nowrap;
+}
+.jp{font-family:var(--jp)}
+.amber{color:var(--amber)}
+
+/* corner ticks — 8 gradient slivers, one pair per corner */
+.tk{
+  background-repeat:no-repeat;
+  background-image:
+    linear-gradient(var(--tk),var(--tk)),linear-gradient(var(--tk),var(--tk)),
+    linear-gradient(var(--tk),var(--tk)),linear-gradient(var(--tk),var(--tk)),
+    linear-gradient(var(--tk),var(--tk)),linear-gradient(var(--tk),var(--tk)),
+    linear-gradient(var(--tk),var(--tk)),linear-gradient(var(--tk),var(--tk));
+  background-size:
+    var(--tkl) 1px,1px var(--tkl),var(--tkl) 1px,1px var(--tkl),
+    var(--tkl) 1px,1px var(--tkl),var(--tkl) 1px,1px var(--tkl);
+  background-position:
+    0 0,0 0,100% 0,100% 0,
+    0 100%,0 100%,100% 100%,100% 100%;
+}
+
+/* ============================================================ SHELL */
+.topbar{
+  position:sticky;top:0;z-index:40;
+  display:flex;align-items:center;gap:14px;
+  height:44px;padding:0 14px;
+  background:linear-gradient(180deg,#101015,#0c0c10);
+  border-bottom:1px solid var(--line);
+}
+.topbar::after{
+  content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--amber-glow) 18%,transparent 55%);
+}
+.brand{display:flex;align-items:center;gap:9px}
+.brand-mark{
+  width:22px;height:22px;flex:none;position:relative;
+  border:1px solid var(--amber);color:var(--amber);
+  display:grid;place-items:center;font-family:var(--jp);font-size:12px;line-height:1;
+  box-shadow:0 0 0 3px rgba(245,197,24,.07),inset 0 0 10px rgba(245,197,24,.12);
+}
+.brand-name{font-family:var(--mono);font-size:11.5px;letter-spacing:.22em;text-transform:uppercase}
+.brand-sub{font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--faint);text-transform:uppercase}
+
+.navtabs{display:flex;gap:0;margin-left:6px;border:1px solid var(--line);background:#0d0d11}
+.navtab{
+  appearance:none;background:none;border:0;border-right:1px solid var(--line);
+  color:var(--dim);cursor:pointer;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  padding:7px 14px;position:relative;transition:color .12s,background .12s;
+}
+.navtab:last-child{border-right:0}
+.navtab:hover{color:var(--ink-2);background:#131318}
+.navtab.on{color:var(--amber);background:rgba(245,197,24,.06)}
+.navtab.on::before{
+  content:"";position:absolute;left:0;right:0;top:-1px;height:1px;background:var(--amber);
+}
+.navtab .k{color:var(--faint);margin-right:7px}
+.navtab.on .k{color:rgba(245,197,24,.55)}
+
+.top-right{margin-left:auto;display:flex;align-items:center;gap:16px}
+.readout-inline{display:flex;align-items:baseline;gap:6px}
+.readout-inline .v{font-family:var(--mono);font-size:11.5px;color:var(--ink)}
+.live{display:flex;align-items:center;gap:6px}
+.dot{width:6px;height:6px;background:var(--amber);border-radius:50%;box-shadow:0 0 8px var(--amber);animation:blink 2.4s infinite}
+@keyframes blink{0%,72%{opacity:1}80%,100%{opacity:.25}}
+
+.wrap{padding:12px 14px 28px;max-width:1720px;margin:0 auto}
+
+/* ============================================================ PANELS */
+.panel{
+  background-color:var(--panel);
+  border:1px solid var(--line);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.028),0 1px 0 rgba(0,0,0,.4);
+  position:relative;
+  padding:10px 11px 11px;
+}
+.panel.accent{--tk:var(--amber);border-color:#2a2517}
+.ph{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.ph .rule{flex:1;min-width:8px;height:1px;background:linear-gradient(90deg,var(--line-2),transparent)}
+.ph .id{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--faint);flex:none;white-space:nowrap}
+.ph h2{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);
+  font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ph .sq{width:5px;height:5px;background:var(--amber);flex:none;box-shadow:0 0 6px var(--amber-glow)}
+
+/* ============================================================ GRID */
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:10px}
+.c2{grid-column:span 2}.c3{grid-column:span 3}.c4{grid-column:span 4}
+.c5{grid-column:span 5}.c6{grid-column:span 6}.c7{grid-column:span 7}
+.c8{grid-column:span 8}.c12{grid-column:span 12}
+.stack{display:flex;flex-direction:column;gap:10px}
+.subgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.subgrid>.panel{min-width:0}
+@media (max-width:640px){.subgrid{grid-template-columns:1fr}}
+.schemerow{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed #1c1c24}
+.schemef{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:var(--dim)}
+
+/* ============================================================ KPI TILES */
+.kpi{padding:9px 10px 10px}
+.kpi .lbl{display:block;margin-bottom:7px;font-size:9px}
+.kpi .val{font-family:var(--mono);font-size:26px;line-height:1;letter-spacing:-.01em;color:var(--ink)}
+.kpi.hero .val{color:var(--amber);text-shadow:0 0 22px rgba(245,197,24,.35)}
+.kpi .val .u{font-size:12px;color:var(--dim);margin-left:2px;letter-spacing:0}
+.kpi .foot{display:flex;align-items:center;gap:6px;margin-top:8px;font-family:var(--mono);font-size:9px;color:var(--faint);letter-spacing:.08em}
+.delta{color:var(--ok)}
+.delta.neg{color:var(--warn)}
+.microbar{display:flex;gap:1.5px;align-items:flex-end;height:14px;margin-top:8px}
+.microbar i{width:3px;background:var(--line-3);display:block}
+.microbar i.on{background:var(--amber);opacity:.85}
+
+/* ============================================================ GAUGES */
+.gauge-bank{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+.gauge{display:flex;flex-direction:column;align-items:center;gap:5px;padding:4px 2px 2px}
+.gauge svg{display:block}
+.gauge .gname{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;text-align:center}
+.gauge .gsub{font-family:var(--mono);font-size:8.5px;color:var(--faint)}
+
+.setrow{display:grid;grid-template-columns:98px 1fr 62px;align-items:center;gap:9px;padding:5px 0;border-top:1px dashed #1e1e26}
+.setrow:first-of-type{border-top:0}
+.setrow .sname{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--ink-2);display:flex;align-items:center;gap:6px}
+.setrow .sname b{font-weight:400;color:var(--faint);font-size:9px}
+.segbar{display:flex;gap:2px;height:9px}
+.segbar i{flex:1;background:#20202a;display:block;border-radius:1px}
+.segbar i.on{background:var(--amber);box-shadow:0 0 5px rgba(245,197,24,.35)}
+.segbar i.on.lo{background:rgba(245,197,24,.42);box-shadow:none}
+.setrow .snum{font-family:var(--mono);font-size:10.5px;text-align:right;color:var(--ink)}
+.setrow .snum s{text-decoration:none;color:var(--faint);font-size:9px}
+.setrow.locked .sname,.setrow.locked .snum{color:var(--faint)}
+
+/* ============================================================ CHARTS */
+.chartbox{position:relative}
+.chartbox svg{display:block;width:100%;height:auto}
+.axl{font-family:var(--mono);font-size:8.5px;fill:var(--faint);letter-spacing:.08em}
+.gridline{stroke:#1c1c24;stroke-width:1}
+.gridline.base{stroke:#2b2b35}
+.trendline{fill:none;stroke:var(--amber);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.trendarea{fill:url(#agrad)}
+.tdot{fill:var(--ground);stroke:var(--amber);stroke-width:1.5}
+.tdot.last{fill:var(--amber)}
+.repbar{fill:#3a3a46}
+.repbar.hot{fill:var(--amber)}
+.hitrect{fill:transparent;cursor:crosshair}
+.crossline{stroke:var(--amber);stroke-width:1;stroke-dasharray:2 3;opacity:0;pointer-events:none}
+.crossline.on{opacity:.75}
+.tip{
+  position:absolute;z-index:20;pointer-events:none;opacity:0;transform:translate(-50%,-118%);
+  background:#16161d;border:1px solid var(--line-3);padding:7px 9px;min-width:148px;
+  box-shadow:0 8px 24px rgba(0,0,0,.6);transition:opacity .1s;
+}
+.tip.on{opacity:1}
+.tip .th{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--amber);margin-bottom:5px}
+.tip .tr{display:flex;justify-content:space-between;gap:14px;font-family:var(--mono);font-size:10px;color:var(--ink-2)}
+.tip .tr b{color:var(--ink);font-weight:500}
+.chartcap{display:flex;justify-content:space-between;align-items:center;margin:2px 0 6px}
+.legend{display:flex;gap:12px;align-items:center}
+.legend span{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.1em}
+.swatch{width:9px;height:9px;flex:none}
+.swatch.line{height:2px;background:var(--amber)}
+.swatch.bar{background:#3a3a46}
+
+/* ============================================================ SEGMENTS TABLE */
+.tracks{display:flex;gap:0;border:1px solid var(--line);margin-bottom:9px;width:fit-content}
+.track{
+  appearance:none;background:none;border:0;border-right:1px solid var(--line);cursor:pointer;
+  font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--dim);padding:6px 12px;transition:.12s;
+}
+.track:last-child{border-right:0}
+.track:hover{color:var(--ink-2);background:#131318}
+.track.on{background:var(--amber);color:#0b0b0e}
+
+.segtable{width:100%;border-collapse:collapse;font-size:12px}
+.segtable thead th{
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--faint);
+  font-weight:400;text-align:left;padding:0 8px 6px 0;border-bottom:1px solid var(--line-2);white-space:nowrap;
+}
+.segtable thead th.r{text-align:right;padding-right:0}
+.segtable tbody tr{border-bottom:1px dashed #1c1c24;transition:background .12s}
+.segtable tbody tr:hover{background:#15151b}
+.segtable td{padding:8px 8px 8px 0;vertical-align:middle}
+.segtable td.r{text-align:right;padding-right:0}
+.seg-code{font-family:var(--mono);font-size:9.5px;color:var(--faint);letter-spacing:.08em}
+.seg-name{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:var(--ink)}
+.seg-jp{font-family:var(--jp);font-size:11px;color:var(--dim);margin-left:7px}
+.seg-scope{font-family:var(--mono);font-size:10px;color:var(--ink-2)}
+.seg-scope s{text-decoration:none;color:var(--faint);font-size:9px}
+.seg-glyphs{font-family:var(--jp);font-size:13px;color:var(--ink-2);letter-spacing:.12em}
+
+.chip{
+  display:inline-block;font-family:var(--mono);font-size:8.5px;letter-spacing:.13em;text-transform:uppercase;
+  padding:3px 6px;border:1px solid var(--line-2);color:var(--ink-2);background:#15151b;white-space:nowrap;
+}
+.chip.type{border-color:#2f3a44;color:#9fc0d4;background:rgba(70,110,140,.09)}
+.chip.score{border-color:#3a3428;color:#cbb489;background:rgba(160,130,70,.09)}
+.chip.tier{border-color:var(--line-3);color:var(--ink);background:#1b1b22}
+.chip.tier.t-n1,.chip.tier.t-n2{color:var(--warn);border-color:#4a3320}
+.chip.tier.hot{background:var(--amber);color:#0b0b0e;border-color:var(--amber)}
+
+/* difficulty ladder strip */
+.ladder{margin-top:14px;border-top:1px solid var(--line);padding-top:11px}
+.ladderhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.rungs{display:flex;align-items:stretch;gap:0}
+.rung{flex:1;position:relative;padding:9px 10px 10px;background-color:#14141a;border:1px solid var(--line);
+  margin-right:14px;--tk:#2c2c36;}
+.rung:last-child{margin-right:0}
+.rung::after{
+  content:"";position:absolute;right:-14px;top:50%;width:14px;height:1px;background:var(--line-2);
+}
+.rung:last-child::after{display:none}
+.rung .rn{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;color:var(--faint);display:block}
+.rung .rt{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--ink-2);display:block;margin-top:4px}
+.rung .rg{font-family:var(--jp);font-size:12px;color:var(--faint);display:block;margin-top:3px}
+.rung .rp{display:block;height:3px;background:#22222b;margin-top:8px}
+.rung .rp i{display:block;height:100%;background:var(--amber)}
+.rung.cur{border-color:#3b3620;background-color:rgba(245,197,24,.06);--tk:var(--amber)}
+.rung.cur .rt{color:var(--amber)}
+.rung.done .rn::before{content:"✓ ";color:var(--amber)}
+.rung.locked{opacity:.45}
+@media (max-width:900px){.rungs{flex-wrap:wrap;gap:8px}.rung{flex:1 1 44%;margin-right:0}.rung::after{display:none}}
+
+.accmini{display:flex;align-items:center;gap:7px;justify-content:flex-end}
+.accmini .bar{width:52px;height:4px;background:#22222b;position:relative;flex:none}
+.accmini .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--amber);display:block}
+.accmini .n{font-family:var(--mono);font-size:11px;color:var(--ink);min-width:44px;text-align:right}
+.accmini .n.none{color:var(--faint)}
+
+.btn{
+  appearance:none;cursor:pointer;font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+  padding:6px 11px;background:#17171e;border:1px solid var(--line-2);color:var(--ink-2);
+  transition:.12s;white-space:nowrap;
+}
+.btn:hover{border-color:var(--amber);color:var(--amber);background:rgba(245,197,24,.07)}
+.btn:active{transform:translateY(1px)}
+.btn.arm{border-color:#3a3520;color:var(--amber)}
+.btn.arm:hover{background:var(--amber);color:#0b0b0e}
+.btn.solid{background:var(--amber);color:#0b0b0e;border-color:var(--amber);font-weight:600}
+.btn.solid:hover{background:#ffd633;color:#0b0b0e}
+.btn.ghost{background:none}
+.btn[disabled]{opacity:.35;cursor:not-allowed}
+.btn[disabled]:hover{border-color:var(--line-2);color:var(--ink-2);background:none}
+
+/* ============================================================ STREAK / HEAT */
+.streakhead{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+.streakhead .big{font-family:var(--mono);font-size:32px;line-height:1;color:var(--amber);text-shadow:0 0 22px rgba(245,197,24,.3)}
+.streakhead .txt{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+.heat{display:grid;grid-template-columns:repeat(28,1fr);gap:3px}
+.heat i{aspect-ratio:1;background:#191920;display:block;border-radius:1px}
+.heat i[data-l="1"]{background:rgba(245,197,24,.20)}
+.heat i[data-l="2"]{background:rgba(245,197,24,.42)}
+.heat i[data-l="3"]{background:rgba(245,197,24,.68)}
+.heat i[data-l="4"]{background:var(--amber);box-shadow:0 0 5px rgba(245,197,24,.5)}
+.heatscale{display:flex;align-items:center;gap:5px;margin-top:8px;justify-content:flex-end}
+.heatscale i{width:8px;height:8px;display:block;border-radius:1px}
+
+/* ============================================================ WEAK CHARS */
+.weakgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:6px}
+.weakcell{
+  background-color:var(--panel-2);border:1px solid var(--line);padding:7px 6px 6px;
+  display:flex;flex-direction:column;align-items:center;gap:5px;cursor:default;transition:.12s;
+  --tk:#2c2c36;
+}
+.weakcell:hover{border-color:var(--line-3);background-color:#1b1b22}
+.weakcell .g{font-family:var(--jp);font-size:23px;line-height:1.1;color:var(--ink)}
+.weakcell .r{font-family:var(--mono);font-size:8.5px;color:var(--dim);letter-spacing:.06em;text-align:center}
+.weakcell .e{font-family:var(--mono);font-size:9.5px;color:var(--warn)}
+.weakcell .ebar{width:100%;height:2px;background:#24242c}
+.weakcell .ebar i{display:block;height:100%;background:var(--warn)}
+
+/* ============================================================ THEMATIC */
+.themerow{display:grid;grid-template-columns:1fr 60px 40px;align-items:center;gap:8px;padding:4.5px 0;border-top:1px dashed #1c1c24}
+.themerow:first-child{border-top:0}
+.themerow .tn{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--ink-2)}
+.themerow .tb{height:3px;background:#22222b}
+.themerow .tb i{display:block;height:100%;background:var(--amber)}
+.themerow .tv{font-family:var(--mono);font-size:9.5px;text-align:right;color:var(--dim)}
+
+/* ============================================================ LOG TABLE */
+.logtable{width:100%;border-collapse:collapse}
+.logtable th{
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--faint);
+  font-weight:400;text-align:left;padding:0 10px 6px 0;border-bottom:1px solid var(--line-2);
+}
+.logtable th.r{text-align:right;padding-right:0}
+.logtable td{font-family:var(--mono);font-size:10.5px;padding:5.5px 10px 5.5px 0;border-bottom:1px dashed #1a1a22;color:var(--ink-2);white-space:nowrap}
+.logtable td.r{text-align:right;padding-right:0}
+.logtable tr:hover td{background:#15151b;color:var(--ink)}
+.logtable td.id{color:var(--faint)}
+.logtable td.acc{color:var(--ink)}
+.sparkcell{width:88px}
+.sparkcell svg{display:block;width:88px;height:14px}
+
+/* ============================================================ CARD VIEW */
+.stage{
+  position:relative;display:grid;place-items:center;
+  min-height:430px;padding:26px 10px 52px;
+  background-color:var(--ground-2);
+  border:1px solid var(--line);
+  --tk:var(--amber);
+}
+/* instrument grid + target glow live on the pseudo-element so the
+   corner-tick background-image on .tk stays intact */
+.stage::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:
+    radial-gradient(420px 300px at 50% 45%,rgba(245,197,24,.055),transparent 72%),
+    linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);
+  background-size:100% 100%,26px 26px,26px 26px;
+}
+/* reticle lines */
+.reticle{position:absolute;inset:0;pointer-events:none}
+.reticle i{position:absolute;background:rgba(245,197,24,.16)}
+.reticle i.h{left:14px;right:14px;height:1px;top:50%}
+.reticle i.v{top:14px;bottom:14px;width:1px;left:50%}
+
+.card-outer{perspective:1400px;width:min(330px,80vw);position:relative;z-index:2}
+.card3d{
+  position:relative;width:100%;aspect-ratio:3/4;
+  transform-style:preserve-3d;
+  transition:transform .62s cubic-bezier(.22,.72,.28,1);
+  cursor:pointer;
+}
+.card3d.flipped{transform:rotateY(180deg)}
+.face{
+  position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  background-color:#141419;
+  border:1px solid var(--line-2);
+  box-shadow:0 18px 50px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.045);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  --tk:var(--amber);--tkl:14px;
+  padding:20px;
+}
+.face.front{background-color:#15151b}
+.face.back{transform:rotateY(180deg);background-color:#121218;justify-content:center;gap:0}
+.glyph{
+  font-family:var(--jp);
+  font-size:clamp(88px,15vw,142px);
+  line-height:1;color:var(--ink);
+  text-shadow:0 0 44px rgba(245,197,24,.20);
+  user-select:none;
+}
+.glyph.small{font-size:clamp(64px,10vw,104px)}
+
+.back-inner{display:flex;flex-direction:column;align-items:center;gap:14px;width:100%}
+.romaji{font-family:var(--mono);font-size:clamp(32px,5.6vw,46px);line-height:1;color:var(--amber);letter-spacing:.04em}
+.back-kana{font-family:var(--jp);font-size:40px;line-height:1;color:var(--ink)}
+.meaning{font-family:var(--sans);font-size:19px;letter-spacing:.01em;color:var(--ink);text-align:center;font-weight:500}
+.rdgroup{width:100%;border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:8px}
+.rdrow{display:grid;grid-template-columns:60px 1fr auto;align-items:center;gap:9px}
+.rdrow .rk{font-family:var(--mono);font-size:8.5px;letter-spacing:.13em;color:var(--faint);text-transform:uppercase}
+.rdrow .rv{font-family:var(--jp);font-size:19px;color:var(--ink);line-height:1.25}
+.rdrow .rv small{display:block;font-family:var(--mono);font-size:10px;color:var(--dim);
+  letter-spacing:.06em;margin-top:2px}
+.back-echo{font-family:var(--jp);font-size:52px;line-height:1;color:var(--ink-2);opacity:.9}
+.backmeta{
+  position:absolute;left:16px;right:16px;bottom:14px;display:flex;justify-content:space-between;
+  border-top:1px solid var(--line);padding-top:8px;
+}
+.backmeta span{font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase}
+.backmeta span b{color:var(--ink-2);font-weight:400}
+.backtag{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;color:var(--faint);text-transform:uppercase}
+
+/* speaker */
+.spk{
+  appearance:none;cursor:pointer;flex:none;
+  display:inline-flex;align-items:center;gap:7px;
+  background:#191920;border:1px solid var(--line-2);color:var(--ink-2);
+  padding:5px 9px;transition:.14s;
+}
+.spk:hover{border-color:var(--amber);color:var(--amber)}
+.spk svg{width:17px;height:17px;display:block;overflow:visible}
+.spk .wv{opacity:.55;transform-origin:8px 12px}
+.spk.tx{border-color:var(--amber);color:var(--amber);background:rgba(245,197,24,.12);box-shadow:0 0 0 3px rgba(245,197,24,.08)}
+.spk.tx .w1{animation:ping .55s ease-out 1}
+.spk.tx .w2{animation:ping .55s ease-out .12s 1}
+@keyframes ping{0%{opacity:.2;transform:translateX(-2px)}45%{opacity:1;transform:translateX(0)}100%{opacity:.55;transform:translateX(0)}}
+.spk .meter{display:flex;align-items:flex-end;gap:1.5px;height:12px;width:0;overflow:hidden;transition:width .16s}
+.spk.tx .meter{width:16px}
+.spk .meter i{width:2px;background:currentColor;height:3px;display:block}
+.spk.tx .meter i:nth-child(1){animation:vu .34s ease-in-out infinite alternate}
+.spk.tx .meter i:nth-child(2){animation:vu .27s ease-in-out .05s infinite alternate}
+.spk.tx .meter i:nth-child(3){animation:vu .31s ease-in-out .1s infinite alternate}
+.spk.tx .meter i:nth-child(4){animation:vu .24s ease-in-out .02s infinite alternate}
+@keyframes vu{from{height:3px}to{height:12px}}
+.spk.lg{padding:8px 14px;font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase}
+.spk.lg svg{width:19px;height:19px}
+
+.stagefoot{
+  position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:center;
+  padding:9px 12px;border-top:1px solid var(--line);background:rgba(10,10,14,.72);
+}
+.stagehint{font-family:var(--mono);font-size:8.5px;letter-spacing:.13em;color:var(--faint);text-transform:uppercase}
+kbd{
+  font-family:var(--mono);font-size:8.5px;border:1px solid var(--line-3);padding:1px 4px;color:var(--ink-2);
+  background:#1a1a21;margin:0 1px;
+}
+.deckpos{display:flex;align-items:center;gap:9px}
+.posbar{width:120px;height:3px;background:#22222b;position:relative}
+.posbar i{position:absolute;left:0;top:0;bottom:0;background:var(--amber);transition:width .2s}
+
+.controls{display:flex;gap:6px;justify-content:center;margin-top:10px}
+
+.deckbtn{
+  display:flex;align-items:center;gap:9px;width:100%;text-align:left;cursor:pointer;
+  background-color:#14141a;border:1px solid var(--line);padding:8px 9px;transition:.12s;--tk:#2c2c36;
+}
+.deckbtn:hover{border-color:var(--line-3);background-color:#1a1a21}
+.deckbtn.on{border-color:#3b3620;background-color:rgba(245,197,24,.07);--tk:var(--amber)}
+.deckbtn .dg{font-family:var(--jp);font-size:20px;color:var(--ink);width:26px;text-align:center;flex:none}
+.deckbtn.on .dg{color:var(--amber)}
+.deckbtn .dn{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--ink);display:block}
+.deckbtn .dm{font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;color:var(--faint);display:block;margin-top:2px}
+
+.speclist{display:flex;flex-direction:column;gap:0}
+.specrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-top:1px dashed #1c1c24}
+.specrow:first-child{border-top:0}
+.specrow .sk{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.specrow .sv{font-family:var(--mono);font-size:10px;color:var(--ink);letter-spacing:.06em;text-align:right}
+.specrow .sv.a{color:var(--amber)}
+
+.livegrid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)}
+.livecell{background-color:var(--panel-2);padding:9px 9px 10px}
+.livecell .lbl{display:block;font-size:8.5px;margin-bottom:6px}
+.livecell .lv{font-family:var(--mono);font-size:21px;line-height:1;color:var(--ink)}
+.livecell.hot .lv{color:var(--amber)}
+
+.gradebtns{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:9px}
+.gradebtns .btn{padding:8px 2px;font-size:8.5px;letter-spacing:.1em;text-align:center}
+.gradebtns .btn.g4:hover{border-color:var(--ok);color:var(--ok);background:rgba(74,222,128,.08)}
+.gradebtns .btn.g1:hover{border-color:var(--warn);color:var(--warn);background:rgba(255,140,58,.08)}
+
+.latbars{display:flex;align-items:flex-end;gap:2px;height:34px;margin-top:4px}
+.latbars i{flex:1;background:var(--line-3);display:block;min-height:2px}
+.latbars i.on{background:var(--amber);opacity:.9}
+
+.toast{
+  position:fixed;left:50%;bottom:22px;transform:translate(-50%,14px);z-index:60;
+  background-color:#16161d;border:1px solid var(--amber);color:var(--amber);
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  padding:9px 16px;opacity:0;transition:.22s;pointer-events:none;
+  box-shadow:0 10px 30px rgba(0,0,0,.6);--tk:var(--amber);
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+.view{display:none}
+.view.on{display:block}
+
+/* ============================================================ RESPONSIVE */
+/* c3 / c6 are card-view columns (3+6+3); c2/c4/c5/c7/c8 are dashboard columns */
+@media (max-width:1360px){
+  .c5{grid-column:span 6}.c7{grid-column:span 6}
+  .c8{grid-column:span 12}.c4{grid-column:span 12}
+  .c4.stack{flex-direction:row;align-items:stretch}
+  .c4.stack>.panel{flex:1;min-width:0}
+}
+@media (max-width:1100px){
+  .c2{grid-column:span 4}
+  .c3{grid-column:span 12}
+  .c5,.c6,.c7{grid-column:span 12}
+  .c3.stack{flex-direction:row;align-items:stretch}
+  .c3.stack>.panel{flex:1;min-width:0}
+  .c4.stack{flex-direction:column}
+  .heat{grid-template-columns:repeat(14,1fr)}
+}
+@media (max-width:900px){
+  .wrap{padding:10px 10px 24px}
+  .c2{grid-column:span 6}
+  .c3,.c4{grid-column:span 12}
+  .c3.stack,.c4.stack{flex-direction:column}
+  .topbar{height:auto;flex-wrap:wrap;padding:8px 10px;gap:9px}
+  .top-right{width:100%;margin-left:0;justify-content:space-between}
+  .navtabs{order:3;width:100%}
+  .navtab{flex:1;padding:7px 6px}
+  .tablescroll{overflow-x:auto}
+  .tablescroll table{min-width:720px}
+  .gauge-bank{grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width:640px){
+  .c2,.c3,.c4{grid-column:span 12}
+  .heat{grid-template-columns:repeat(14,1fr)}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms !important;transition-duration:.06s !important}
+}
+</style>
+
+<div id="app">
+
+<!-- ==================================================== TOP BAR -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark jp">語</div>
+    <div>
+      <div class="brand-name">Japanese Practice</div>
+      <div class="brand-sub">Cmd Deck · v0.9.4</div>
+    </div>
+  </div>
+
+  <nav class="navtabs" role="tablist" aria-label="Views">
+    <button class="navtab on" role="tab" aria-selected="true" data-view="dash"><span class="k">01</span>Dashboard</button>
+    <button class="navtab" role="tab" aria-selected="false" data-view="card"><span class="k">02</span>Card Deck</button>
+  </nav>
+
+  <div class="top-right">
+    <div class="readout-inline"><span class="lbl">Operator</span><span class="v">KANA-01</span></div>
+    <div class="readout-inline"><span class="lbl">Session</span><span class="v amber">S-0147</span></div>
+    <div class="readout-inline"><span class="lbl">Uptime</span><span class="v mono" id="clock">00:00:00</span></div>
+    <div class="live"><span class="dot"></span><span class="lbl">Telemetry Live</span></div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ==================================================================== -->
+<!-- ============================ DASHBOARD ============================= -->
+<!-- ==================================================================== -->
+<section class="view on" id="view-dash">
+  <div class="grid">
+
+    <!-- KPI STRIP -->
+    <div class="panel tk kpi hero c2">
+      <span class="lbl">Lifetime accuracy</span>
+      <div class="val">81.4<span class="u">%</span></div>
+      <div class="microbar" data-micro="62,66,64,71,69,74,73,78,76,82,80,85,84,88,87,92"></div>
+      <div class="foot"><span class="delta">▲ 4.1</span><span>vs prev 10 sess</span></div>
+    </div>
+    <div class="panel tk kpi c2">
+      <span class="lbl">Sessions logged</span>
+      <div class="val">146</div>
+      <div class="foot"><span>since</span><span>2026-02-11</span></div>
+    </div>
+    <div class="panel tk kpi c2">
+      <span class="lbl">Total reps</span>
+      <div class="val">11 482</div>
+      <div class="foot"><span class="delta">▲ 1 067</span><span>last 16 sess</span></div>
+    </div>
+    <div class="panel tk kpi c2">
+      <span class="lbl">Streak · days</span>
+      <div class="val">34</div>
+      <div class="foot"><span>best</span><span>34 · current</span></div>
+    </div>
+    <div class="panel tk kpi c2">
+      <span class="lbl">Mean latency</span>
+      <div class="val">1.91<span class="u">s</span></div>
+      <div class="foot"><span class="delta">▲ 0.14s</span><span>faster</span></div>
+    </div>
+    <div class="panel tk kpi c2">
+      <span class="lbl">D7 retention</span>
+      <div class="val">76<span class="u">%</span></div>
+      <div class="foot"><span class="delta neg">▼ 1.8</span><span>SRS recall</span></div>
+    </div>
+
+    <!-- MASTERY GAUGE BANK -->
+    <div class="panel tk accent c5">
+      <div class="ph"><span class="sq"></span><h2>Character-set mastery</h2><span class="rule"></span><span class="id">MOD/GAUGE-01</span></div>
+
+      <div class="gauge-bank" id="gaugeBank"></div>
+
+      <div id="setBars"></div>
+    </div>
+
+    <!-- SESSION TELEMETRY -->
+    <div class="panel tk c7">
+      <div class="ph"><span class="sq"></span><h2>Session telemetry · last 16</h2><span class="rule"></span><span class="id">MOD/TREND-02</span></div>
+
+      <div class="chartcap">
+        <span class="lbl">Accuracy per session — single scale, 60–100%</span>
+        <div class="legend">
+          <span><i class="swatch line"></i>Accuracy</span>
+          <span><i class="swatch bar"></i>Reps</span>
+        </div>
+      </div>
+
+      <div class="chartbox" id="trendBox">
+        <svg id="trendSvg" viewBox="0 0 800 190" preserveAspectRatio="xMidYMid meet" role="img"
+             aria-label="Accuracy per session over the last sixteen sessions, rising from 71.2 percent to 91.6 percent"></svg>
+        <div class="tip" id="trendTip"></div>
+      </div>
+
+      <div class="chartcap" style="margin-top:10px">
+        <span class="lbl">Reps per session — separate scale</span>
+        <span class="lbl">Peak 100 · Mean 67</span>
+      </div>
+      <div class="chartbox">
+        <svg id="repsSvg" viewBox="0 0 800 78" preserveAspectRatio="xMidYMid meet" role="img"
+             aria-label="Repetitions completed per session, ranging from 36 to 100"></svg>
+      </div>
+    </div>
+
+    <!-- EXERCISE SEGMENTS -->
+    <div class="c8 stack">
+    <div class="panel tk">
+      <div class="ph"><span class="sq"></span><h2>Exercise segments</h2><span class="rule"></span><span class="id">MOD/SEG-03</span></div>
+
+      <div class="tracks" role="tablist" aria-label="Difficulty tracks">
+        <button class="track on" role="tab" aria-selected="true"  data-track="kana">Kana ladder</button>
+        <button class="track" role="tab" aria-selected="false" data-track="jlpt">Kanji · JLPT</button>
+        <button class="track" role="tab" aria-selected="false" data-track="vol">Kanji · volume</button>
+      </div>
+
+      <div class="tablescroll">
+        <table class="segtable">
+          <thead>
+            <tr>
+              <th style="width:34px">ID</th>
+              <th>Segment</th>
+              <th>Scope</th>
+              <th>Challenge type</th>
+              <th>Scoring scheme</th>
+              <th>Difficulty</th>
+              <th class="r" style="width:118px">Accuracy</th>
+              <th class="r" style="width:78px"></th>
+            </tr>
+          </thead>
+          <tbody id="segBody"></tbody>
+        </table>
+      </div>
+
+      <div class="ladder">
+        <div class="ladderhead">
+          <span class="lbl" id="ladderTitle">Difficulty ladder · kana track</span>
+          <span class="lbl">Progression is sequential — a rung unlocks at 90% on the previous</span>
+        </div>
+        <div class="rungs" id="rungs"></div>
+      </div>
+    </div>
+
+      <!-- scoring reference + thematic mastery, two-up under the segments -->
+      <div class="subgrid">
+        <div class="panel tk">
+          <div class="ph"><span class="sq"></span><h2>Scoring schemes</h2><span class="rule"></span><span class="id">MOD/SCHEME-14</span></div>
+          <div class="schemerow">
+            <span class="chip score">ACCURACY</span>
+            <span class="schemef">correct / total × 100</span>
+          </div>
+          <div class="schemerow">
+            <span class="chip score">SPEED-WTD</span>
+            <span class="schemef">accuracy × (target / response ms)</span>
+          </div>
+          <div class="schemerow">
+            <span class="chip score">STREAK</span>
+            <span class="schemef">consecutive correct · bonus at 10 / 25 / 50</span>
+          </div>
+          <div class="schemerow">
+            <span class="chip score">SRS</span>
+            <span class="schemef">SM-2 interval · ease 1.30 – 2.50</span>
+          </div>
+          <div class="schemerow" style="border-bottom:0">
+            <span class="lbl">Challenge types</span>
+            <span class="schemef">recognition · recall · timed · listening · mixed</span>
+          </div>
+        </div>
+
+        <div class="panel tk">
+          <div class="ph"><span class="sq"></span><h2>Thematic mastery · Top 200</h2><span class="rule"></span><span class="id">MOD/THEME-06</span></div>
+          <div id="themeList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT STACK -->
+    <div class="c4 stack">
+      <div class="panel tk">
+        <div class="ph"><span class="sq"></span><h2>Streak · 28-day activity</h2><span class="rule"></span><span class="id">MOD/STRK-04</span></div>
+        <div class="streakhead">
+          <span class="big">34</span>
+          <span class="txt">Consecutive days<br>Longest on record</span>
+        </div>
+        <div class="heat" id="heat"></div>
+        <div class="heatscale">
+          <span class="lbl" style="margin-right:2px">Load</span>
+          <i style="background:#191920"></i>
+          <i style="background:rgba(245,197,24,.20)"></i>
+          <i style="background:rgba(245,197,24,.42)"></i>
+          <i style="background:rgba(245,197,24,.68)"></i>
+          <i style="background:#f5c518"></i>
+        </div>
+
+        <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:9px">
+          <div class="specrow" style="padding-bottom:7px">
+            <span class="sk">Week</span>
+            <span class="sk" style="letter-spacing:.1em">Sessions · reps · mean acc</span>
+          </div>
+          <div class="specrow"><span class="sk">W-3 · 07-13</span><span class="sv">4 · 227 <span style="color:var(--dim)">· 76.1%</span></span></div>
+          <div class="specrow"><span class="sk">W-2 · 07-20</span><span class="sv">4 · 221 <span style="color:var(--dim)">· 73.0%</span></span></div>
+          <div class="specrow"><span class="sk">W-1 · 07-27</span><span class="sv">4 · 331 <span style="color:var(--dim)">· 80.8%</span></span></div>
+          <div class="specrow"><span class="sk">W-0 · 08-03</span><span class="sv a">3 · 246 <span style="color:var(--dim)">· 85.0%</span></span></div>
+        </div>
+      </div>
+
+      <div class="panel tk">
+        <div class="ph"><span class="sq"></span><h2>Weak characters · error rate</h2><span class="rule"></span><span class="id">MOD/WEAK-05</span></div>
+        <div class="weakgrid" id="weakGrid"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+          <span class="lbl">12 flagged · rolling 30 sess</span>
+          <button class="btn arm" data-drill="weak">Drill weak set</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SESSION LOG -->
+    <div class="panel tk c12">
+      <div class="ph"><span class="sq"></span><h2>Session log · per-session performance history</h2><span class="rule"></span><span class="id">MOD/LOG-07</span></div>
+      <div class="tablescroll">
+        <table class="logtable">
+          <thead>
+            <tr>
+              <th style="width:74px">Sess</th>
+              <th style="width:96px">Date</th>
+              <th>Segment</th>
+              <th>Challenge</th>
+              <th>Scoring</th>
+              <th class="r">Reps</th>
+              <th class="r">Correct</th>
+              <th class="r">Accuracy</th>
+              <th class="r">Best streak</th>
+              <th class="r">Avg latency</th>
+              <th class="r" style="width:96px">Response curve</th>
+            </tr>
+          </thead>
+          <tbody id="logBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ==================================================================== -->
+<!-- ============================ CARD VIEW ============================= -->
+<!-- ==================================================================== -->
+<section class="view" id="view-card">
+  <div class="grid">
+
+    <!-- LEFT: DECK SELECT + SPEC -->
+    <div class="c3 stack">
+      <div class="panel tk">
+        <div class="ph"><span class="sq"></span><h2>Deck select</h2><span class="rule"></span><span class="id">MOD/DECK-08</span></div>
+        <div class="stack" style="gap:5px" id="deckList"></div>
+      </div>
+
+      <div class="panel tk accent">
+        <div class="ph"><span class="sq"></span><h2>Segment spec</h2><span class="rule"></span><span class="id">MOD/SPEC-09</span></div>
+        <div class="speclist" id="specList"></div>
+      </div>
+
+      <div class="panel tk">
+        <div class="ph"><span class="sq"></span><h2>Queue</h2><span class="rule"></span><span class="id">MOD/QUE-10</span></div>
+        <div class="specrow"><span class="sk">Due today</span><span class="sv">42</span></div>
+        <div class="specrow"><span class="sk">New introduced</span><span class="sv">8</span></div>
+        <div class="specrow"><span class="sk">Relearn</span><span class="sv" style="color:var(--warn)">11</span></div>
+        <div class="specrow"><span class="sk">Interval median</span><span class="sv">4.2 d</span></div>
+      </div>
+    </div>
+
+    <!-- CENTER: STAGE -->
+    <div class="c6">
+      <div class="panel tk" style="padding:0;background-color:transparent;border:0;box-shadow:none;background-image:none">
+        <div class="stage tk" style="--tkl:16px">
+          <span class="reticle"><i class="h"></i><i class="v"></i></span>
+
+          <div class="card-outer">
+            <div class="card3d" id="card3d" role="button" tabindex="0" aria-label="Flash card. Activate to flip." aria-pressed="false">
+              <!-- FRONT: the character alone. Nothing else. -->
+              <div class="face front tk">
+                <div class="glyph jp" id="cardGlyph">あ</div>
+              </div>
+              <!-- BACK: written sound + speaker -->
+              <div class="face back tk">
+                <div class="back-inner" id="cardBack"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button class="btn" id="btnPrev">◄ Prev</button>
+            <button class="btn solid" id="btnFlip">Flip card</button>
+            <button class="btn" id="btnNext">Next ►</button>
+          </div>
+
+          <div class="stagefoot">
+            <span class="stagehint"><kbd>Space</kbd> flip · <kbd>←</kbd><kbd>→</kbd> step · <kbd>1</kbd>–<kbd>4</kbd> grade</span>
+            <div class="deckpos">
+              <span class="lbl" id="posLabel">CARD 01 / 12</span>
+              <span class="posbar"><i id="posFill" style="width:8%"></i></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: LIVE TELEMETRY -->
+    <div class="c3 stack">
+      <div class="panel tk accent">
+        <div class="ph"><span class="sq"></span><h2>Live session</h2><span class="rule"></span><span class="id">MOD/LIVE-11</span></div>
+        <div class="livegrid">
+          <div class="livecell"><span class="lbl">Reps</span><span class="lv" id="lvReps">18</span></div>
+          <div class="livecell"><span class="lbl">Correct</span><span class="lv" id="lvCorrect">16</span></div>
+          <div class="livecell hot"><span class="lbl">Accuracy</span><span class="lv" id="lvAcc">88.9%</span></div>
+          <div class="livecell"><span class="lbl">Streak</span><span class="lv" id="lvStreak">7</span></div>
+        </div>
+        <div style="margin-top:10px">
+          <span class="lbl">Response latency · last 20</span>
+          <div class="latbars" id="latBars"></div>
+        </div>
+        <div class="gradebtns">
+          <button class="btn g1" data-grade="1">Again</button>
+          <button class="btn" data-grade="2">Hard</button>
+          <button class="btn" data-grade="3">Good</button>
+          <button class="btn g4" data-grade="4">Easy</button>
+        </div>
+      </div>
+
+      <div class="panel tk">
+        <div class="ph"><span class="sq"></span><h2>Scoring breakdown</h2><span class="rule"></span><span class="id">MOD/SCORE-12</span></div>
+        <div class="specrow"><span class="sk">Base · accuracy</span><span class="sv">1 600</span></div>
+        <div class="specrow"><span class="sk">Speed weighting</span><span class="sv">×1.18</span></div>
+        <div class="specrow"><span class="sk">Streak bonus</span><span class="sv">+ 210</span></div>
+        <div class="specrow"><span class="sk">SRS interval gain</span><span class="sv">+ 94</span></div>
+        <div class="specrow" style="border-top:1px solid var(--line-2);padding-top:8px">
+          <span class="sk">Session score</span><span class="sv a" id="scoreOut">2 192</span>
+        </div>
+      </div>
+
+      <div class="panel tk">
+        <div class="ph"><span class="sq"></span><h2>Set accuracy</h2><span class="rule"></span><span class="id">MOD/SETACC-13</span></div>
+        <div id="deckAcc"></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</main>
+
+<div class="toast tk" id="toast"></div>
+</div>
+
+<script>
+"use strict";
+/* =====================================================================
+   DATA — every glyph/reading pair below is taken verbatim from
+   _reference/JAPANESE-CONTENT-MODEL.md. No reading is invented.
+   ===================================================================== */
+
+/* ---- per-session history (last 16 of 146 logged) ---- */
+const SESSIONS = [
+  {id:"S-0131",date:"2026-07-09",seg:"KANA / GOJUON",     ch:"RECOGNITION",sc:"ACCURACY",   reps:48, acc:71.2,streak:9, ms:2610},
+  {id:"S-0132",date:"2026-07-11",seg:"KANA / GOJUON",     ch:"RECOGNITION",sc:"ACCURACY",   reps:60, acc:74.6,streak:12,ms:2480},
+  {id:"S-0133",date:"2026-07-12",seg:"KANA / DAKUON",     ch:"RECALL",     sc:"STREAK",     reps:40, acc:68.9,streak:7, ms:2755},
+  {id:"S-0134",date:"2026-07-14",seg:"KANA / GOJUON",     ch:"TIMED",      sc:"SPEED-WTD",  reps:72, acc:79.1,streak:15,ms:2320},
+  {id:"S-0135",date:"2026-07-16",seg:"KATAKANA / GOJUON", ch:"LISTENING",  sc:"ACCURACY",   reps:60, acc:73.4,streak:11,ms:2530},
+  {id:"S-0136",date:"2026-07-18",seg:"KANA / DAKUON",     ch:"RECALL",     sc:"STREAK",     reps:55, acc:77.8,streak:13,ms:2410},
+  {id:"S-0137",date:"2026-07-20",seg:"KANJI / JLPT N5",   ch:"RECOGNITION",sc:"ACCURACY",   reps:45, acc:66.7,streak:6, ms:3180},
+  {id:"S-0138",date:"2026-07-22",seg:"KANA / YOON",       ch:"TIMED",      sc:"SPEED-WTD",  reps:36, acc:70.2,streak:8, ms:2890},
+  {id:"S-0139",date:"2026-07-24",seg:"KATAKANA / GOJUON", ch:"RECOGNITION",sc:"ACCURACY",   reps:80, acc:82.5,streak:19,ms:2260},
+  {id:"S-0140",date:"2026-07-27",seg:"KANJI / JLPT N5",   ch:"RECALL",     sc:"SRS",        reps:60, acc:72.9,streak:10,ms:2970},
+  {id:"S-0141",date:"2026-07-29",seg:"KANA / FULL 104",   ch:"MIXED",      sc:"SRS",        reps:100,acc:84.0,streak:22,ms:2180},
+  {id:"S-0142",date:"2026-07-31",seg:"KANJI / JLPT N5",   ch:"RECOGNITION",sc:"ACCURACY",   reps:75, acc:78.6,streak:14,ms:2740},
+  {id:"S-0143",date:"2026-08-01",seg:"KANA / FULL 104",   ch:"MIXED",      sc:"SRS",        reps:90, acc:87.8,streak:27,ms:2050},
+  {id:"S-0144",date:"2026-08-03",seg:"KANJI / JLPT N4",   ch:"RECALL",     sc:"SRS",        reps:66, acc:74.3,streak:12,ms:3040},
+  {id:"S-0145",date:"2026-08-04",seg:"KATAKANA / FULL 104",ch:"TIMED",     sc:"SPEED-WTD",  reps:84, acc:89.2,streak:31,ms:1980},
+  {id:"S-0146",date:"2026-08-05",seg:"KANA / FULL 104",   ch:"MIXED",      sc:"SRS",        reps:96, acc:91.6,streak:34,ms:1910}
+];
+
+/* ---- character sets: counts are the authoritative ones ---- */
+const SETS = [
+  {name:"HIRAGANA", jp:"ひらがな", total:104,  done:97,  acc:93.3},
+  {name:"KATAKANA", jp:"カタカナ", total:104,  done:88,  acc:84.6},
+  {name:"JLPT N5",  jp:"漢字",     total:107,  done:79,  acc:73.8},
+  {name:"JLPT N4",  jp:"漢字",     total:174,  done:42,  acc:61.2},
+  {name:"JLPT N3",  jp:"漢字",     total:394,  done:11,  acc:34.0},
+  {name:"JLPT N2",  jp:"漢字",     total:248,  done:0,   acc:null},
+  {name:"JLPT N1",  jp:"漢字",     total:382,  done:0,   acc:null},
+  {name:"JOYO ALL", jp:"常用漢字", total:1521, done:129, acc:null}
+];
+
+const GAUGES = [
+  {name:"KANA COMPOSITE", pct:89.0, sub:"185 / 208"},
+  {name:"KANJI JLPT",     pct:24.9, sub:"132 / 530"},
+  {name:"JOYO COMPLETE",  pct:8.5,  sub:"129 / 1521"}
+];
+
+/* ---- exercise segments: challenge type × scoring scheme × difficulty ---- */
+const SEGMENTS = {
+  kana:[
+    {id:"K-01",name:"GOJUON GRID",  jp:"五十音", scope:"46",  unit:"chars", glyphs:"あ か さ た な",
+     ch:"RECOGNITION",sc:"ACCURACY",  tier:"TIER 1",acc:94.2,state:"cleared"},
+    {id:"K-02",name:"DAKUON",       jp:"濁音",   scope:"—",   unit:"voiced", glyphs:"が ざ だ ば",
+     ch:"RECALL",     sc:"STREAK",    tier:"TIER 2",acc:88.1,state:"active"},
+    {id:"K-03",name:"HAN-DAKUON",   jp:"半濁音", scope:"—",   unit:"half-voiced", glyphs:"ぱ ぴ ぷ ぺ ぽ",
+     ch:"RECOGNITION",sc:"ACCURACY",  tier:"TIER 3",acc:91.0,state:"active"},
+    {id:"K-04",name:"YOON",         jp:"拗音",   scope:"—",   unit:"contracted", glyphs:"きゃ しゅ きょ",
+     ch:"TIMED",      sc:"SPEED-WTD", tier:"TIER 4",acc:71.5,state:"active"},
+    {id:"K-05",name:"HIRAGANA MIX", jp:"ひらがな",scope:"104",unit:"chars", glyphs:"あ ぎ ふ ん",
+     ch:"MIXED",      sc:"SRS",       tier:"TIER 5",acc:87.8,state:"active"},
+    {id:"K-06",name:"KATAKANA MIX", jp:"カタカナ",scope:"104",unit:"chars", glyphs:"ア キ ソ ン",
+     ch:"LISTENING",  sc:"SRS",       tier:"TIER 5",acc:84.6,state:"active"}
+  ],
+  jlpt:[
+    {id:"J-N5",name:"JLPT N5",jp:"漢字",scope:"107",unit:"kanji",glyphs:"日 月 火 水",
+     ch:"RECOGNITION",sc:"ACCURACY",  tier:"N5",acc:73.8,state:"active"},
+    {id:"J-N4",name:"JLPT N4",jp:"漢字",scope:"174",unit:"kanji",glyphs:"学 生 中 上",
+     ch:"RECALL",     sc:"SRS",       tier:"N4",acc:61.2,state:"active"},
+    {id:"J-N3",name:"JLPT N3",jp:"漢字",scope:"394",unit:"kanji",glyphs:"—",
+     ch:"TIMED",      sc:"SPEED-WTD", tier:"N3",acc:34.0,state:"active"},
+    {id:"J-N2",name:"JLPT N2",jp:"漢字",scope:"248",unit:"kanji",glyphs:"—",
+     ch:"MIXED",      sc:"STREAK",    tier:"N2",acc:null,state:"locked"},
+    {id:"J-N1",name:"JLPT N1",jp:"漢字",scope:"382",unit:"kanji",glyphs:"—",
+     ch:"RECALL",     sc:"SRS",       tier:"N1",acc:null,state:"locked"}
+  ],
+  vol:[
+    {id:"V-200",name:"TOP 200",  jp:"上位200", scope:"200", unit:"kanji",glyphs:"人 大 小 川",
+     ch:"MIXED",      sc:"SRS",      tier:"VOL 1",acc:64.5,state:"active"},
+    {id:"V-500",name:"TOP 500",  jp:"上位500", scope:"500", unit:"kanji",glyphs:"金 土 山 三",
+     ch:"RECOGNITION",sc:"ACCURACY", tier:"VOL 2",acc:22.1,state:"active"},
+    {id:"V-ALL",name:"COMPLETE", jp:"常用漢字",scope:"1 372",unit:"kanji",glyphs:"—",
+     ch:"MIXED",      sc:"SRS",      tier:"VOL 3",acc:null,state:"locked"},
+    {id:"V-THM",name:"THEMATIC · NATURE",jp:"自然",scope:"—",unit:"set",glyphs:"日 月 火 水 木",
+     ch:"RECOGNITION",sc:"STREAK",   tier:"VOL 1",acc:81.0,state:"active"},
+    {id:"V-TIM",name:"THEMATIC · TIME",  jp:"時間",scope:"—",unit:"set",glyphs:"日 月 一 二 三",
+     ch:"TIMED",      sc:"SPEED-WTD",tier:"VOL 1",acc:69.4,state:"active"}
+  ]
+};
+
+/* ---- the source-backed difficulty ladders ---- */
+const LADDERS = {
+  kana:{title:"Difficulty ladder · kana track", rungs:[
+    {n:"RUNG 1",t:"GOJUON",     g:"五十音",  p:96, s:"done"},
+    {n:"RUNG 2",t:"DAKUON",     g:"濁音",    p:88, s:"cur"},
+    {n:"RUNG 3",t:"HAN-DAKUON", g:"半濁音",  p:91, s:"cur"},
+    {n:"RUNG 4",t:"YOON",       g:"拗音",    p:72, s:""},
+    {n:"RUNG 5",t:"FULL 104 MIX",g:"ひらがな・カタカナ",p:88,s:""}
+  ]},
+  jlpt:{title:"Difficulty ladder · JLPT track", rungs:[
+    {n:"N5 · 107",t:"FOUNDATION",g:"漢字",p:74,s:"cur"},
+    {n:"N4 · 174",t:"EVERYDAY",  g:"漢字",p:61,s:"cur"},
+    {n:"N3 · 394",t:"ABSTRACT",  g:"漢字",p:34,s:""},
+    {n:"N2 · 248",t:"PROFESSIONAL",g:"漢字",p:0,s:"locked"},
+    {n:"N1 · 382",t:"SPECIALISED",g:"漢字",p:0,s:"locked"}
+  ]},
+  vol:{title:"Difficulty ladder · volume track", rungs:[
+    {n:"VOL 1 · 200", t:"TOP 200",  g:"上位200", p:65,s:"cur"},
+    {n:"VOL 2 · 500", t:"TOP 500",  g:"上位500", p:22,s:""},
+    {n:"VOL 3 · 1372",t:"COMPLETE", g:"常用漢字",p:0, s:"locked"}
+  ]}
+};
+
+/* ---- weak characters (verified pairs only) ---- */
+const WEAK = [
+  {g:"ソ",  r:"so",  e:47},
+  {g:"生",  r:"sei / iki",e:44},
+  {g:"ン",  r:"n",   e:43},
+  {g:"シ",  r:"shi", e:41},
+  {g:"ツ",  r:"tsu", e:39},
+  {g:"上",  r:"jō / ue",  e:36},
+  {g:"ぬ",  r:"nu",  e:34},
+  {g:"ね",  r:"ne",  e:31},
+  {g:"きょ",r:"kyo", e:28},
+  {g:"ヲ",  r:"wo",  e:26},
+  {g:"ざ",  r:"za",  e:23},
+  {g:"ホ",  r:"ho",  e:21}
+];
+
+/* ---- thematic categories from the Top 200 wall chart ---- */
+const THEMES = [
+  {n:"NUMBERS & COUNTING",p:92},
+  {n:"PEOPLE & FAMILY",   p:78},
+  {n:"NATURE & WEATHER",  p:81},
+  {n:"TIME & CALENDAR",   p:69},
+  {n:"ACTIONS",           p:54},
+  {n:"DESCRIPTIONS",      p:41},
+  {n:"PLACES",            p:33}
+];
+
+/* ---- decks ---- */
+const DECKS = {
+  hira:{
+    label:"HIRAGANA", jp:"ひらがな", meta:"104 CHARS · TIER 5 MIX", mark:"あ",
+    ch:"MIXED", sc:"SPACED-REPETITION", tier:"TIER 5 · FULL MIX", set:"HIRAGANA 104",
+    acc:[["GOJUON",96.4],["DAKUON",88.1],["HAN-DAKUON",91.0],["YOON",71.5]],
+    cards:[
+      {t:"kana",g:"あ",r:"a",  cls:"gojuon"},
+      {t:"kana",g:"き",r:"ki", cls:"gojuon"},
+      {t:"kana",g:"す",r:"su", cls:"gojuon"},
+      {t:"kana",g:"ね",r:"ne", cls:"gojuon"},
+      {t:"kana",g:"ほ",r:"ho", cls:"gojuon"},
+      {t:"kana",g:"む",r:"mu", cls:"gojuon"},
+      {t:"kana",g:"ら",r:"ra", cls:"gojuon"},
+      {t:"kana",g:"を",r:"wo", cls:"gojuon"},
+      {t:"kana",g:"ん",r:"n",  cls:"gojuon"},
+      {t:"kana",g:"ざ",r:"za", cls:"dakuon"},
+      {t:"kana",g:"ぱ",r:"pa", cls:"han-dakuon"},
+      {t:"kana",g:"きゃ",r:"kya",cls:"yoon"}
+    ]
+  },
+  kata:{
+    label:"KATAKANA", jp:"カタカナ", meta:"104 CHARS · TIER 5 MIX", mark:"ア",
+    ch:"LISTENING", sc:"SPACED-REPETITION", tier:"TIER 5 · FULL MIX", set:"KATAKANA 104",
+    acc:[["GOJUON",89.2],["DAKUON",83.4],["HAN-DAKUON",86.0],["YOON",64.8]],
+    cards:[
+      {t:"kana",g:"ア",r:"a",  cls:"gojuon"},
+      {t:"kana",g:"キ",r:"ki", cls:"gojuon"},
+      {t:"kana",g:"ス",r:"su", cls:"gojuon"},
+      {t:"kana",g:"ソ",r:"so", cls:"gojuon"},
+      {t:"kana",g:"ツ",r:"tsu",cls:"gojuon"},
+      {t:"kana",g:"ネ",r:"ne", cls:"gojuon"},
+      {t:"kana",g:"ホ",r:"ho", cls:"gojuon"},
+      {t:"kana",g:"ラ",r:"ra", cls:"gojuon"},
+      {t:"kana",g:"ヲ",r:"wo", cls:"gojuon"},
+      {t:"kana",g:"ン",r:"n",  cls:"gojuon"}
+    ]
+  },
+  n5:{
+    label:"JLPT N5", jp:"漢字", meta:"107 KANJI · GRADED", mark:"日",
+    ch:"RECOGNITION", sc:"ACCURACY", tier:"JLPT N5", set:"JLPT N5 107",
+    acc:[["NUMBERS",88.0],["NATURE",81.0],["PEOPLE",76.4],["POSITION",64.2]],
+    cards:[
+      {t:"kanji",g:"日",m:"day, sun",     on:"ニチ / ジツ",kun:"ひ / か",      onr:"nichi / jitsu",kunr:"hi / ka"},
+      {t:"kanji",g:"月",m:"month, moon",  on:"ゲツ / ガツ",kun:"つき",         onr:"getsu / gatsu",kunr:"tsuki"},
+      {t:"kanji",g:"火",m:"fire",         on:"カ",         kun:"ひ",           onr:"ka",           kunr:"hi"},
+      {t:"kanji",g:"水",m:"water",        on:"スイ",       kun:"みず",         onr:"sui",          kunr:"mizu"},
+      {t:"kanji",g:"木",m:"tree, wood",   on:"モク / ボク",kun:"き",           onr:"moku / boku",  kunr:"ki"},
+      {t:"kanji",g:"金",m:"gold, money",  on:"キン / コン",kun:"かね",         onr:"kin / kon",    kunr:"kane"},
+      {t:"kanji",g:"土",m:"earth, soil",  on:"ド / ト",    kun:"つち",         onr:"do / to",      kunr:"tsuchi"},
+      {t:"kanji",g:"山",m:"mountain",     on:"サン",       kun:"やま",         onr:"san",          kunr:"yama"},
+      {t:"kanji",g:"川",m:"river",        on:"セン",       kun:"かわ",         onr:"sen",          kunr:"kawa"},
+      {t:"kanji",g:"人",m:"person",       on:"ジン / ニン",kun:"ひと",         onr:"jin / nin",    kunr:"hito"},
+      {t:"kanji",g:"大",m:"big",          on:"ダイ / タイ",kun:"おお(きい)",   onr:"dai / tai",    kunr:"ō(kii)"},
+      {t:"kanji",g:"小",m:"small",        on:"ショウ",     kun:"ちい(さい)",   onr:"shō",          kunr:"chii(sai)"},
+      {t:"kanji",g:"中",m:"middle, inside",on:"チュウ",    kun:"なか",         onr:"chū",          kunr:"naka"},
+      {t:"kanji",g:"上",m:"up, above",    on:"ジョウ",     kun:"うえ",         onr:"jō",           kunr:"ue"},
+      {t:"kanji",g:"下",m:"down, below",  on:"カ / ゲ",    kun:"した",         onr:"ka / ge",      kunr:"shita"},
+      {t:"kanji",g:"学",m:"study, learning",on:"ガク",     kun:"まな(ぶ)",     onr:"gaku",         kunr:"mana(bu)"},
+      {t:"kanji",g:"生",m:"life, birth",  on:"セイ / ショウ",kun:"い(きる) / う(まれる)",onr:"sei / shō",kunr:"i(kiru) / u(mareru)"}
+    ]
+  }
+};
+
+/* =====================================================================
+   HELPERS
+   ===================================================================== */
+const $  = (s,r)=> (r||document).querySelector(s);
+const $$ = (s,r)=> Array.from((r||document).querySelectorAll(s));
+const el = (tag,cls,html)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(html!=null)n.innerHTML=html;return n;};
+const svgEl = (tag,attrs)=>{const n=document.createElementNS("http://www.w3.org/2000/svg",tag);
+  for(const k in attrs) n.setAttribute(k,attrs[k]); return n;};
+const fmt = n => n.toLocaleString("en-US").replace(/,/g," ");
+
+let toastTimer=null;
+function toast(msg){
+  const t=$("#toast"); t.textContent=msg; t.classList.add("on");
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("on"),1900);
+}
+
+/* speaker button factory — inline SVG only */
+function speaker(label){
+  const b=el("button","spk"+(label?" lg":""));
+  b.type="button";
+  b.setAttribute("aria-label","Play pronunciation");
+  b.innerHTML =
+    '<svg viewBox="0 0 24 24" aria-hidden="true">'+
+      '<path d="M3.4 9.3h3.3L11.6 5.1v13.8L6.7 14.7H3.4z" fill="currentColor"/>'+
+      '<path class="wv w1" d="M14.4 9.4a3.9 3.9 0 0 1 0 5.2" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round"/>'+
+      '<path class="wv w2" d="M17.2 6.9a7.6 7.6 0 0 1 0 10.2" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round"/>'+
+    '</svg>'+
+    '<span class="meter" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'+
+    (label?'<span>'+label+'</span>':'');
+  b.addEventListener("click",ev=>{
+    ev.stopPropagation();
+    b.classList.remove("tx");
+    void b.offsetWidth;              /* restart the animation */
+    b.classList.add("tx");
+    setTimeout(()=>b.classList.remove("tx"),950);
+    toast("TX · audio out — "+(b.dataset.say||"pronunciation"));
+  });
+  return b;
+}
+
+/* =====================================================================
+   DASHBOARD — gauges
+   ===================================================================== */
+function buildGauges(){
+  const bank=$("#gaugeBank");
+  const R=32, C=2*Math.PI*R, SWEEP=0.75;      /* 270° dial */
+  GAUGES.forEach(g=>{
+    const wrap=el("div","gauge");
+    const s=svgEl("svg",{viewBox:"0 0 86 86",width:"86",height:"86"});
+
+    /* tick ring */
+    for(let i=0;i<=18;i++){
+      const a=(135+(270/18)*i)*Math.PI/180;
+      const r1=41, r2=(i%3===0)?36:38.5;
+      s.appendChild(svgEl("line",{
+        x1:43+Math.cos(a)*r2, y1:43+Math.sin(a)*r2,
+        x2:43+Math.cos(a)*r1, y2:43+Math.sin(a)*r1,
+        stroke:(i%3===0)?"#3d3d48":"#2a2a33","stroke-width":1
+      }));
+    }
+    s.appendChild(svgEl("circle",{cx:43,cy:43,r:R,fill:"none",stroke:"#20202a","stroke-width":6,
+      "stroke-dasharray":(C*SWEEP)+" "+C,transform:"rotate(135 43 43)"}));
+    s.appendChild(svgEl("circle",{cx:43,cy:43,r:R,fill:"none",stroke:"#f5c518","stroke-width":6,
+      "stroke-dasharray":(C*SWEEP*g.pct/100)+" "+C,transform:"rotate(135 43 43)",
+      style:"filter:drop-shadow(0 0 5px rgba(245,197,24,.45))"}));
+
+    const t=svgEl("text",{x:43,y:44,"text-anchor":"middle",fill:"#e8e8ee",
+      style:"font-family:var(--mono);font-size:17px"}); t.textContent=g.pct.toFixed(1);
+    s.appendChild(t);
+    const t2=svgEl("text",{x:43,y:56,"text-anchor":"middle",fill:"#7a7a87",
+      style:"font-family:var(--mono);font-size:8px;letter-spacing:.1em"}); t2.textContent="PCT";
+    s.appendChild(t2);
+
+    wrap.appendChild(s);
+    wrap.appendChild(el("span","gname",g.name));
+    wrap.appendChild(el("span","gsub",g.sub));
+    bank.appendChild(wrap);
+  });
+}
+
+function buildSetBars(){
+  const host=$("#setBars"), N=24;
+  SETS.forEach(s=>{
+    const pct=s.total?(s.done/s.total*100):0;
+    const on=Math.round(pct/100*N);
+    const row=el("div","setrow"+(s.done===0?" locked":""));
+    row.innerHTML='<span class="sname">'+s.name+' <b>'+s.total+'</b></span>';
+    const bar=el("div","segbar");
+    for(let i=0;i<N;i++){
+      const c=el("i"); if(i<on) c.className = (pct<12?"on lo":"on"); bar.appendChild(c);
+    }
+    row.appendChild(bar);
+    row.appendChild(el("span","snum",s.done===0
+      ? '<s>LOCKED</s>'
+      : pct.toFixed(1)+'<s>%</s>'));
+    host.appendChild(row);
+  });
+}
+
+/* =====================================================================
+   DASHBOARD — trend + reps charts (two separate scales, two plots)
+   ===================================================================== */
+const CH={w:800,h:190,l:40,r:14,t:12,b:26};
+function buildTrend(){
+  const s=$("#trendSvg"), n=SESSIONS.length;
+  const iw=CH.w-CH.l-CH.r, ih=CH.h-CH.t-CH.b;
+  const yMin=60,yMax=100;
+  const X=i=> CH.l + (iw/(n-1))*i;
+  const Y=v=> CH.t + ih - ((v-yMin)/(yMax-yMin))*ih;
+
+  const defs=svgEl("defs");
+  const lg=svgEl("linearGradient",{id:"agrad",x1:"0",y1:"0",x2:"0",y2:"1"});
+  lg.appendChild(svgEl("stop",{offset:"0","stop-color":"#f5c518","stop-opacity":".24"}));
+  lg.appendChild(svgEl("stop",{offset:"1","stop-color":"#f5c518","stop-opacity":"0"}));
+  defs.appendChild(lg); s.appendChild(defs);
+
+  /* gridlines + y labels */
+  for(let v=yMin;v<=yMax;v+=10){
+    s.appendChild(svgEl("line",{x1:CH.l,x2:CH.w-CH.r,y1:Y(v),y2:Y(v),
+      class:"gridline"+(v===yMin?" base":"")}));
+    const tx=svgEl("text",{x:CH.l-8,y:Y(v)+3,"text-anchor":"end",class:"axl"});
+    tx.textContent=v+"%"; s.appendChild(tx);
+  }
+
+  /* area + line */
+  let d="",a="";
+  SESSIONS.forEach((ss,i)=>{ d+=(i?" L":"M")+X(i)+" "+Y(ss.acc); });
+  a = d + " L"+X(n-1)+" "+(CH.t+ih)+" L"+X(0)+" "+(CH.t+ih)+" Z";
+  s.appendChild(svgEl("path",{d:a,class:"trendarea"}));
+  s.appendChild(svgEl("path",{d:d,class:"trendline"}));
+
+  /* dots + x labels */
+  SESSIONS.forEach((ss,i)=>{
+    s.appendChild(svgEl("circle",{cx:X(i),cy:Y(ss.acc),r:i===n-1?4.5:3,
+      class:"tdot"+(i===n-1?" last":"")}));
+    if(i%3===0||i===n-1){
+      const tx=svgEl("text",{x:X(i),y:CH.h-8,"text-anchor":"middle",class:"axl"});
+      tx.textContent=ss.date.slice(5); s.appendChild(tx);
+    }
+  });
+
+  /* selective direct label on the newest point only */
+  const lbl=svgEl("text",{x:X(n-1)-6,y:Y(SESSIONS[n-1].acc)-11,"text-anchor":"end",
+    style:"font-family:var(--mono);font-size:11px;fill:#f5c518"});
+  lbl.textContent=SESSIONS[n-1].acc.toFixed(1)+"%"; s.appendChild(lbl);
+
+  /* crosshair + hit areas */
+  const cross=svgEl("line",{class:"crossline",y1:CH.t,y2:CH.t+ih,x1:0,x2:0});
+  s.appendChild(cross);
+  const tip=$("#trendTip"), box=$("#trendBox");
+  SESSIONS.forEach((ss,i)=>{
+    const half=iw/(n-1)/2;
+    const hr=svgEl("rect",{class:"hitrect",x:X(i)-half,y:CH.t,width:half*2,height:ih});
+    hr.addEventListener("mouseenter",()=>{
+      cross.setAttribute("x1",X(i)); cross.setAttribute("x2",X(i)); cross.classList.add("on");
+      $$("#repsSvg .repbar").forEach((b,j)=>b.classList.toggle("hot",j===i));
+      tip.innerHTML='<div class="th">'+ss.id+' · '+ss.date+'</div>'+
+        '<div class="tr"><span>Segment</span><b>'+ss.seg+'</b></div>'+
+        '<div class="tr"><span>Challenge</span><b>'+ss.ch+'</b></div>'+
+        '<div class="tr"><span>Scoring</span><b>'+ss.sc+'</b></div>'+
+        '<div class="tr"><span>Accuracy</span><b>'+ss.acc.toFixed(1)+'%</b></div>'+
+        '<div class="tr"><span>Reps</span><b>'+ss.reps+'</b></div>'+
+        '<div class="tr"><span>Streak</span><b>'+ss.streak+'</b></div>'+
+        '<div class="tr"><span>Latency</span><b>'+(ss.ms/1000).toFixed(2)+'s</b></div>';
+      const br=hr.getBoundingClientRect(), pr=box.getBoundingClientRect();
+      tip.style.left=(br.left-pr.left+br.width/2)+"px";
+      tip.style.top =(pr.height*((Y(ss.acc))/CH.h))+"px";
+      tip.classList.add("on");
+    });
+    hr.addEventListener("mouseleave",()=>{
+      cross.classList.remove("on"); tip.classList.remove("on");
+      $$("#repsSvg .repbar").forEach(b=>b.classList.remove("hot"));
+    });
+    s.appendChild(hr);
+  });
+}
+
+function buildReps(){
+  const s=$("#repsSvg"), n=SESSIONS.length;
+  const W=800,H=78,L=40,R=14,T=8,B=16;
+  const iw=W-L-R, ih=H-T-B;
+  const max=100, step=iw/(n-1);
+  const bw=Math.max(6,step-6);         /* 2px+ surface gap between bars */
+  s.appendChild(svgEl("line",{x1:L,x2:W-R,y1:T+ih,y2:T+ih,class:"gridline base"}));
+  const t0=svgEl("text",{x:L-8,y:T+7,"text-anchor":"end",class:"axl"});t0.textContent="100";s.appendChild(t0);
+  const t1=svgEl("text",{x:L-8,y:T+ih+3,"text-anchor":"end",class:"axl"});t1.textContent="0";s.appendChild(t1);
+  SESSIONS.forEach((ss,i)=>{
+    const h=Math.max(2,(ss.reps/max)*ih);
+    s.appendChild(svgEl("rect",{class:"repbar",x:L+step*i-bw/2,y:T+ih-h,width:bw,height:h,rx:2}));
+  });
+}
+
+/* =====================================================================
+   DASHBOARD — segments table
+   ===================================================================== */
+function renderSegments(track){
+  const body=$("#segBody"); body.innerHTML="";
+  SEGMENTS[track].forEach(sg=>{
+    const tr=el("tr");
+    const tierCls = /N1|N2/.test(sg.tier) ? "chip tier t-"+sg.tier.toLowerCase()
+                  : (sg.state==="cleared" ? "chip tier hot" : "chip tier");
+    tr.innerHTML =
+      '<td><span class="seg-code">'+sg.id+'</span></td>'+
+      '<td><span class="seg-name">'+sg.name+'</span><span class="seg-jp jp">'+sg.jp+'</span></td>'+
+      '<td><span class="seg-scope">'+(sg.scope==="—"
+            ? '<span class="seg-glyphs jp">'+sg.glyphs+'</span>'
+            : sg.scope+' <s>'+sg.unit+'</s>')+'</span></td>'+
+      '<td><span class="chip type">'+sg.ch+'</span></td>'+
+      '<td><span class="chip score">'+sg.sc+'</span></td>'+
+      '<td><span class="'+tierCls+'">'+sg.tier+'</span></td>'+
+      '<td class="r"><div class="accmini">'+
+        '<span class="bar"><i style="width:'+(sg.acc||0)+'%"></i></span>'+
+        '<span class="n'+(sg.acc==null?' none':'')+'">'+(sg.acc==null?'—':sg.acc.toFixed(1)+'%')+'</span>'+
+      '</div></td>'+
+      '<td class="r"></td>';
+    const cell=tr.lastElementChild;
+    const b=el("button","btn "+(sg.state==="locked"?"ghost":"arm"),sg.state==="locked"?"Locked":"Arm ▸");
+    if(sg.state==="locked") b.disabled=true;
+    b.addEventListener("click",()=>{
+      const deck = track==="kana" ? (/KATAKANA/.test(sg.name)?"kata":"hira") : "n5";
+      setDeck(deck);
+      setView("card");
+      toast("Segment armed · "+sg.id+" "+sg.name);
+    });
+    cell.appendChild(b);
+    body.appendChild(tr);
+  });
+  renderLadder(track);
+}
+
+function renderLadder(track){
+  const L=LADDERS[track];
+  $("#ladderTitle").textContent=L.title;
+  const host=$("#rungs"); host.innerHTML="";
+  L.rungs.forEach(r=>{
+    const d=el("div","rung "+r.s);
+    d.classList.add("tk"); d.style.setProperty("--tkl","7px");
+    d.innerHTML='<span class="rn">'+r.n+'</span>'+
+                '<span class="rt">'+r.t+'</span>'+
+                '<span class="rg jp">'+r.g+'</span>'+
+                '<span class="rp"><i style="width:'+r.p+'%"></i></span>';
+    host.appendChild(d);
+  });
+}
+
+/* =====================================================================
+   DASHBOARD — streak heat, weak chars, themes, log
+   ===================================================================== */
+function buildHeat(){
+  const host=$("#heat");
+  const load=[3,2,4,1,3,4,2,0,3,3,4,2,1,3,4,4,2,3,1,4,3,4,2,3,4,3,4,4];
+  load.forEach(l=>{const i=el("i");i.dataset.l=l;host.appendChild(i);});
+}
+function buildWeak(){
+  const host=$("#weakGrid");
+  WEAK.forEach(w=>{
+    const c=el("div","weakcell tk");
+    c.style.setProperty("--tkl","6px");
+    c.innerHTML='<span class="g jp">'+w.g+'</span>'+
+                '<span class="r">'+w.r+'</span>'+
+                '<span class="e">'+w.e+'%</span>'+
+                '<span class="ebar"><i style="width:'+w.e+'%"></i></span>';
+    c.title=w.g+" — "+w.r+" · "+w.e+"% error rate";
+    host.appendChild(c);
+  });
+}
+function buildThemes(){
+  const host=$("#themeList");
+  THEMES.forEach(t=>{
+    const r=el("div","themerow");
+    r.innerHTML='<span class="tn">'+t.n+'</span>'+
+                '<span class="tb"><i style="width:'+t.p+'%"></i></span>'+
+                '<span class="tv">'+t.p+'%</span>';
+    host.appendChild(r);
+  });
+}
+function sparkline(seed){
+  const pts=[];
+  for(let i=0;i<12;i++){
+    const v=(Math.sin(seed*1.7+i*0.9)*0.5+0.5)*0.7+0.15;
+    pts.push((i/11*84+2).toFixed(1)+" "+(13-v*11).toFixed(1));
+  }
+  return '<svg viewBox="0 0 88 14" preserveAspectRatio="none"><polyline points="'+pts.join(" ")+
+         '" fill="none" stroke="#f5c518" stroke-width="1.2" opacity=".8"/></svg>';
+}
+function buildLog(){
+  const body=$("#logBody");
+  SESSIONS.slice().reverse().forEach((s,i)=>{
+    const correct=Math.round(s.reps*s.acc/100);
+    const tr=el("tr");
+    tr.innerHTML=
+      '<td class="id">'+s.id+'</td>'+
+      '<td>'+s.date+'</td>'+
+      '<td style="color:var(--ink)">'+s.seg+'</td>'+
+      '<td>'+s.ch+'</td>'+
+      '<td>'+s.sc+'</td>'+
+      '<td class="r">'+s.reps+'</td>'+
+      '<td class="r">'+correct+'</td>'+
+      '<td class="r acc" style="color:'+(s.acc>=85?"#f5c518":"inherit")+'">'+s.acc.toFixed(1)+'%</td>'+
+      '<td class="r">'+s.streak+'</td>'+
+      '<td class="r">'+(s.ms/1000).toFixed(2)+'s</td>'+
+      '<td class="r sparkcell">'+sparkline(i+1)+'</td>';
+    body.appendChild(tr);
+  });
+}
+function buildMicrobars(){
+  $$("[data-micro]").forEach(host=>{
+    const vals=host.dataset.micro.split(",").map(Number);
+    const max=Math.max.apply(null,vals);
+    vals.forEach(v=>{
+      const i=el("i"); i.style.height=Math.max(3,(v/max)*14)+"px";
+      i.className="on"; i.style.opacity=(0.35+0.65*(v/max)).toFixed(2);
+      host.appendChild(i);
+    });
+  });
+}
+
+/* =====================================================================
+   CARD DECK
+   ===================================================================== */
+let deckKey="hira", idx=0, flipped=false;
+let live={reps:18,correct:16,streak:7};
+
+function buildDeckList(){
+  const host=$("#deckList");
+  Object.keys(DECKS).forEach(k=>{
+    const d=DECKS[k];
+    const b=el("button","deckbtn tk");
+    b.type="button"; b.dataset.deck=k;
+    b.setAttribute("aria-pressed", k===deckKey ? "true":"false");
+    b.classList.toggle("on", k===deckKey);
+    b.innerHTML='<span class="dg jp">'+d.mark+'</span><span><span class="dn">'+d.label+
+                '</span><span class="dm">'+d.meta+'</span></span>';
+    b.addEventListener("click",()=>{setDeck(k);toast("Deck loaded · "+d.label);});
+    host.appendChild(b);
+  });
+}
+
+function renderSpec(){
+  const d=DECKS[deckKey];
+  $("#specList").innerHTML=
+    '<div class="specrow"><span class="sk">Character set</span><span class="sv">'+d.set+'</span></div>'+
+    '<div class="specrow"><span class="sk">Challenge type</span><span class="sv">'+d.ch+'</span></div>'+
+    '<div class="specrow"><span class="sk">Scoring scheme</span><span class="sv">'+d.sc+'</span></div>'+
+    '<div class="specrow"><span class="sk">Difficulty</span><span class="sv a">'+d.tier+'</span></div>'+
+    '<div class="specrow"><span class="sk">Deck length</span><span class="sv">'+d.cards.length+' cards</span></div>';
+  const acc=$("#deckAcc"); acc.innerHTML="";
+  d.acc.forEach(a=>{
+    const r=el("div","themerow");
+    r.innerHTML='<span class="tn">'+a[0]+'</span>'+
+                '<span class="tb"><i style="width:'+a[1]+'%"></i></span>'+
+                '<span class="tv">'+a[1].toFixed(1)+'</span>';
+    acc.appendChild(r);
+  });
+}
+
+function renderCard(){
+  const d=DECKS[deckKey], c=d.cards[idx];
+  const g=$("#cardGlyph");
+  g.textContent=c.g;                                   /* FRONT: character alone */
+  g.className="glyph jp"+(c.g.length>1?" small":"");
+
+  const back=$("#cardBack"); back.innerHTML="";
+  if(c.t==="kana"){
+    back.appendChild(el("span","backtag",d.label+" · "+c.cls));
+    back.appendChild(el("span","romaji",c.r));
+    back.appendChild(el("span","back-kana jp",c.g));
+    const sp=speaker("Play sound"); sp.dataset.say=c.r; back.appendChild(sp);
+  }else{
+    back.appendChild(el("span","backtag","JLPT N5 · Kanji"));
+    back.appendChild(el("span","back-echo jp",c.g));
+    back.appendChild(el("span","meaning",c.m));
+    const grp=el("div","rdgroup");
+    [["ON'YOMI",c.on,c.onr],["KUN'YOMI",c.kun,c.kunr]].forEach(row=>{
+      const r=el("div","rdrow");
+      r.appendChild(el("span","rk",row[0]));
+      r.appendChild(el("span","rv jp",row[1]+'<small>'+row[2]+'</small>'));
+      const sp=speaker(""); sp.dataset.say=row[2]; r.appendChild(sp);
+      grp.appendChild(r);
+    });
+    back.appendChild(grp);
+  }
+
+  /* card-level SRS readout, bottom-anchored inside the instrument frame */
+  const old=$(".face.back .backmeta"); if(old) old.remove();
+  const meta=el("div","backmeta");
+  const seen=6+((idx*7)%23), ease=(1.9+((idx*13)%60)/100).toFixed(2), iv=1+((idx*5)%14);
+  meta.innerHTML='<span>Seen <b>'+seen+'×</b></span>'+
+                 '<span>Ease <b>'+ease+'</b></span>'+
+                 '<span>Next <b>+'+iv+'d</b></span>';
+  $(".face.back").appendChild(meta);
+
+  $("#posLabel").textContent="CARD "+String(idx+1).padStart(2,"0")+" / "+String(d.cards.length).padStart(2,"0");
+  $("#posFill").style.width=((idx+1)/d.cards.length*100).toFixed(1)+"%";
+}
+
+function setFlip(state){
+  flipped = state==null ? !flipped : state;
+  $("#card3d").classList.toggle("flipped",flipped);
+  $("#card3d").setAttribute("aria-pressed",flipped?"true":"false");
+  $("#btnFlip").textContent = flipped ? "Show character" : "Flip card";
+}
+function step(dir){
+  const d=DECKS[deckKey];
+  const wasFlipped=flipped;
+  setFlip(false);
+  /* if the card was showing its back, wait for the flip to clear the
+     halfway point before swapping the glyph */
+  setTimeout(()=>{
+    idx=(idx+dir+d.cards.length)%d.cards.length;
+    renderCard();
+  },wasFlipped?320:0);
+}
+function setDeck(k){
+  deckKey=k; idx=0; setFlip(false);
+  $$("#deckList .deckbtn").forEach(b=>{
+    b.setAttribute("aria-pressed", b.dataset.deck===k?"true":"false");
+    b.classList.toggle("on", b.dataset.deck===k);
+  });
+  renderSpec(); renderCard();
+}
+
+function buildLat(){
+  const host=$("#latBars");
+  const v=[62,48,55,71,40,58,66,44,52,80,47,60,38,55,64,42,50,57,45,36];
+  v.forEach((x,i)=>{const b=el("i");b.style.height=Math.round(x/80*34)+"px";
+    if(i>=v.length-4)b.className="on";host.appendChild(b);});
+}
+function grade(n){
+  live.reps++;
+  if(n>=2){live.correct++;live.streak++;} else {live.streak=0;}
+  $("#lvReps").textContent=live.reps;
+  $("#lvCorrect").textContent=live.correct;
+  $("#lvAcc").textContent=(live.correct/live.reps*100).toFixed(1)+"%";
+  $("#lvStreak").textContent=live.streak;
+  $("#scoreOut").textContent=fmt(2192+live.reps*17+live.streak*12);
+  toast(["","Again · interval reset","Hard · +1d","Good · +4d","Easy · +9d"][n]);
+  step(1);
+}
+
+/* =====================================================================
+   VIEW SWITCHING + INPUT
+   ===================================================================== */
+function setView(v){
+  $$(".view").forEach(s=>s.classList.toggle("on", s.id==="view-"+v));
+  $$(".navtab").forEach(b=>{
+    b.setAttribute("aria-selected", b.dataset.view===v?"true":"false");
+    b.classList.toggle("on", b.dataset.view===v);
+  });
+  if(history.replaceState) history.replaceState(null,"","#"+v);
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function boot(){
+  buildGauges(); buildSetBars(); buildTrend(); buildReps();
+  renderSegments("kana"); buildHeat(); buildWeak(); buildThemes();
+  buildLog(); buildMicrobars(); buildDeckList(); renderSpec(); renderCard(); buildLat();
+
+  $$(".navtab").forEach(b=>b.addEventListener("click",()=>setView(b.dataset.view)));
+  $$(".track").forEach(b=>b.addEventListener("click",()=>{
+    $$(".track").forEach(x=>{x.setAttribute("aria-selected","false");x.classList.remove("on");});
+    b.setAttribute("aria-selected","true"); b.classList.add("on");
+    renderSegments(b.dataset.track);
+  }));
+  $("[data-drill='weak']").addEventListener("click",()=>{
+    setDeck("kata"); setView("card"); toast("Drill armed · 12 weak characters");
+  });
+
+  $("#card3d").addEventListener("click",()=>setFlip());
+  $("#card3d").addEventListener("keydown",e=>{
+    if(e.key==="Enter"||e.key===" "){e.preventDefault();setFlip();}
+  });
+  $("#btnFlip").addEventListener("click",()=>setFlip());
+  $("#btnNext").addEventListener("click",()=>step(1));
+  $("#btnPrev").addEventListener("click",()=>step(-1));
+  $$("[data-grade]").forEach(b=>b.addEventListener("click",()=>grade(+b.dataset.grade)));
+
+  document.addEventListener("keydown",e=>{
+    if(!$("#view-card").classList.contains("on")) return;
+    if(e.target.closest(".spk")) return;
+    if(e.key===" "){e.preventDefault();setFlip();}
+    else if(e.key==="ArrowRight") step(1);
+    else if(e.key==="ArrowLeft")  step(-1);
+    else if("1234".includes(e.key)) grade(+e.key);
+  });
+
+  /* deep link: #card opens the deck directly */
+  if(location.hash==="#card") setView("card");
+
+  /* uptime clock */
+  const t0=Date.now()-(37*60+12)*1000;
+  setInterval(()=>{
+    const s=Math.floor((Date.now()-t0)/1000);
+    $("#clock").textContent=[Math.floor(s/3600),Math.floor(s/60)%60,s%60]
+      .map(x=>String(x).padStart(2,"0")).join(":");
+  },1000);
+}
+document.addEventListener("DOMContentLoaded",boot);
+</script>

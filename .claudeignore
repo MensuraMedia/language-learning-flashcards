@@ -1,0 +1,29 @@
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Secrets
+.env*
+*.pem
+*.key
+
+# Vendored standards (read on demand, not every session)
+universal-instruction-set-main/
+universal-instruction-set-main.zip
+
+# Generated media
+static/audio/generated/
+*.log
+coverage/
+**/.git/
