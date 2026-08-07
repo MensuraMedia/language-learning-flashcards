@@ -2159,3 +2159,105 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
   .recap { display: none !important; }
   .panel { border-color: #ccc; box-shadow: none; background: #fff; }
 }
+
+/* ═══════════════════════════════════════════ KEYBOARD AFFORDANCES ═════════ */
+/* Added alongside the generated design system, not in place of it. */
+
+.linklike {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--amber);
+  cursor: pointer;
+  text-decoration: underline dotted;
+}
+.linklike:focus-visible { outline: 2px solid var(--amber-line); outline-offset: 2px; }
+
+/* transient volume readout */
+.volume-bar {
+  position: absolute;
+  left: 50%;
+  bottom: 74px;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(12, 12, 15, .92);
+  border: 1px solid var(--line-2);
+  box-shadow: 0 14px 30px -18px #000;
+}
+.volume-track {
+  display: block;
+  width: 132px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--panel-3);
+  overflow: hidden;
+}
+.volume-fill {
+  display: block;
+  height: 100%;
+  background: var(--amber);
+  transition: width .12s var(--ease);
+}
+
+/* transient edge-of-deck message */
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: 74px;
+  transform: translateX(-50%);
+  z-index: 6;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(12, 12, 15, .92);
+  border: 1px solid var(--line-2);
+  font-size: 11px;
+  color: var(--ink-2);
+}
+
+/* keyboard reference overlay */
+.help {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 6, 8, .72);
+  backdrop-filter: blur(3px);
+}
+.help[hidden] { display: none; }
+.help-card {
+  width: min(420px, 92vw);
+  background: linear-gradient(180deg, var(--panel), #131317);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  box-shadow: 0 30px 70px -30px #000;
+}
+.help-table { width: 100%; border-collapse: collapse; }
+.help-table td { padding: 7px 14px; font-size: 12px; border-top: 1px solid var(--line); }
+.help-table td:first-child { width: 128px; white-space: nowrap; }
+.help-table tr:first-child td { border-top: 0; }
+
+/* `.btn` sets `flex: 1` for the three-across .stage-foot row. Anywhere else it
+   is one control among others, so it must size to its content instead of
+   swallowing the remaining space — that was stretching "End" across the topbar
+   and "Close" across the help panel. */
+.topbar-right .btn,
+.panel-h .btn,
+.recap-act .btn { flex: 0 0 auto; }
+
+/* `.recap` is display:none in the base system and was revealed by a class in
+   the mockup. This view drives it with the `hidden` attribute instead, so make
+   that attribute the single source of truth. `[hidden]{display:none!important}`
+   above already covers the closed case. It is also fixed rather than absolute,
+   because its nearest positioned ancestor is the window, not the felt. */
+.recap:not([hidden]) {
+  display: flex;
+  position: fixed;
+}

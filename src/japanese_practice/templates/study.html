@@ -68,8 +68,45 @@
       <button class="btn amber" id="flip" type="button">Flip <span class="kbd">Space</span></button>
       <button class="btn" id="right" type="button">Right <span class="kbd">J</span></button>
     </div>
-    <p class="hint muted">Space flips · J right · F wrong · Esc ends the session</p>
+    <p class="hint muted">
+      Space flips · J right · F wrong · ← → move · ↑ ↓ volume · P plays ·
+      <button class="linklike" id="help-open" type="button">? shortcuts</button>
+    </p>
+
+    <!-- transient volume readout, raised by ArrowUp/ArrowDown/M -->
+    <div class="volume-bar" id="volume-bar" hidden aria-live="polite">
+      <span class="lbl-sm" id="volume-label">Volume 100%</span>
+      <span class="volume-track"><i class="volume-fill" id="volume-fill"></i></span>
+    </div>
+
+    <!-- transient edge-of-deck message -->
+    <div class="toast" id="toast" hidden aria-live="polite"></div>
   </section>
+
+  <!-- keyboard reference -->
+  <div class="help" id="help" hidden role="dialog" aria-label="Keyboard shortcuts">
+    <div class="help-card">
+      <div class="panel-h">
+        <span class="lbl">Keyboard shortcuts</span>
+        <button class="btn ghost" id="help-close" type="button">Close</button>
+      </div>
+      <table class="help-table">
+        <tbody>
+          <tr><td><span class="kbd">Space</span> <span class="kbd">Enter</span></td><td>Flip the card</td></tr>
+          <tr><td><span class="kbd">J</span></td><td>Mark right</td></tr>
+          <tr><td><span class="kbd">F</span></td><td>Mark wrong</td></tr>
+          <tr><td><span class="kbd">→</span></td><td>Next card (no grade)</td></tr>
+          <tr><td><span class="kbd">←</span></td><td>Previous card</td></tr>
+          <tr><td><span class="kbd">↑</span></td><td>Volume up</td></tr>
+          <tr><td><span class="kbd">↓</span></td><td>Volume down</td></tr>
+          <tr><td><span class="kbd">M</span></td><td>Mute / unmute</td></tr>
+          <tr><td><span class="kbd">P</span> <span class="kbd">R</span></td><td>Play pronunciation</td></tr>
+          <tr><td><span class="kbd">Esc</span></td><td>End the session</td></tr>
+          <tr><td><span class="kbd">?</span> <span class="kbd">H</span></td><td>Toggle this panel</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
   <div class="recap" id="recap" hidden>
     <div class="recap-card ticked">
@@ -82,5 +119,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="module" src="{{ url_for('static', filename='js/study.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/study.js', v=asset_version) }}"></script>
 {% endblock %}

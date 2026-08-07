@@ -1,0 +1,32 @@
+{
+  "clips": [
+    {
+      "path": "hiragana/female/あ.wav",
+      "ok": true,
+      "reason": "",
+      "bytes": 34130,
+      "duration_ms": 772,
+      "peak": 0.570892333984375,
+      "sha256": "d97c3f7c71f8452117f222ffd4f870f2b42b2548c72e222e3bda93255bc738f5"
+    },
+    {
+      "path": "hiragana/female/し.wav",
+      "ok": true,
+      "reason": "",
+      "bytes": 40538,
+      "duration_ms": 918,
+      "peak": 0.38836669921875,
+      "sha256": "ffd142cda0164eb6632a4ea3e84caa4769a4b6969c4ea4450f9d95d5795e33bc"
+    },
+    {
+      "path": "hiragana/female/つ.wav",
+      "ok": true,
+      "reason": "",
+      "bytes": 41228,
+      "duration_ms": 933,
+      "peak": 0.3951416015625,
+      "sha256": "77103f7f56e59613fafbbd451b76bf58112ff069feedafb893f4a3ad206fb799"
+    }
+  ],
+  "rejected": []
+}

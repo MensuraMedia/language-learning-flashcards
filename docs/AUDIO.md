@@ -12,7 +12,7 @@ raises**:
 
 | # | Source | Format | Notes |
 |---|---|---|---|
-| 1 | Bundled clip — `static/audio/<script>/<glyph>.mp3` | mp3 | Hand-recorded. Highest quality, zero cost, works offline |
+| 1 | **Validated** bundled clip — `static/audio/<script>/<voice>/<glyph>.mp3` | mp3/wav | Local, validated against the manifest. Highest quality, zero cost, works offline |
 | 2 | **ElevenLabs**, cached | mp3 | Only when `ELEVENLABS_API_KEY` is set. Cached per `(text, voice_id)` |
 | 3 | **ElevenLabs**, fresh | mp3 | Result written to cache |
 | 4 | Local TTS cache | wav | `espeak-ng` / `pico2wave` render, cached per `(text, backend)` |
@@ -163,11 +163,78 @@ Clearing the cache is safe — it simply re-synthesises.
 | ElevenLabs module (`tts_elevenlabs.py`) | ✅ Written, imports clean |
 | Wired into `get_audio` ahead of local TTS | ✅ |
 | Caching per `(text, voice)` | ✅ |
-| Graceful degradation without a key | ✅ **Verified** — returns local espeak WAV |
+| Graceful degradation without a key | ✅ **Verified** — falls through to local TTS |
+| Local clip library + validation | ✅ `audio_library.py`; 26 tests |
+| espeak-ng installed | ✅ 2026-08-06; Japanese voice `ja` present |
 | **Called against the live API** | ❌ **Never** — no key available |
 | Real voice IDs chosen | ❌ Placeholders only |
 | `gender` exposed on `/api/audio/<id>` | ❌ Not yet — parameter exists on `get_audio`, the route does not pass it |
 | Bundled clips | ❌ None recorded |
+
+### Correction — 2026-08-06
+
+An earlier revision of this document and of `HANDOFF.md` stated that
+`/api/audio` returned "real espeak synthesis". **It did not.** No TTS binary was
+installed; every response was the 0.4s silent stub, whose 17,684-byte size was
+mistaken for evidence of real audio. The clip validator built for this section
+is what caught it, by measuring amplitude rather than trusting size.
+
+`espeak-ng` 1.50 is now installed with the Japanese voice `ja`, and synthesis is
+verified by amplitude: あ renders at 772ms with peak 0.571.
+
+**Rule: never treat file size as evidence that audio contains sound.**
+
+---
+
+## 8. The local clip library
+
+Every clip the app ships is stored locally and validated before use. Nothing is
+fetched from a third party at runtime.
+
+```
+static/audio/
+├── manifest.json                     # sha256 + duration + peak per clip
+├── hiragana/{female,male}/<glyph>.{mp3,wav}
+├── katakana/{female,male}/<glyph>.{mp3,wav}
+└── kanji/{female,male}/<glyph>.{mp3,wav}
+```
+
+The tree mirrors how audio is selected — **script → voice → glyph** — so a
+clip's purpose is readable from its path and a missing set shows up in a plain
+directory listing.
+
+### Validation gates
+
+`audio_library.validate_clip()` rejects a clip for any of these, and
+`is_validated()` treats a rejected file as **absent** so it can never reach a
+learner:
+
+| Gate | Rejects |
+|---|---|
+| Exists and ≥ 512 bytes | Zero-byte and header-only files |
+| RIFF / MP3 magic bytes | Wrong or corrupt format |
+| Duration 150–4000 ms | Truncated renders; a whole word read instead of a mora |
+| Peak amplitude ≥ 0.01 | **Silence** — the worst failure, since nothing plays and the learner assumes the character has no sound |
+| SHA-256 recorded | Silent corruption between runs |
+
+Duration is derived from the bytes actually present, not the WAV header:
+streaming writers such as espeak-ng emit a placeholder length, and trusting it
+reported durations of 48,695,681 ms.
+
+### Commands
+
+```python
+from japanese_practice import audio_library as lib
+
+lib.scan_library()             # validate every clip in the tree
+lib.write_manifest()           # record the valid ones with checksums
+lib.verify_against_manifest()  # detect drift or deletion since then
+lib.is_validated("hiragana", "あ", "female")
+```
+
+---
+
+## 9. Next steps
 
 **Next steps:** provide a key, run `list_voices()`, choose a male and a female
 Japanese voice per §3, set `JP_VOICE_MALE` / `JP_VOICE_FEMALE`, then add a

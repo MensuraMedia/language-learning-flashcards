@@ -2,7 +2,7 @@
 
 How the suite is built, what each layer proves, and why it is shaped this way.
 
-- **Last run:** 2026-08-06 · **155 passed, 0 failed** · 0.99s
+- **Last run:** 2026-08-06 · **181 passed, 0 failed** · 1.21s
 - **Lint:** `ruff` clean · `black` clean (25 files)
 
 ---
@@ -41,7 +41,8 @@ so `async def` tests need no per-test decorator.
 | [`tests/test_content.py`](../tests/test_content.py) | **58** | 256 | data | No Japanese character teaches something false |
 | [`tests/test_analytics.py`](../tests/test_analytics.py) | **41** | 484 | SQL | Every metric computes correctly, and survives an empty DB |
 | [`tests/test_api.py`](../tests/test_api.py) | **21** | 292 | HTTP | The whole stack works end to end through real requests |
-| **Total** | **155** | **1,322** | | |
+| [`tests/test_audio_library.py`](../tests/test_audio_library.py) | **26** | 213 | assets | No silent, truncated or corrupt clip reaches a learner |
+| **Total** | **181** | **1,535** | | |
 
 The distribution is deliberate. **Content has the most tests despite being the
 simplest code**, because it carries the highest consequence — see §4.
@@ -211,7 +212,7 @@ Stated plainly, because an unqualified "155 passing" would overstate it.
 | Gap | Why | Mitigation |
 |---|---|---|
 | **Frontend JavaScript** | No JS test runner; no `node` on this machine | Rendering verified manually in the pywebview window |
-| **Keyboard controls** (Space/J/F/Esc) | No input-injection tool (`xdotool` absent) | Handlers reviewed by reading; **unverified** |
+| ~~Keyboard controls~~ | — | **Verified 2026-08-06** with `xdotool` against the live window: every key in the map exercised |
 | **The 3D flip animation** | CSS transform, not assertable from Python | Verified visually — front and back faces both captured |
 | **ElevenLabs API** | No API key available | Fallback path verified; the live call has **never run** |
 | **pywebview window lifecycle** | Needs a display server | Verified manually on `DISPLAY=:0` |

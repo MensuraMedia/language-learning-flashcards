@@ -89,5 +89,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="module" src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/dashboard.js', v=asset_version) }}"></script>
 {% endblock %}

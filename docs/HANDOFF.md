@@ -4,7 +4,7 @@
 It is the single place a new session (human or agent) reads to know where the
 project stands, what is real, what is assumed, and what to do next.
 
-- **Last updated:** 2026-08-06 21:05 UTC-4
+- **Last updated:** 2026-08-06 22:15 UTC-4
 - **Updated by:** session `30934411` (Claude Opus 5)
 - **Project root:** `/home/user/projects/japanese_practice`
 - **Remote:** https://github.com/MensuraMedia/language-learning-flashcards (public)
@@ -39,9 +39,11 @@ works on this project **must**:
 | Analytics engine | ✅ All 13 metrics compute from real data |
 | Desktop window (pywebview) | ✅ Opens and renders |
 | UI layout polish | ⚠️ Functional, not finished |
-| Audio (local TTS) | ✅ Real espeak synthesis working |
+| Audio (local TTS) | ✅ espeak-ng **installed 2026-08-06**; real audio verified (peak 0.571) |
 | Audio (ElevenLabs) | ⚠️ Integrated, never called against the live API |
-| Tests | ✅ **155 passing**, lint + format clean — see [TESTING.md](TESTING.md) |
+| Clip library + validation | ✅ `audio_library.py`, manifest + checksums |
+| Keyboard controls | ✅ **All verified with xdotool** |
+| Tests | ✅ **181 passing**, lint + format clean — see [TESTING.md](TESTING.md) |
 | Packaging / distribution | ❌ Not started |
 
 **Chosen design direction:** `mockups/05-tactile-deck.html`, with the analytics
@@ -92,8 +94,13 @@ All of the following were run on 2026-08-06 and produced the stated result.
 - `POST /api/session/<id>/attempt` → scores and streaks update correctly
 - `POST /api/session/<id>/end` → totals finalised
 - `GET /api/character/<id>` → character + recall history
-- `GET /api/audio/<id>` → **17,684-byte WAV, 22050 Hz — real espeak synthesis,
-  not the silent fallback**
+- `GET /api/audio/<id>` → 200 with a playable WAV.
+  **CORRECTION (2026-08-06 22:00):** an earlier note in this file claimed this
+  was "real espeak synthesis". It was not. 17,684 bytes is *exactly* the silent
+  stub (0.4s x 22050Hz x 2 bytes + 44-byte header) — the size was inferred from,
+  not verified against, the content, and **no TTS binary was installed at all**.
+  `espeak-ng` has since been installed and real synthesis is now verified by
+  amplitude (peak 0.571, 772ms for あ). Never infer audio validity from file size.
 - Bad input → `{"code","message"}` with HTTP 400
 
 **Analytics** — computed over 545 seeded attempts across 28 sessions / 20 days.
@@ -141,12 +148,11 @@ correctly (Noto Sans CJK JP present system-wide).
   generated against the mockup's exact DOM; the templates approximate it. Several
   panels below the fold are unverified visually. Inline `style=` attributes were
   used as spacing stopgaps in `dashboard.html` — these should move into CSS.
-- ~~`study.html` unverified~~ — **VERIFIED 2026-08-06.** Study view renders in
-  the pywebview window: front face shows the glyph alone (ぬ, weakest-first
-  ordering confirmed), back face shows the reading (`nu`) plus the inline-SVG
-  speaker. The 3D flip transform works. **Keyboard controls (Space/J/F/Esc) and
-  the click handlers are still unexercised** — no input-injection tool is
-  installed (`xdotool` absent).
+- ~~`study.html` unverified~~ — **FULLY VERIFIED 2026-08-06** with `xdotool`
+  installed. Every keyboard control exercised against the live pywebview window:
+  Space flips, ←/→ navigate, ↑/↓ change volume (readout confirmed at 90%),
+  M mutes, P plays, H opens the shortcut panel, J/F grade (score 30, streak
+  reset on a wrong answer confirmed), Esc ends and shows the recap.
 - ~~No tests~~ — **155 tests passing** as of 2026-08-06 (scoring 35, content 58,
   analytics 41, API 21). Full breakdown and coverage gaps in
   [TESTING.md](TESTING.md). Not covered: frontend JS, keyboard controls, the CSS
@@ -211,8 +217,11 @@ chosen deliberately to keep the real address out of public history.
 
 ## 8. Next actions, in order
 
-1. **Install `xdotool`** and exercise the keyboard controls (Space/J/F/Esc) and
-   click handlers — the only part of the study view still unverified.
+1. **Fix the detached `.btn` rendering.** The topbar "End" link and the help
+   panel's "Close" button render centred in their container rather than inline,
+   in WebKit. `.topbar-right .btn, .panel-h .btn { flex: 0 0 auto }` did not
+   resolve it and asset cache-busting ruled out staleness. Cosmetic, not
+   functional. Reproduce in the pywebview window, not Firefox.
 2. **Finish the dashboard layout** — check every panel below the fold renders
    (trend, retention, latency, time-of-day, leeches, mastery, calendar). Move the
    inline `style=` stopgaps into `theme.css`.

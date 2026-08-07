@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 from quart import Quart
 
@@ -26,6 +27,21 @@ def create_app(config: Config | None = None) -> Quart:
 
     app.register_blueprint(views_bp)
     app.register_blueprint(api_bp)
+
+    @app.context_processor
+    def _asset_version() -> dict[str, str]:
+        """Cache-busting stamp for static assets.
+
+        Embedded webviews cache aggressively — without this, a user who updates
+        the app keeps the old CSS and JS until they clear the webview's cache,
+        which they have no UI to do.
+        """
+        newest = 0.0
+        static_root = Path(app.static_folder or "")
+        for asset in static_root.rglob("*"):
+            if asset.is_file():
+                newest = max(newest, asset.stat().st_mtime)
+        return {"asset_version": str(int(newest))}
 
     @app.before_serving
     async def _startup() -> None:
