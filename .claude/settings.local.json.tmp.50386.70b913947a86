@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Agent",
+      "Skill",
+      "WebFetch",
+      "WebSearch",
+      "TodoWrite",
+      "NotebookEdit",
+      "EnterPlanMode",
+      "ExitPlanMode",
+      "EnterWorktree",
+      "ExitWorktree",
+      "CronCreate",
+      "CronDelete",
+      "CronList",
+      "TaskOutput",
+      "TaskStop",
+      "AskUserQuestion",
+      "ToolSearch",
+      "Bash(mkdir -p .claude/memory/sessions .claude/memory/changes)",
+      "Bash(cp universal-instruction-set-main/universal-memory/templates/memory-index.md .claude/memory/MEMORY.md)",
+      "Bash(cp universal-instruction-set-main/universal-memory/rules/universal-memory-rules.md .claude/rules/memory-rules.md)",
+      "Bash(:)",
+      "Bash(mkdir -p .claude/memory/sessions)",
+      "Bash(git add *)"
+    ],
+    "defaultMode": "dontAsk"
+  }
+}

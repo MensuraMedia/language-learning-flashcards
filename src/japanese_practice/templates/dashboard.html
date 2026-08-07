@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Japanese Practice{% endblock %}
+
+{% block topbar %}
+  <span class="lbl-sm">Local · offline</span>
+{% endblock %}
+
+{% block content %}
+<main class="view on" id="dashboard">
+
+  <!-- headline counters -->
+  <section class="tiles" id="tiles"></section>
+
+  <!-- deck shelf: the tactile-deck metaphor, and the entry point to study -->
+  <div class="sec"><span class="lbl">Decks</span><span class="lbl-sm" id="deck-note"></span></div>
+  <div class="shelf-scroll" id="shelf"></div>
+
+  <!-- headline weakness view -->
+  <div class="sec">
+    <span class="lbl">Per-character miss rate</span>
+    <span class="lbl-sm">click a character to drill it</span>
+  </div>
+  <section class="panel" style="padding:14px">
+    <div class="heatmap" id="heatmap"></div>
+    <div class="hm-legend">
+      <span class="lbl-sm">mastered</span>
+      <span class="hm-scale" id="hm-scale"></span>
+      <span class="lbl-sm">failing</span>
+    </div>
+  </section>
+
+  <div class="sec" style="margin-top:22px"><span class="lbl">Performance</span></div>
+
+  <div class="grid">
+    <section class="panel span-2">
+      <div class="panel-h"><span class="lbl">Accuracy by session</span></div>
+      <div class="chart-wrap" id="trend" style="padding:12px"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h">
+        <span class="lbl">Weakest characters</span>
+        <button class="btn go" id="drill-weak" type="button">Drill all →</button>
+      </div>
+      <div class="weak-grid" id="weak" style="padding:12px"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h"><span class="lbl">Confused with</span></div>
+      <div class="confusions" id="confusions" style="padding:10px 12px"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h"><span class="lbl">Retention curve</span></div>
+      <div class="chart-wrap" id="retention" style="padding:12px"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h"><span class="lbl">Response latency</span></div>
+      <div class="histo" id="latency" style="margin:12px"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h"><span class="lbl">Time of day</span></div>
+      <div class="chart-wrap" id="tod" style="padding:12px"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h"><span class="lbl">Leeches</span><span class="lbl-sm">re-forgotten</span></div>
+      <div class="log-list" id="leeches" style="padding:6px 12px"></div>
+    </section>
+
+    <section class="panel span-2">
+      <div class="panel-h"><span class="lbl">Mastery by group</span></div>
+      <div class="bars" id="mastery" style="padding:14px"></div>
+    </section>
+
+    <section class="panel span-all">
+      <div class="panel-h"><span class="lbl">Study calendar</span><span class="lbl-sm">last 90 days</span></div>
+      <div class="cal" id="calendar" style="padding:14px"></div>
+    </section>
+  </div>
+
+  <div class="empty" id="empty" hidden>
+    <p class="lbl">No study history yet</p>
+    <p class="muted">Pick a deck above and answer a few cards — every panel here fills in from your own attempts.</p>
+  </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

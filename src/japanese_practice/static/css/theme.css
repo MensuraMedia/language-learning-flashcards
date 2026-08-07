@@ -1,0 +1,2161 @@
+/* ==========================================================================
+   Japanese Practice — theme.css
+   Design direction: 05 "Tactile Deck". Analytics panels grafted from
+   04 "Data Studio".
+
+   The metaphor is physical: every study set is a real deck with visible
+   thickness, fanned sheets and a contact shadow, shelved on a plank and
+   wrapped in a paper obi band that doubles as its progress meter. Cards are
+   picked up, tilted under the cursor and turned over in true 3D.
+
+   ACCENT RULE — amber (--amber) is reserved for three things only:
+     1. progress (obi fill, meters, mastery)
+     2. live values (the running score, the current streak, the hovered datum)
+     3. the flip (card edge light, the turned face)
+   Everything else lives on the neutral gray scale. The miss-rate heatmap is
+   the one analytic that is allowed amber, because a miss rate IS a progress
+   value read in reverse.
+
+   Contents
+     1.  Tokens
+     2.  Reset & base
+     3.  Typography helpers
+     4.  App chrome — topbar, nav, views
+     5.  Section headings
+     6.  Stat strip / stat tiles
+     7.  Shelf & plank
+     8.  Deck — thickness, sheets, obi
+     9.  Panels & panel grid
+     10. Chart frame (line / area)
+     11. Bar meters
+     12. Miss-rate heatmap
+     13. Data tables (weakness, sessions, leeches)
+     14. Confusion-pair list
+     15. Streak calendar
+     16. Latency histogram
+     17. Retention / time-of-day mini charts
+     18. Weak-card chips
+     19. The felt table
+     20. The flash card — true 3D flip
+     21. Speaker
+     22. Grade bar, hints, keys
+     23. Run rail — kv, pips, log
+     24. Deck picker
+     25. Session recap overlay
+     26. Buttons & form controls
+     27. Focus-visible states
+     28. Responsive
+     29. Reduced motion / print
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. TOKENS — verbatim from mockup 05 / BUILD-SPEC §2
+   ========================================================================== */
+:root {
+  /* surfaces */
+  --bg: #0d0d0f;
+  --bg-deep: #09090b;
+  --panel: #16161a;
+  --panel-2: #1c1c21;
+  --panel-3: #23232a;
+
+  /* rules */
+  --line: #26262b;
+  --line-2: #33333c;
+  --line-3: #45454f;
+
+  /* ink */
+  --ink: #e8e8ee;
+  --ink-2: #9a9aa6;
+  --ink-3: #66666f;
+  --ink-4: #4a4a53;
+
+  /* accent — progress, live values and the flip. Nothing else. */
+  --amber: #f0b429;
+  --amber-soft: rgba(240, 180, 41, .14);
+  --amber-line: rgba(240, 180, 41, .34);
+
+  /* card stock */
+  --card-hi: #262630;
+  --card-lo: #15151a;
+  --felt: #101014;
+
+  /* type */
+  --ui: ui-sans-serif, system-ui, "Inter", "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --jp: "Noto Sans CJK JP", "Noto Sans JP", sans-serif;
+
+  /* geometry & motion */
+  --r-sm: 6px;
+  --ease: cubic-bezier(.2, .75, .25, 1);
+
+  /* ---- derived, non-normative ------------------------------------------
+     Supplementary values built on the tokens above. --amber-rgb exists only
+     so alpha can be composed at run time (heatmap tinting); it must always
+     equal --amber. */
+  --amber-rgb: 240, 180, 41;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --flip-dur: .55s;              /* BUILD-SPEC §10 */
+  --shadow-panel: 0 14px 30px -22px #000;
+  --shadow-card: 0 34px 54px -26px rgba(0, 0, 0, 1);
+  --inset-hi: inset 0 1px 0 rgba(255, 255, 255, .075);
+}
+
+
+/* ==========================================================================
+   2. RESET & BASE
+   ========================================================================== */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+* { margin: 0; padding: 0; }
+
+html,
+body { height: 100%; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  background:
+    radial-gradient(1200px 700px at 15% -8%, #17171d 0%, transparent 62%),
+    radial-gradient(900px 620px at 108% 8%, #14141a 0%, transparent 58%),
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--ui);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection { background: var(--amber-soft); color: var(--ink); }
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+}
+
+button { cursor: pointer; }
+
+a { color: inherit; text-decoration: none; }
+
+svg { display: block; }
+
+img { max-width: 100%; }
+
+[hidden] { display: none !important; }
+
+/* scrollbars — thin, on the deep background */
+html { scrollbar-color: var(--line-2) var(--bg-deep); scrollbar-width: thin; }
+* { scrollbar-color: var(--line-2) var(--bg-deep); }
+*::-webkit-scrollbar { height: 8px; width: 8px; }
+*::-webkit-scrollbar-track { background: var(--bg-deep); }
+*::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; }
+*::-webkit-scrollbar-thumb:hover { background: var(--line-3); }
+
+/* screen-reader only */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+
+/* ==========================================================================
+   3. TYPOGRAPHY HELPERS
+   Three families, three jobs:
+     --jp   glyphs. Always the hero of whatever it sits in.
+     --mono every numeral, without exception. Tabular figures.
+     --ui   prose, names, labels.
+   ========================================================================== */
+
+/* small uppercase letter-spaced label — the workhorse caption */
+.lbl {
+  font-size: 9.5px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 600;
+}
+
+.lbl-sm { font-size: 8.5px; letter-spacing: .18em; }
+
+/* every numeral in the app */
+.num {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.01em;
+}
+
+/* Japanese glyphs */
+.jp { font-family: var(--jp); }
+.jp-lg { font-family: var(--jp); font-size: 27px; line-height: 1.1; }
+
+/* live / progress value */
+.amber { color: var(--amber); }
+
+.muted { color: var(--ink-3); }
+.dim { color: var(--ink-4); }
+
+/* corner-tick motif — technical framing on hero surfaces */
+.ticked { position: relative; }
+.ticked::before,
+.ticked::after {
+  content: "";
+  position: absolute;
+  width: 7px; height: 7px;
+  pointer-events: none;
+  border-color: var(--amber-line);
+  opacity: .75;
+}
+.ticked::before { top: -1px; left: -1px; border-top: 1px solid; border-left: 1px solid; }
+.ticked::after { bottom: -1px; right: -1px; border-bottom: 1px solid; border-right: 1px solid; }
+
+
+/* ==========================================================================
+   4. APP CHROME
+   ========================================================================== */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  height: 54px;
+  padding: 0 22px;
+  background: linear-gradient(180deg, rgba(13, 13, 15, .96), rgba(13, 13, 15, .88));
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand { display: flex; align-items: baseline; gap: 10px; flex-shrink: 0; }
+
+/* the mark is a tiny stacked deck in its own right */
+.brand-mark {
+  width: 26px; height: 26px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(155deg, var(--card-hi), var(--card-lo));
+  border: 1px solid var(--line-2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .07),
+    2px 2px 0 -1px var(--panel-2),
+    4px 4px 0 -2px var(--panel);
+  font-family: var(--jp);
+  font-size: 13px;
+  color: var(--amber);
+}
+
+.brand-name { font-size: 14px; font-weight: 650; letter-spacing: .02em; }
+.brand-jp { font-family: var(--jp); font-size: 11px; color: var(--ink-3); }
+.brand-dir {
+  margin-left: 2px;
+  padding: 2px 7px;
+  border: 1px solid var(--line-2);
+  border-radius: 3px;
+  font-size: 8.5px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.nav {
+  display: flex;
+  gap: 2px;
+  margin-left: 14px;
+  padding: 3px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.nav button {
+  padding: 5px 13px;
+  border-radius: 5px;
+  font-size: 11.5px;
+  font-weight: 550;
+  color: var(--ink-2);
+  transition: .16s var(--ease);
+}
+.nav button:hover { color: var(--ink); background: var(--panel-2); }
+.nav button[aria-selected="true"],
+.nav button[aria-current="page"] {
+  color: var(--bg);
+  background: var(--amber);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28);
+}
+
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--panel);
+}
+.chip .lbl { font-size: 9px; }
+.chip b {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.chip.live b { color: var(--amber); }   /* live value → amber */
+.flame { width: 11px; height: 13px; flex-shrink: 0; }
+
+/* view switching */
+.view { display: none; animation: viewIn .34s var(--ease); }
+.view.on { display: block; }
+@keyframes viewIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.wrap { max-width: 1560px; margin: 0 auto; padding: 22px 22px 70px; }
+
+
+/* ==========================================================================
+   5. SECTION HEADINGS
+   ========================================================================== */
+.sec {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 12px;
+  flex-wrap: wrap;
+}
+.sec h2 {
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.sec .sec-jp { font-family: var(--jp); font-size: 11px; color: var(--ink-4); }
+.sec .rule { flex: 1; height: 1px; background: linear-gradient(90deg, var(--line), transparent); }
+.sec .sec-act { display: flex; gap: 5px; }
+
+/* small square icon button — shelf nudges, panel actions */
+.nudge {
+  width: 24px; height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--panel);
+  color: var(--ink-3);
+  transition: .15s var(--ease);
+}
+.nudge:hover { color: var(--amber); border-color: var(--line-3); background: var(--panel-2); }
+.nudge svg { width: 11px; height: 11px; }
+
+
+/* ==========================================================================
+   6. STAT STRIP / STAT TILES
+   One-pixel gaps over a --line background give hairline dividers without
+   double borders. Hover raises an amber ledger tick on the left edge.
+   ========================================================================== */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  margin-bottom: 26px;
+}
+.stats.cols-4 { grid-template-columns: repeat(4, 1fr); }
+.stats.cols-5 { grid-template-columns: repeat(5, 1fr); }
+
+.stat { position: relative; background: var(--panel); padding: 13px 15px 14px; }
+.stat::after {
+  content: "";
+  position: absolute;
+  left: 0; top: 0;
+  width: 2px; height: 0;
+  background: var(--amber);
+  transition: height .3s var(--ease);
+}
+.stat:hover::after { height: 100%; }
+.stat .lbl { margin-bottom: 7px; }
+.stat .v {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  line-height: 1;
+}
+.stat .v small { font-size: 12px; color: var(--ink-3); font-weight: 500; margin-left: 2px; }
+.stat.live .v { color: var(--amber); }
+.stat .sub {
+  margin-top: 6px;
+  font-size: 10.5px;
+  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.stat .sub > span { overflow: hidden; text-overflow: ellipsis; }
+
+.spark { display: block; }
+.spark .spark-line { fill: none; stroke: var(--amber); stroke-width: 1.5; stroke-linejoin: round; }
+.spark .spark-flat { stroke: var(--line-3); }
+
+.delta { font-family: var(--mono); font-size: 10px; color: var(--amber); }
+.delta.flat,
+.delta.down { color: var(--ink-3); }
+
+/* free-standing tile grid, for pages without the full six-up strip */
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
+.tile {
+  padding: 12px 14px 13px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.tile .v {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 23px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+.tile .v small { font-size: 11px; color: var(--ink-3); font-weight: 500; margin-left: 2px; }
+.tile.live .v { color: var(--amber); }
+.tile .d { font-family: var(--mono); font-size: 9.5px; color: var(--ink-3); }
+
+
+/* ==========================================================================
+   7. SHELF & PLANK
+   Decks stand on a lit plank; the rail scrolls horizontally with no visible
+   scrollbar so the shelf reads as furniture, not as a listbox.
+   ========================================================================== */
+.shelf { margin-bottom: 34px; }
+.shelf-rail { position: relative; padding-bottom: 20px; }
+
+.shelf-scroll {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 22px 4px 10px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.shelf-scroll::-webkit-scrollbar { display: none; height: 0; }
+
+/* the plank the decks stand on */
+.plank {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 13px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #2b2b34 0%, #1c1c23 34%, #101015 72%, #0a0a0d 100%);
+  border-top: 1px solid #3d3d48;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .05),
+    0 12px 26px -12px #000;
+}
+/* end brackets */
+.plank::before,
+.plank::after {
+  content: "";
+  position: absolute;
+  top: -5px;
+  width: 1px; height: 23px;
+  background: var(--line-2);
+}
+.plank::before { left: 0; }
+.plank::after { right: 0; }
+
+
+/* ==========================================================================
+   8. DECK — thickness, fanned sheets, contact shadow, obi band
+   Structure expected by the template:
+
+     button.deck
+       span.sheet.s3          fanned sheet, furthest
+       span.sheet.s2          fanned sheet, nearer
+       span.deck-face
+         span.deck-top        rung badge + count
+         span.deck-glyphs     three sample glyphs, receding
+         span.deck-id         name + jp name
+         span.obi             progress band
+         span.deck-tags       challenge / scoring tags
+   ========================================================================== */
+.deck {
+  position: relative;
+  flex: 0 0 236px;
+  width: 236px;
+  height: 302px;
+  scroll-snap-align: start;
+  text-align: left;
+  transform-style: preserve-3d;
+  transition: transform .3s var(--ease);
+}
+.deck:hover { transform: translateY(-9px); }
+.deck:active { transform: translateY(-3px) scale(.99); }
+
+/* contact shadow on the plank — spreads and softens as the deck is lifted */
+.deck::after {
+  content: "";
+  position: absolute;
+  left: 6%; right: 6%; bottom: -14px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, .72), transparent 72%);
+  filter: blur(4px);
+  transition: .3s var(--ease);
+}
+.deck:hover::after { bottom: -20px; left: 2%; right: 2%; opacity: .85; filter: blur(7px); }
+
+/* the sheets behind the face — real stack depth, fanning on hover */
+.sheet {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-lg);
+  background: linear-gradient(160deg, #1e1e25, #131318);
+  border: 1px solid var(--line-2);
+  transition: transform .34s var(--ease), opacity .34s var(--ease);
+}
+.sheet.s3 { transform: translate(9px, 7px) rotate(2.2deg); opacity: .5; }
+.sheet.s2 { transform: translate(5px, 4px) rotate(1.1deg); opacity: .75; }
+.deck:hover .sheet.s3 { transform: translate(19px, 12px) rotate(5.4deg); opacity: .62; }
+.deck:hover .sheet.s2 { transform: translate(10px, 7px) rotate(2.7deg); opacity: .85; }
+
+.deck-face {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(158deg, var(--card-hi) 0%, #1b1b21 46%, var(--card-lo) 100%);
+  border: 1px solid var(--line-2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .075),
+    inset 0 -1px 0 rgba(0, 0, 0, .6),
+    inset 1px 0 0 rgba(255, 255, 255, .02),
+    0 18px 32px -18px rgba(0, 0, 0, .95);
+  transition: box-shadow .3s var(--ease), border-color .3s var(--ease);
+}
+/* the top edge catches amber light when the deck is picked up */
+.deck:hover .deck-face {
+  border-color: var(--line-3);
+  box-shadow:
+    inset 0 1px 0 rgba(240, 180, 41, .3),
+    inset 0 -1px 0 rgba(0, 0, 0, .6),
+    0 30px 44px -20px rgba(0, 0, 0, 1);
+}
+/* paper grain + vignette */
+.deck-face::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .7;
+  background:
+    repeating-linear-gradient(48deg, rgba(255, 255, 255, .014) 0 1px, transparent 1px 4px),
+    radial-gradient(120% 90% at 50% 0%, transparent 40%, rgba(0, 0, 0, .4) 100%);
+}
+
+.deck-top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 13px 0;
+}
+
+/* difficulty rung badge — a progress statement, so amber is allowed */
+.rung {
+  display: inline-block;
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--amber);
+  padding: 3px 6px;
+  border: 1px solid var(--amber-line);
+  border-radius: 3px;
+  background: var(--amber-soft);
+}
+.deck-count {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  flex-shrink: 0;
+  padding-left: 6px;
+}
+
+/* three sample glyphs, receding into the stack */
+.deck-glyphs {
+  flex: 1;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 2px 8px 6px;
+  font-family: var(--jp);
+  font-size: 46px;
+  line-height: 1;
+  color: var(--ink);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, .7);
+}
+.deck-glyphs span:nth-child(2) { opacity: .62; font-size: 38px; }
+.deck-glyphs span:nth-child(3) { opacity: .34; font-size: 31px; }
+
+.deck-id { position: relative; z-index: 2; padding: 0 13px 8px; }
+.deck-name { font-size: 12.5px; font-weight: 620; letter-spacing: .01em; line-height: 1.25; }
+.deck-jp { font-family: var(--jp); font-size: 10.5px; color: var(--ink-3); margin-top: 2px; }
+
+/* --- obi: the paper belly band, doubling as the progress meter ---------- */
+.obi {
+  position: relative;
+  z-index: 2;
+  padding: 8px 13px 9px;
+  background: linear-gradient(180deg, #101015, #0b0b0e);
+  border-top: 1px solid var(--line-2);
+  border-bottom: 1px solid #000;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, .03);
+}
+.obi-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.obi-row .lbl { font-size: 8.5px; }
+.obi-row b { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--amber); }
+
+/* the meter itself — pressed into the band */
+.track {
+  height: 4px;
+  border-radius: 2px;
+  background: #000;
+  border: 1px solid #000;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .9);
+}
+.fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #b8842a, var(--amber));
+  box-shadow: 0 0 8px rgba(240, 180, 41, .4);
+  transition: width .8s var(--ease);
+}
+.obi-sub {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-4);
+}
+
+.deck-tags {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 9px 13px 11px;
+  background: rgba(0, 0, 0, .22);
+}
+.tag {
+  font-size: 8.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--line-2);
+  color: var(--ink-2);
+  background: rgba(255, 255, 255, .022);
+}
+.tag.sc { color: var(--ink-3); border-style: dashed; }
+
+
+/* ==========================================================================
+   9. PANELS & PANEL GRID
+   ========================================================================== */
+.grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1.55fr 1fr 1fr;
+  align-items: start;
+}
+
+.panel {
+  background: linear-gradient(180deg, var(--panel), #131317);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035), var(--shadow-panel);
+}
+.panel-h {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--line);
+  min-height: 40px;
+}
+.panel-h h3 {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.panel-h .hint {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--ink-4);
+  font-family: var(--mono);
+}
+.panel-h .spacer { flex: 1; }
+.panel-b { padding: 14px; }
+.panel-b.tight { padding: 6px 14px 12px; }
+
+.span-all { grid-column: 1 / -1; }
+.span-2 { grid-column: span 2; }
+
+/* scrolling body for long analytic lists */
+.scroll { max-height: 322px; overflow: auto; }
+.scroll.short { max-height: 250px; }
+
+/* empty state */
+.empty {
+  padding: 26px 8px;
+  text-align: center;
+  font-size: 10.5px;
+  color: var(--ink-4);
+  letter-spacing: .06em;
+}
+
+
+/* ==========================================================================
+   10. CHART FRAME — line / area (accuracy per session, velocity, retention)
+   The SVG is authored by JS; these are the class contracts it draws against.
+   Only the trend itself is amber: it is the live performance value.
+   ========================================================================== */
+.chart-wrap { position: relative; }
+.chart-wrap svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+.gridline { stroke: var(--line); stroke-width: 1; }
+.gridline.zero { stroke: var(--line-2); }
+.axis-t { fill: var(--ink-4); font-family: var(--mono); font-size: 9px; }
+.axis-t.mid { fill: var(--ink-3); }
+
+.trend-line {
+  fill: none;
+  stroke: var(--amber);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+/* the area wash under the line — the amber fading into the panel */
+.trend-area { fill: url(#trendFade); stroke: none; }
+.trend-area-flat { fill: var(--amber-soft); stroke: none; }
+
+.trend-dot { fill: var(--bg); stroke: var(--amber); stroke-width: 1.5; }
+.trend-dot.on { fill: var(--amber); }
+
+/* secondary series stays gray — amber marks one value at a time */
+.trend-line-2 {
+  fill: none;
+  stroke: var(--line-3);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 3;
+}
+.bar-mark { fill: var(--line-3); }
+.bar-mark.on { fill: var(--amber); }
+
+.crosshair { stroke: var(--line-3); stroke-width: 1; stroke-dasharray: 2 3; }
+.hit { fill: transparent; cursor: crosshair; }
+
+/* hover tooltip */
+.tip {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -118%);
+  background: #0a0a0c;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+  min-width: 150px;
+  box-shadow: 0 12px 26px -10px #000;
+  transition: opacity .12s linear;
+  z-index: 5;
+}
+.tip.on { opacity: 1; }
+.tip .t-h { font-family: var(--mono); font-size: 10px; color: var(--ink-3); margin-bottom: 5px; }
+.tip .t-r {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 10.5px;
+  line-height: 1.7;
+}
+.tip .t-r b { font-family: var(--mono); color: var(--ink); }
+.tip .t-acc b { color: var(--amber); }
+
+/* legend */
+.legend { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.legend .item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--ink-2); }
+.key-line { width: 14px; height: 2px; border-radius: 2px; display: inline-block; background: var(--amber); }
+.key-line.alt { background: var(--line-3); }
+.key-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background: var(--amber); }
+
+
+/* ==========================================================================
+   11. BAR METERS — accuracy by set / mastery by group
+   .bar-f  amber, for accuracy and mastery (progress)
+   .weak   gray, for miss rates and other negative quantities
+   ========================================================================== */
+.bars { display: flex; flex-direction: column; gap: 11px; }
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 10px;
+  align-items: center;
+}
+.bar-name {
+  font-size: 11px;
+  color: var(--ink-2);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.bar-name .jp { font-size: 12px; color: var(--ink-3); }
+.bar-name em { font-style: normal; font-family: var(--mono); font-size: 9px; color: var(--ink-4); }
+.bar-val { font-family: var(--mono); font-size: 11px; color: var(--ink); }
+
+.bar-t {
+  grid-column: 1 / -1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--panel-3);
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .7);
+}
+.bar-f {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #a5761f, var(--amber));
+  transition: width .8s var(--ease);
+}
+.bar-f.weak { background: linear-gradient(90deg, #3d3d46, #5d5d68); }
+
+/* compact inline meter, for table cells */
+.meterrow { display: flex; align-items: center; gap: 8px; }
+.meter {
+  position: relative;
+  height: 4px;
+  min-width: 52px;
+  flex: 1;
+  background: var(--panel-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.meter i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  background: var(--amber);
+  border-radius: 2px;
+}
+.meter.weak i { background: var(--line-3); }
+.meterrow .pct {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink);
+  min-width: 34px;
+  text-align: right;
+}
+
+
+/* ==========================================================================
+   12. MISS-RATE HEATMAP  (per_character_miss_rate)
+   Every studied character as a cell, tinted by miss rate in --amber alpha.
+
+   Two ways to drive a cell, both supported:
+     a) continuous — style="--miss:.42"  (preferred; miss_rate straight from
+        the API, 0..1). Alpha ramps .04 → .86.
+     b) bucketed   — class="b0".."b5" for legends and swatch keys.
+   ========================================================================== */
+.heatmap {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 3px;
+}
+
+.hm-cell {
+  --miss: 0;
+  position: relative;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  border: 1px solid var(--line);
+  font-family: var(--jp);
+  font-size: 19px;
+  line-height: 1;
+  color: var(--ink);
+  /* miss rate → amber alpha */
+  background:
+    linear-gradient(
+      180deg,
+      rgba(var(--amber-rgb), calc(.04 + var(--miss) * .86)),
+      rgba(var(--amber-rgb), calc(.04 + var(--miss) * .70))
+    ),
+    var(--panel-3);
+  transition: transform .12s var(--ease), box-shadow .12s var(--ease);
+}
+/* past ~60% miss the tint is bright enough to need dark ink */
+.hm-cell.hot { color: #17120a; }
+.hm-cell:hover {
+  transform: scale(1.13);
+  z-index: 3;
+  box-shadow: 0 0 0 1px var(--ink-2), 0 8px 18px -10px #000;
+}
+/* count of sightings, printed small in the corner */
+.hm-cell .n {
+  position: absolute;
+  right: 3px;
+  bottom: 2px;
+  font-family: var(--mono);
+  font-size: 7.5px;
+  color: var(--ink-4);
+}
+.hm-cell.hot .n { color: rgba(23, 18, 10, .7); }
+/* never seen — an empty slot in the grid */
+.hm-cell.unseen {
+  background: #121216;
+  color: var(--ink-4);
+  border-style: dashed;
+  border-color: var(--line-2);
+}
+
+/* discrete buckets — also used for the legend swatches */
+.hm-cell.b0 { background: linear-gradient(rgba(var(--amber-rgb), .04), rgba(var(--amber-rgb), .04)), var(--panel-3); }
+.hm-cell.b1 { background: rgba(var(--amber-rgb), .18); }
+.hm-cell.b2 { background: rgba(var(--amber-rgb), .34); }
+.hm-cell.b3 { background: rgba(var(--amber-rgb), .52); }
+.hm-cell.b4 { background: rgba(var(--amber-rgb), .70); color: #17120a; }
+.hm-cell.b5 { background: rgba(var(--amber-rgb), .90); color: #17120a; }
+
+.hm-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+  font-size: 9.5px;
+  color: var(--ink-4);
+}
+.hm-scale { display: flex; gap: 2px; }
+.hm-scale i { width: 26px; height: 8px; border-radius: 1px; display: block; }
+.hm-scale i:nth-child(1) { background: rgba(var(--amber-rgb), .04); border: 1px solid var(--line); }
+.hm-scale i:nth-child(2) { background: rgba(var(--amber-rgb), .18); }
+.hm-scale i:nth-child(3) { background: rgba(var(--amber-rgb), .34); }
+.hm-scale i:nth-child(4) { background: rgba(var(--amber-rgb), .52); }
+.hm-scale i:nth-child(5) { background: rgba(var(--amber-rgb), .70); }
+.hm-scale i:nth-child(6) { background: rgba(var(--amber-rgb), .90); }
+
+/* script selector above the heatmap */
+.setsel {
+  display: flex;
+  gap: 1px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+.setsel button {
+  padding: 3px 9px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--ink-3);
+  background: var(--panel-2);
+  transition: .14s var(--ease);
+}
+.setsel button:hover { color: var(--ink); }
+.setsel button[aria-pressed="true"] { background: var(--panel-3); color: var(--amber); }
+
+
+/* ==========================================================================
+   13. DATA TABLES — session history, weakest characters, leeches
+   ========================================================================== */
+.tbl-scroll { overflow-x: auto; }
+
+table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.tbl-scroll table { min-width: 760px; }
+
+th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 9px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  font-weight: 600;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+th.r,
+td.r { text-align: right; }
+
+td {
+  padding: 9px 12px;
+  border-bottom: 1px solid #1c1c21;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+tbody tr { transition: background .14s linear; cursor: default; }
+tbody tr:hover { background: rgba(255, 255, 255, .022); }
+tbody tr:hover td:first-child { box-shadow: inset 2px 0 0 var(--amber); }
+tbody tr:last-child td { border-bottom: none; }
+
+td.deckname { color: var(--ink); font-weight: 520; }
+td .num { color: var(--ink); }
+td .jp { font-family: var(--jp); font-size: 16px; color: var(--ink); line-height: 1; }
+
+/* sticky header for scrolling weakness tables */
+.dt th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--panel);
+}
+
+.mini { display: inline-block; vertical-align: middle; }
+
+.pill {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--line-2);
+  font-size: 8.5px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.pill.hot { color: var(--amber); border-color: var(--amber-line); background: var(--amber-soft); }
+
+.badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .07em;
+  padding: 1.5px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--line-2);
+  color: var(--ink-2);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* drill launcher inside a table row */
+.go {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  border: 1px solid var(--line-2);
+  border-radius: 3px;
+  padding: 3px 9px;
+  color: var(--ink-2);
+  white-space: nowrap;
+  transition: .12s var(--ease);
+}
+.go:hover { border-color: var(--amber-line); color: var(--amber); background: var(--amber-soft); }
+
+
+/* ==========================================================================
+   14. CONFUSION-PAIR LIST  (confusion_pairs)
+   "you answered X when it was Y, n times" — a gray relationship, not a
+   progress value, so no amber on the bars.
+   ========================================================================== */
+.confusions { display: flex; flex-direction: column; gap: 2px; }
+
+.conf-row {
+  display: grid;
+  grid-template-columns: auto auto auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 6px;
+  border-radius: var(--r-sm);
+  border-bottom: 1px solid #1c1c21;
+  transition: background .14s linear;
+}
+.conf-row:last-child { border-bottom: none; }
+.conf-row:hover { background: var(--panel-2); }
+
+.conf-row .g {
+  font-family: var(--jp);
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ink);
+  min-width: 26px;
+  text-align: center;
+}
+.conf-row .g.wrong { color: var(--ink-3); font-size: 19px; }
+.conf-row .arrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-4);
+  letter-spacing: .1em;
+}
+.conf-row .cbar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--panel-3);
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .7);
+}
+.conf-row .cbar i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #3d3d46, #5d5d68);
+}
+.conf-row .n {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-2);
+  min-width: 26px;
+  text-align: right;
+}
+
+
+/* ==========================================================================
+   15. STREAK CALENDAR  (streak_calendar)
+   90 days of consistency. Amber alpha again — this is progress.
+   Levels 0..4 via data-l, or continuous via --lv.
+   ========================================================================== */
+.cal { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; }
+.cal.wide { grid-template-columns: repeat(30, 1fr); }
+
+.cal i {
+  display: block;
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: var(--panel-3);
+  border: 1px solid transparent;
+  transition: transform .12s var(--ease);
+}
+.cal i:hover { transform: scale(1.25); }
+.cal i[data-l="0"] { background: #121216; border-color: var(--line); }
+.cal i[data-l="1"] { background: rgba(var(--amber-rgb), .18); }
+.cal i[data-l="2"] { background: rgba(var(--amber-rgb), .38); }
+.cal i[data-l="3"] { background: rgba(var(--amber-rgb), .62); }
+.cal i[data-l="4"] { background: var(--amber); }
+/* today gets a ring */
+.cal i.today { box-shadow: 0 0 0 1px var(--amber-line); }
+
+.cal-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 9.5px;
+  color: var(--ink-4);
+}
+.cal-legend span { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+.cal-legend span:nth-of-type(1) { background: #121216; border: 1px solid var(--line); }
+.cal-legend span:nth-of-type(2) { background: rgba(var(--amber-rgb), .18); }
+.cal-legend span:nth-of-type(3) { background: rgba(var(--amber-rgb), .38); }
+.cal-legend span:nth-of-type(4) { background: rgba(var(--amber-rgb), .62); }
+.cal-legend span:nth-of-type(5) { background: var(--amber); }
+.cal-legend em { font-style: normal; margin-left: 4px; }
+
+/* the three streak counters above the calendar */
+.streak-nums { display: flex; gap: 18px; margin-bottom: 14px; }
+.streak-nums .lbl { margin-bottom: 5px; }
+.streak-nums .v {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 23px;
+  font-weight: 600;
+  line-height: 1;
+}
+.streak-nums .v small { font-size: 11px; color: var(--ink-3); }
+.streak-nums .v.live { color: var(--amber); }
+
+
+/* ==========================================================================
+   16. LATENCY HISTOGRAM  (latency_distribution)
+   Five hesitation buckets: 0-500, 500-1k, 1-2k, 2-4k, 4k+.
+   Column height comes from --h (0..1). Bars are gray; the hovered bar
+   goes amber as the live read-out.
+   ========================================================================== */
+.histo {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 8px;
+  align-items: end;
+  height: 132px;
+  padding-top: 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.histo-col {
+  --h: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+  gap: 5px;
+}
+.histo-col .n {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  line-height: 1;
+}
+.histo-col .hbar {
+  width: 100%;
+  height: calc(var(--h) * 100%);
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, #4a4a53, #2a2a31);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+  transition: background .16s var(--ease), height .6s var(--ease);
+}
+.histo-col:hover .hbar,
+.histo-col.on .hbar {
+  background: linear-gradient(180deg, var(--amber), #b8842a);
+}
+.histo-col:hover .n,
+.histo-col.on .n { color: var(--amber); }
+
+.histo-axis {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 8px;
+  margin-top: 7px;
+}
+.histo-axis span {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-4);
+  text-align: center;
+  white-space: nowrap;
+}
+
+
+/* ==========================================================================
+   17. RETENTION / TIME-OF-DAY MINI CHARTS
+   Simple keyed rows — a label, a track, a value. Used for retention_curve,
+   time_of_day_performance and first_vs_eventual.
+   ========================================================================== */
+.krows { display: flex; flex-direction: column; gap: 8px; }
+
+.krow {
+  display: grid;
+  grid-template-columns: 62px 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+.krow .k {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--ink-4);
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.krow .t {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--panel-3);
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .7);
+}
+.krow .t i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #a5761f, var(--amber));
+  transition: width .7s var(--ease);
+}
+.krow .t.weak i { background: linear-gradient(90deg, #3d3d46, #5d5d68); }
+.krow .v { font-family: var(--mono); font-size: 10.5px; color: var(--ink); min-width: 42px; text-align: right; }
+.krow .v em { font-style: normal; color: var(--ink-4); font-size: 9px; margin-left: 4px; }
+
+/* the first-vs-eventual gap read-out */
+.gap-figure { display: flex; align-items: baseline; gap: 14px; margin-bottom: 12px; }
+.gap-figure .fig {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 27px;
+  font-weight: 600;
+  line-height: 1;
+}
+.gap-figure .fig.live { color: var(--amber); }
+
+
+/* ==========================================================================
+   18. WEAK-CARD CHIPS — "cards falling out of the deck"
+   Loose cards scattered on the table; they straighten when picked up.
+   ========================================================================== */
+.weak-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 9px;
+}
+
+.wcard {
+  position: relative;
+  padding: 10px 8px 9px;
+  border-radius: 8px;
+  text-align: center;
+  background: linear-gradient(158deg, #212128, #141419);
+  border: 1px solid var(--line-2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .05),
+    2px 3px 0 -1px #101014,
+    0 8px 16px -12px #000;
+  transition: .22s var(--ease);
+}
+.wcard:nth-child(odd) { transform: rotate(-1.1deg); }
+.wcard:nth-child(even) { transform: rotate(1.3deg); }
+.wcard:hover { transform: rotate(0) translateY(-4px); border-color: var(--line-3); }
+
+.wcard .g { font-family: var(--jp); font-size: 27px; line-height: 1.1; color: var(--ink); }
+.wcard .r {
+  font-size: 9.5px;
+  color: var(--ink-3);
+  margin-top: 2px;
+  font-family: var(--mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wcard .m { font-size: 9px; color: var(--ink-4); margin-top: 1px; }
+.wcard .pct { margin-top: 6px; font-family: var(--mono); font-size: 10px; color: var(--ink-2); }
+.wcard .wt { height: 3px; border-radius: 2px; background: #000; margin-top: 4px; overflow: hidden; }
+.wcard .wt i { display: block; height: 100%; background: var(--ink-4); }
+
+
+/* ==========================================================================
+   19. THE FELT TABLE
+   ========================================================================== */
+.table-view {
+  display: grid;
+  grid-template-columns: 280px 1fr 288px;
+  gap: 18px;
+  align-items: start;
+}
+
+.felt {
+  position: relative;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: radial-gradient(120% 100% at 50% -20%, #1a1a20 0%, var(--felt) 62%, #08080a 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .03),
+    inset 0 -40px 80px -40px #000;
+  padding: 26px 20px 22px;
+  min-height: 640px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+/* felt weave */
+.felt::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .5;
+  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, .008) 0 2px, transparent 2px 5px);
+}
+
+.felt-head {
+  width: 100%;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.felt-head h2 { font-size: 13px; font-weight: 640; }
+.felt-head .jp { font-size: 12px; color: var(--ink-3); }
+.felt-head .spacer { flex: 1; }
+
+.counter { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+.counter b { color: var(--amber); font-weight: 600; }   /* live position */
+
+
+/* ==========================================================================
+   20. THE FLASH CARD — true 3D flip
+   Structure:
+     .stage            perspective lives here (the viewer's eye)
+       .deck3d         the physical stack, tipped back
+         .contact      shadow on the felt
+         .ghost g1-g3  cards still to come, with real z depth
+         .cut          visible edge thickness under the top card
+         .tilt         cursor tilt (JS writes --tx / --ty)
+           .lift       pick-up arc during the turn
+             .card3d   the rotating body — rotateY(180deg) on .flipped
+               .face.front   the glyph, alone
+               .face.back    reading + speaker
+   ========================================================================== */
+.stage {
+  flex: 1;
+  width: 100%;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px 0 8px;
+  perspective: 1700px;          /* perspective on the parent, per spec */
+  perspective-origin: 50% 42%;
+}
+
+.deck3d {
+  position: relative;
+  width: clamp(240px, 25vw, 336px);
+  aspect-ratio: 5 / 7;
+  transform-style: preserve-3d;
+  transform: rotateX(7deg);
+}
+
+/* --- under-stack -------------------------------------------------------- */
+.ghost {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  background: linear-gradient(158deg, #1c1c23, #0f0f13);
+  border: 1px solid var(--line-2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04), 0 20px 30px -22px #000;
+}
+.ghost::after {
+  content: "記";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--jp);
+  font-size: 34px;
+  color: rgba(var(--amber-rgb), .055);
+}
+.g1 { transform: translate3d(7px, 9px, -14px) rotate(1.4deg); }
+.g2 { transform: translate3d(14px, 18px, -28px) rotate(2.8deg); opacity: .72; }
+.g3 { transform: translate3d(21px, 27px, -42px) rotate(4.1deg); opacity: .45; }
+
+/* the cut — visible paper thickness under the top card */
+.cut {
+  position: absolute;
+  left: 2px; right: 2px; bottom: -9px;
+  height: 12px;
+  border-radius: 0 0 16px 16px;
+  background: repeating-linear-gradient(180deg, #22222a 0 1px, #0d0d11 1px 3px);
+  box-shadow: 0 6px 14px -6px #000;
+  transform: translateZ(-4px);
+}
+
+.contact {
+  position: absolute;
+  left: -4%; right: -4%; bottom: -34px;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, .85), transparent 70%);
+  filter: blur(9px);
+  transform: translateZ(-60px);
+}
+
+/* --- tilt on hover ------------------------------------------------------
+   JS sets --tx / --ty from the pointer position (degrees). With no script
+   the pure-CSS hover rule below still gives the card a lift. */
+.tilt {
+  position: absolute;
+  inset: 0;
+  --tx: 0deg;
+  --ty: 0deg;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--tx)) rotateY(var(--ty));
+  transition: transform .32s var(--ease);
+}
+.deck3d:hover .tilt { transition: transform .12s linear; }
+/* fallback when no pointer script is attached */
+.deck3d:hover .tilt:not([style*="--tx"]) { transform: rotateX(-3deg) rotateY(4deg); }
+
+/* --- pick-up arc -------------------------------------------------------- */
+.lift { position: absolute; inset: 0; transform-style: preserve-3d; }
+.lift.flipping { animation: liftArc 620ms var(--ease); }
+@keyframes liftArc {
+  0%   { transform: translate3d(0, 0, 0) rotateZ(0); }
+  35%  { transform: translate3d(0, -26px, 64px) rotateZ(-2.6deg); }
+  70%  { transform: translate3d(0, -16px, 40px) rotateZ(1.4deg); }
+  100% { transform: translate3d(0, 0, 0) rotateZ(0); }
+}
+.lift.deal-out { animation: dealOut 340ms cubic-bezier(.5, 0, .85, .4) forwards; }
+@keyframes dealOut {
+  0%   { transform: translate3d(0, 0, 0) rotateZ(0); opacity: 1; }
+  100% { transform: translate3d(420px, 64px, 140px) rotateZ(19deg); opacity: 0; }
+}
+.lift.deal-in { animation: dealIn 420ms var(--ease); }
+@keyframes dealIn {
+  0%   { transform: translate3d(16px, 26px, -46px) rotateZ(4.2deg); opacity: 0; }
+  100% { transform: translate3d(0, 0, 0) rotateZ(0); opacity: 1; }
+}
+
+/* --- the rotating body -------------------------------------------------- */
+.card3d {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  cursor: pointer;
+  transition: transform var(--flip-dur) var(--ease);   /* .55s, per spec */
+}
+.card3d.flipped { transform: rotateY(180deg); }
+.card3d.instant { transition: none; }
+
+/* Face swap at the exact edge-on moment. backface-visibility does the real
+   work; this is belt and braces for engines that lose it inside a
+   preserve-3d subtree. Delay = half the flip. */
+.card3d .face { transition: opacity 1ms linear calc(var(--flip-dur) / 2); }
+.card3d.instant .face { transition: none; }
+.card3d.flipped .face.front { opacity: 0; }
+.card3d .face.back { opacity: 0; }
+.card3d.flipped .face.back { opacity: 1; }
+
+.face {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: linear-gradient(158deg, var(--card-hi) 0%, #1c1c22 44%, var(--card-lo) 100%);
+  border: 1px solid var(--line-2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .09),
+    inset 0 -1px 0 rgba(0, 0, 0, .7),
+    inset 1px 0 0 rgba(255, 255, 255, .025),
+    inset -1px 0 0 rgba(0, 0, 0, .4),
+    var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+}
+/* paper grain, sheen and foot vignette */
+.face::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(48deg, rgba(255, 255, 255, .013) 0 1px, transparent 1px 4px),
+    radial-gradient(130% 95% at 30% 0%, rgba(255, 255, 255, .045) 0%, transparent 46%),
+    radial-gradient(120% 90% at 50% 100%, rgba(0, 0, 0, .5) 0%, transparent 58%);
+}
+/* inner rule frame — a printed card border */
+.face::after {
+  content: "";
+  position: absolute;
+  inset: 11px;
+  border: 1px solid rgba(255, 255, 255, .045);
+  border-radius: 9px;
+  pointer-events: none;
+}
+.face.back { transform: rotateY(180deg); }
+
+/* --- FRONT: the character, alone. Nothing else. ------------------------- */
+.face.front { align-items: center; justify-content: center; }
+.glyph {
+  position: relative;
+  z-index: 2;
+  font-family: var(--jp);
+  font-size: clamp(92px, 12.5vw, 168px);
+  line-height: 1;
+  color: var(--ink);
+  text-shadow: 0 3px 20px rgba(0, 0, 0, .75), 0 0 60px rgba(var(--amber-rgb), .045);
+  user-select: none;
+}
+/* yoon and other multi-glyph cards */
+.glyph.small { font-size: clamp(64px, 8.6vw, 116px); }
+
+/* --- BACK: the reading -------------------------------------------------- */
+.face.back {
+  padding: 30px 26px 24px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.back-in {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.back-tag {
+  font-size: 8.5px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+  width: 72%;
+}
+.back-mini { font-family: var(--jp); font-size: 38px; color: var(--ink-2); line-height: 1.1; }
+/* the sound written out — the answer, so amber */
+.back-sound {
+  /* Readings can contain kana (セイ / い(きる)), and --mono has no CJK member —
+     using it here renders tofu. Japanese text always uses --jp. */
+  font-family: var(--jp);
+  font-size: clamp(36px, 5.6vw, 62px);
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--amber);
+  line-height: 1.1;
+  margin-top: 10px;
+}
+.back-meaning { font-size: 19px; font-weight: 600; color: var(--ink); line-height: 1.25; margin-top: 8px; }
+
+/* on'yomi / kun'yomi rows */
+.readings { width: 100%; margin-top: 18px; display: flex; flex-direction: column; gap: 9px; }
+.reading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, .32);
+  border: 1px solid var(--line);
+}
+.reading .k { font-size: 8.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-4); }
+.reading .v { font-family: var(--jp); font-size: 19px; color: var(--ink); }
+.reading.on .v { color: var(--amber); }
+
+.back-foot { margin-top: 20px; display: flex; align-items: center; gap: 12px; }
+
+
+/* ==========================================================================
+   21. SPEAKER
+   ========================================================================== */
+.speaker {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(158deg, #26262e, #141418);
+  border: 1px solid var(--line-2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .09), 0 6px 14px -8px #000;
+  color: var(--ink-2);
+  transition: .2s var(--ease);
+}
+.speaker:hover { color: var(--amber); border-color: var(--amber-line); transform: translateY(-1px); }
+.speaker:active { transform: translateY(1px) scale(.97); }
+.speaker svg { width: 23px; height: 23px; position: relative; z-index: 2; }
+.speaker .body { fill: currentColor; }
+.speaker .w { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; opacity: .45; }
+
+.speaker.playing { color: var(--amber); border-color: var(--amber-line); }
+.speaker.playing .w1 { animation: wv .5s ease-out 2; }
+.speaker.playing .w2 { animation: wv .5s ease-out .12s 2; }
+@keyframes wv {
+  0% { opacity: .15; transform: translateX(-2px); }
+  40% { opacity: 1; }
+  100% { opacity: .15; transform: translateX(0); }
+}
+
+.speaker .ring {
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  border: 1px solid var(--amber);
+  opacity: 0;
+}
+.speaker.playing .ring { animation: ripple .9s ease-out; }
+@keyframes ripple {
+  0% { opacity: .8; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+
+/* level meter beside the speaker */
+.eq { display: flex; align-items: flex-end; gap: 3px; height: 20px; }
+.eq i { display: block; width: 3px; height: 4px; border-radius: 1px; background: var(--line-3); transition: .2s; }
+.speaker-on .eq i { background: var(--amber); }
+.speaker-on .eq i:nth-child(1) { animation: eq .42s ease-in-out infinite alternate; }
+.speaker-on .eq i:nth-child(2) { animation: eq .42s ease-in-out .09s infinite alternate; }
+.speaker-on .eq i:nth-child(3) { animation: eq .42s ease-in-out .18s infinite alternate; }
+.speaker-on .eq i:nth-child(4) { animation: eq .42s ease-in-out .05s infinite alternate; }
+@keyframes eq { from { height: 4px; } to { height: 18px; } }
+
+.spk-note { font-size: 9.5px; color: var(--ink-4); letter-spacing: .1em; text-transform: uppercase; }
+
+
+/* ==========================================================================
+   22. GRADE BAR, HINTS, KEYS
+   ========================================================================== */
+.stage-foot { width: 100%; position: relative; z-index: 2; margin-top: 26px; min-height: 66px; }
+
+.hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-size: 11px;
+  color: var(--ink-4);
+  letter-spacing: .06em;
+}
+
+/* keycap */
+.kbd {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--line-2);
+  border-bottom-width: 2px;
+  background: var(--panel-2);
+  color: var(--ink-3);
+}
+
+.grade {
+  display: flex;
+  gap: 9px;
+  justify-content: center;
+  flex-wrap: wrap;
+  animation: viewIn .26s var(--ease);
+}
+.gbtn {
+  min-width: 96px;
+  padding: 10px 16px;
+  border-radius: 9px;
+  text-align: center;
+  background: linear-gradient(180deg, var(--panel-3), #17171c);
+  border: 1px solid var(--line-2);
+  border-bottom: 2px solid #0c0c0f;
+  transition: .15s var(--ease);
+}
+.gbtn:hover {
+  transform: translateY(-2px);
+  border-color: var(--line-3);
+  background: linear-gradient(180deg, #2a2a33, #1a1a20);
+}
+.gbtn:active { transform: translateY(1px); border-bottom-width: 1px; }
+.gbtn .t { font-size: 11.5px; font-weight: 600; display: block; }
+.gbtn .s { font-family: var(--mono); font-size: 9px; color: var(--ink-4); display: block; margin-top: 2px; }
+.gbtn.good { border-color: var(--amber-line); background: linear-gradient(180deg, rgba(var(--amber-rgb), .16), rgba(var(--amber-rgb), .05)); }
+.gbtn.good .t { color: var(--amber); }
+.gbtn.good:hover { background: linear-gradient(180deg, rgba(var(--amber-rgb), .24), rgba(var(--amber-rgb), .08)); }
+.grade[data-locked="true"] { opacity: .32; pointer-events: none; }
+
+
+/* ==========================================================================
+   23. RUN RAIL — kv rows, answer pips, table log
+   ========================================================================== */
+.side { display: flex; flex-direction: column; gap: 14px; }
+
+.kv {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid #1c1c21;
+}
+.kv:last-child { border-bottom: none; }
+.kv .k { font-size: 10px; color: var(--ink-3); letter-spacing: .06em; }
+.kv .v { font-family: var(--mono); font-size: 13px; color: var(--ink); font-weight: 600; }
+.kv .v.big { font-size: 19px; color: var(--amber); }   /* the live headline */
+
+.badge-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+
+/* scoring-scheme formula box */
+.scheme {
+  margin-top: 10px;
+  padding: 9px 10px;
+  border-radius: 7px;
+  background: #0c0c0f;
+  border: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  line-height: 1.6;
+}
+.scheme b { color: var(--amber); font-weight: 600; }
+
+/* answer trail */
+.pips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.pip { width: 11px; height: 11px; border-radius: 3px; background: var(--panel-3); border: 1px solid var(--line-2); }
+.pip.hit { background: var(--amber); border-color: var(--amber); }
+.pip.miss { background: transparent; border-color: var(--line-3); position: relative; }
+.pip.miss::after {
+  content: "";
+  position: absolute;
+  left: 1px; right: 1px; top: 4px;
+  height: 1px;
+  background: var(--line-3);
+}
+
+.log-list { display: flex; flex-direction: column; max-height: 264px; overflow-y: auto; }
+.log-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 2px;
+  border-bottom: 1px solid #1c1c21;
+  font-size: 11px;
+}
+.log-row:last-child { border-bottom: none; }
+.log-row .jp { font-size: 17px; width: 32px; flex-shrink: 0; }
+.log-row .rr {
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 10px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.log-row .tm { font-family: var(--mono); font-size: 10px; color: var(--ink-4); }
+.log-row .st { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
+.log-row .st.hit { background: var(--amber); }
+.log-row .st.miss { background: var(--line-3); }
+
+
+/* ==========================================================================
+   24. DECK PICKER
+   ========================================================================== */
+.deckpick {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 300px;
+  overflow-y: auto;
+  margin: -4px -4px 0;
+}
+.dp {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 8px;
+  border-radius: var(--r-sm);
+  text-align: left;
+  width: 100%;
+  transition: .14s var(--ease);
+}
+.dp:hover { background: var(--panel-2); }
+.dp[aria-current="true"] { background: var(--amber-soft); box-shadow: inset 2px 0 0 var(--amber); }
+.dp .g {
+  font-family: var(--jp);
+  font-size: 14px;
+  color: var(--ink-2);
+  width: 30px;
+  text-align: center;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.dp .n {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dp[aria-current="true"] .n,
+.dp[aria-current="true"] .g { color: var(--ink); }
+.dp .c { font-family: var(--mono); font-size: 9.5px; color: var(--ink-4); }
+
+
+/* ==========================================================================
+   25. SESSION RECAP OVERLAY
+   ========================================================================== */
+.recap {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(9, 9, 11, .86);
+  backdrop-filter: blur(5px);
+  animation: viewIn .3s var(--ease);
+}
+.recap.on { display: flex; }
+
+.recap-card {
+  width: min(400px, 100%);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  background: linear-gradient(158deg, var(--card-hi), var(--card-lo));
+  border: 1px solid var(--line-2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 34px 60px -30px #000;
+}
+.recap-card h3 { font-size: 14px; font-weight: 650; margin-bottom: 3px; }
+.recap-card .sub { font-size: 10.5px; color: var(--ink-3); margin-bottom: 18px; }
+.recap-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+.recap-grid div { background: #141418; padding: 11px 12px; }
+.recap-grid .lbl { margin-bottom: 5px; }
+.recap-grid .v { font-family: var(--mono); font-size: 19px; font-weight: 600; }
+.recap-act { display: flex; gap: 9px; }
+
+
+/* ==========================================================================
+   26. BUTTONS & FORM CONTROLS
+   ========================================================================== */
+.btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  border: 1px solid var(--line-2);
+  background: var(--panel-2);
+  transition: .15s var(--ease);
+}
+.btn:hover { border-color: var(--line-3); background: var(--panel-3); }
+.btn.primary { background: var(--amber); color: #141005; border-color: var(--amber); }
+.btn.primary:hover { background: #ffc63d; }
+.btn.ghost { background: none; }
+.btn[disabled] { opacity: .4; pointer-events: none; }
+
+/* segmented control — challenge / scoring pickers */
+.seg {
+  display: flex;
+  gap: 1px;
+  padding: 3px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.seg button {
+  flex: 1;
+  padding: 5px 11px;
+  border-radius: 5px;
+  font-size: 10.5px;
+  font-weight: 550;
+  color: var(--ink-3);
+  transition: .14s var(--ease);
+  white-space: nowrap;
+}
+.seg button:hover { color: var(--ink); background: var(--panel-2); }
+.seg button[aria-pressed="true"] { color: var(--bg); background: var(--amber); }
+
+select.control,
+input.control {
+  padding: 6px 9px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line-2);
+  background: var(--panel-2);
+  color: var(--ink);
+  font-size: 11.5px;
+}
+select.control { cursor: pointer; }
+
+
+/* ==========================================================================
+   27. FOCUS-VISIBLE STATES
+   The whole app is keyboard operable: Space flips, J correct, F wrong,
+   Esc ends the session. Every interactive surface must show where it is.
+   ========================================================================== */
+:focus-visible { outline: 1px solid var(--amber); outline-offset: 2px; }
+
+/* the deck is a big object — ring it rather than outline it */
+.deck:focus-visible { outline: none; }
+.deck:focus-visible .deck-face {
+  border-color: var(--amber);
+  box-shadow:
+    inset 0 1px 0 rgba(var(--amber-rgb), .3),
+    0 0 0 2px var(--amber-line),
+    0 30px 44px -20px rgba(0, 0, 0, 1);
+}
+.deck:focus-visible { transform: translateY(-9px); }
+
+/* the card: light the printed border rather than the rotating box, so the
+   ring does not tear during the flip */
+.card3d:focus-visible { outline: none; }
+.card3d:focus-visible .face { border-color: var(--amber); }
+.card3d:focus-visible .face::after { border-color: var(--amber-line); }
+
+.hm-cell:focus-visible { outline: 1px solid var(--ink); outline-offset: 1px; z-index: 4; }
+.cal i:focus-visible { outline: 1px solid var(--amber); outline-offset: 1px; }
+.dp:focus-visible { outline-offset: -1px; }
+.gbtn:focus-visible,
+.btn:focus-visible,
+.go:focus-visible,
+.nudge:focus-visible,
+.speaker:focus-visible { outline-offset: 2px; }
+.wcard:focus-visible { outline-offset: 3px; transform: rotate(0) translateY(-4px); }
+tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; }
+
+/* skip link */
+.skip {
+  position: absolute;
+  left: 12px;
+  top: -40px;
+  z-index: 100;
+  padding: 7px 12px;
+  border-radius: var(--r-sm);
+  background: var(--panel-3);
+  border: 1px solid var(--amber-line);
+  font-size: 11px;
+  transition: top .16s var(--ease);
+}
+.skip:focus { top: 10px; }
+
+
+/* ==========================================================================
+   28. RESPONSIVE
+   ========================================================================== */
+@media (max-width: 1420px) {
+  .grid { grid-template-columns: 1fr 1fr; }
+  .grid .p-trend { grid-column: 1 / -1; }
+  .tiles { grid-template-columns: repeat(4, 1fr); }
+}
+
+@media (max-width: 1180px) {
+  .table-view { grid-template-columns: 250px 1fr; }
+  .table-view .side.right { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; }
+  .table-view .side.right > * { flex: 1 1 300px; }
+}
+
+@media (max-width: 1020px) {
+  .stats { grid-template-columns: repeat(3, 1fr); }
+  .tiles { grid-template-columns: repeat(2, 1fr); }
+  .cal.wide { grid-template-columns: repeat(15, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .wrap { padding: 16px 14px 60px; }
+
+  .topbar { height: auto; flex-wrap: wrap; gap: 10px; padding: 10px 14px; }
+  .nav { margin-left: 0; }
+  .topbar-right { margin-left: 0; width: 100%; }
+  .brand-dir { display: none; }
+
+  .grid { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+
+  /* decks shrink but keep their proportions and their thickness */
+  .deck { flex: 0 0 208px; width: 208px; height: 286px; }
+  .deck-glyphs { font-size: 40px; }
+
+  /* the table stacks: felt first, rails beneath */
+  .table-view { grid-template-columns: 1fr; }
+  .table-view .side.right { flex-direction: column; }
+  .felt { padding: 18px 12px 16px; min-height: 0; }
+  .stage { padding: 12px 0 4px; }
+  .deck3d { width: min(300px, 78vw); }
+
+  /* analytics reflow */
+  .heatmap { grid-template-columns: repeat(auto-fill, minmax(34px, 1fr)); }
+  .hm-cell { font-size: 16px; }
+  .hm-cell .n { display: none; }
+  .cal { grid-template-columns: repeat(10, 1fr); }
+  .cal.wide { grid-template-columns: repeat(10, 1fr); }
+  .histo { height: 108px; }
+  .weak-grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+  .krow { grid-template-columns: 52px 1fr auto; }
+  .conf-row { gap: 7px; }
+}
+
+@media (max-width: 620px) {
+  .stats { grid-template-columns: 1fr 1fr; }
+  .tiles { grid-template-columns: 1fr; }
+  .deck { flex: 0 0 182px; width: 182px; height: 262px; }
+  .streak-nums { gap: 12px; }
+  .grade { flex-direction: column; align-items: stretch; }
+  .gbtn { min-width: 0; }
+}
+
+
+/* ==========================================================================
+   29. REDUCED MOTION / PRINT
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* the flip still has to land on the right face — keep the state, drop the
+     motion */
+  .card3d { transition: none; }
+  .deck:hover { transform: none; }
+  .wcard:nth-child(odd),
+  .wcard:nth-child(even) { transform: none; }
+}
+
+@media print {
+  body { background: #fff; color: #000; }
+  .topbar,
+  .nav,
+  .shelf-scroll,
+  .recap { display: none !important; }
+  .panel { border-color: #ccc; box-shadow: none; background: #fff; }
+}
