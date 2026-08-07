@@ -170,7 +170,6 @@ async def test_attempts_feed_the_analytics(client):
     summary = await (await client.get("/api/summary")).get_json()
     assert summary["totals"]["attempts"] == 1
     assert summary["per_character_miss_rate"][0]["glyph"] == cards[0]["glyph"]
-    assert summary["confusion_pairs"][0]["mistaken_for"] == cards[1]["glyph"]
 
 
 async def test_drill_path_overrides_difficulty(client):
@@ -429,3 +428,65 @@ async def test_known_confusion_partners_are_preferred_distractors(client):
         if seen_partner:
             break
     assert seen_partner, "no card with curated confusion partners was ever dealt"
+
+
+# -- memory games ----------------------------------------------------------
+
+
+async def test_board_pairs_a_glyph_with_its_own_reading(client):
+    """A pair is a character and ITS reading — never two glyphs."""
+    board = await (await client.post("/api/game/board", json={"pairs": 5})).get_json()
+
+    by_pair = {}
+    for tile in board["tiles"]:
+        by_pair.setdefault(tile["pair_id"], []).append(tile)
+
+    assert len(by_pair) == 5
+    for tiles in by_pair.values():
+        assert len(tiles) == 2
+        assert {t["kind"] for t in tiles} == {"glyph", "reading"}
+        assert tiles[0]["character_id"] == tiles[1]["character_id"]
+
+
+async def test_pelmanism_is_dealt_face_down(client):
+    matchup = await (await client.post("/api/game/board", json={"mode": "matchup"})).get_json()
+    hidden = await (await client.post("/api/game/board", json={"mode": "pelmanism"})).get_json()
+    assert matchup["face_down"] is False
+    assert hidden["face_down"] is True
+
+
+async def test_confusion_mode_seeds_from_the_curated_look_alikes(client):
+    from japanese_practice.content.confusions import CONFUSION_PAIRS
+
+    known = {g for pair in CONFUSION_PAIRS for g in pair}
+    board = await (
+        await client.post("/api/game/board", json={"mode": "confusion", "pairs": 6})
+    ).get_json()
+
+    glyphs = [t["text"] for t in board["tiles"] if t["kind"] == "glyph"]
+    assert board["source"] == "confusion-pairs"
+    assert all(g in known for g in glyphs), f"non-confusable glyphs dealt: {glyphs}"
+
+
+async def test_pair_count_is_clamped(client):
+    tiny = await (await client.post("/api/game/board", json={"pairs": 1})).get_json()
+    huge = await (await client.post("/api/game/board", json={"pairs": 999})).get_json()
+    assert tiny["pairs"] >= 3
+    assert huge["pairs"] <= 12
+
+
+async def test_unknown_game_mode_is_rejected(client):
+    response = await client.post("/api/game/board", json={"mode": "solitaire"})
+    assert response.status_code == 400
+
+
+async def test_a_new_learner_still_gets_a_board(client):
+    """No attempt history means no weak set — the deck must fill the gap."""
+    board = await (await client.post("/api/game/board", json={"pairs": 6})).get_json()
+    assert board["pairs"] == 6
+    assert board["source"] in {"pool", "weakest+pool"}
+
+
+async def test_mispair_needs_a_character(client):
+    response = await client.post("/api/game/mispair", json={})
+    assert response.status_code == 400

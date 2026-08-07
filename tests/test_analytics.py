@@ -130,11 +130,9 @@ async def test_dashboard_summary_assembles_without_data(db: Database):
         "totals",
         "accuracy_by_session",
         "per_character_miss_rate",
-        "confusion_pairs",
         "retention_curve",
         "time_of_day",
         "weakest_characters",
-        "latency_distribution",
         "streak_calendar",
         "mastery_by_group",
         "leeches",
@@ -483,7 +481,6 @@ async def test_dashboard_summary_carries_real_values(seeded_db: Database, iso):
     summary = await analytics.dashboard_summary(db)
     assert summary["totals"]["attempts"] == 1
     assert summary["per_character_miss_rate"][0]["glyph"] == "し"
-    assert summary["confusion_pairs"][0]["mistaken_for"] == "つ"
     assert summary["weakest_characters"][0]["glyph"] == "し"
 
 

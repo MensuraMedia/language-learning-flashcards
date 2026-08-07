@@ -269,17 +269,6 @@ function renderRetention(rows) {
   wrap.appendChild(s);
 }
 
-// ── latency histogram ────────────────────────────────────────────────────────
-function renderLatency(rows) {
-  const box = $("latency");
-  box.innerHTML = "";
-  const max = Math.max(...rows.map((r) => r.count), 1);
-  rows.forEach((r) => {
-    const col = el("div", "histo-col");
-    col.innerHTML = `<i style="height:${(r.count / max) * 100}%"></i><span class="histo-axis">${r.label}</span><b>${r.count}</b>`;
-    box.appendChild(col);
-  });
-}
 
 // ── time of day ──────────────────────────────────────────────────────────────
 function renderTod(rows) {
@@ -332,21 +321,6 @@ function renderWeak(rows) {
   };
 }
 
-// ── confusion pairs ──────────────────────────────────────────────────────────
-function renderConfusions(rows) {
-  const box = $("confusions");
-  box.innerHTML = "";
-  if (!rows.length) return box.appendChild(el("p", "muted", "No confusions recorded yet."));
-  rows.forEach((r) => {
-    box.appendChild(
-      el(
-        "div",
-        "conf-row",
-        `<span class="jp">${r.glyph}</span><em>mistaken for</em><span class="jp">${r.mistaken_for}</span><b class="num">${r.count}×</b>`
-      )
-    );
-  });
-}
 
 // ── leeches ──────────────────────────────────────────────────────────────────
 function renderLeeches(rows) {
@@ -416,10 +390,8 @@ async function main() {
   renderTrend(trend);
   renderBySet(decks);
   renderRetention(summary.retention_curve || []);
-  renderLatency(summary.latency_distribution || []);
   renderTod(summary.time_of_day || []);
   renderWeak(summary.weakest_characters || []);
-  renderConfusions(summary.confusion_pairs || []);
   renderLeeches(summary.leeches || []);
   renderMastery(summary.mastery_by_group || []);
   renderCalendar(summary.streak_calendar || []);

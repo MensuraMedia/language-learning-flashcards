@@ -39,6 +39,8 @@ const state = {
   scheme: "accuracy",
   graded: new Set(),
   outcomes: new Map(),   // index -> {glyph, answer, correct, skipped}
+  furthest: 0,           // deepest card reached; Next is live only behind it
+  advanceTimer: null,    // pending auto-advance, cancelled by manual navigation
   locked: false,
   volume: readVolume(),
   muted: readMuted(),
@@ -111,7 +113,9 @@ function render() {
     $("back-readings").innerHTML = "";
   }
 
+  state.furthest = Math.max(state.furthest, state.index);
   renderChoices(card);
+  updateNavPair();
   $("counter").textContent = `${state.index + 1} / ${state.cards.length}`;
   state.shownAt = performance.now();
 }
@@ -167,22 +171,54 @@ function flip() {
 
 // ── navigation ───────────────────────────────────────────────────────────────
 
+// A pending auto-advance must never override a deliberate move. Without this,
+// pressing Back during the reveal hold gets yanked forward when the timer
+// fires — and the longer holds make that window several seconds wide.
+function cancelPendingAdvance() {
+  if (state.advanceTimer !== null) {
+    clearTimeout(state.advanceTimer);
+    state.advanceTimer = null;
+  }
+}
+
 function goPrevious() {
+  cancelPendingAdvance();
   if (state.index === 0) return toast("First card");
   state.index -= 1;
   render();
 }
 
+// Next is navigation, not an answer: it only returns you to where you already
+// were. That is why it costs nothing and why Skip is not the way back — Skip
+// means "I don't know this card", which is a different statement entirely.
+function updateNavPair() {
+  const next = $("next");
+  if (!next) return;
+  const canReturn = state.index < state.furthest;
+  next.disabled = !canReturn;
+  next.setAttribute("aria-disabled", String(!canReturn));
+  next.title = canReturn ? "Return to where you were" : "Available after going back";
+
+  const back = $("back");
+  if (back) back.disabled = state.index === 0;
+}
+
 function goNext() {
-  // → must not be a free skip. Advancing an unanswered card without recording
-  // anything strictly dominated the Skip button — same escape, no penalty, and
-  // it preserved the streak — so a score-maximising learner never pressed S.
-  // Navigation forward is only available once the card has been answered.
-  if (!state.graded.has(state.index)) {
-    return toast("Answer it, or press S for don't know");
+  cancelPendingAdvance();
+  // Returning forward after going back is free — the cards in between are
+  // already answered and nothing is being escaped.
+  //
+  // Advancing PAST the frontier is a different act: it would leave an unanswered
+  // card behind with no record, which strictly dominated the Skip button (same
+  // escape, no penalty, streak preserved). So that is refused, and Skip is the
+  // honest way to pass on a card you do not know.
+  if (state.index >= state.furthest) {
+    if (!state.graded.has(state.index)) {
+      return toast("Answer it, or press S for don't know");
+    }
+    if (state.index >= state.cards.length - 1) return toast("Last card");
   }
-  if (state.index >= state.cards.length - 1) return toast("Last card");
-  state.index += 1;
+  state.index = Math.min(state.index + 1, state.cards.length - 1);
   render();
 }
 
@@ -226,10 +262,11 @@ async function grade(correct, { given = null, skipped = false } = {}) {
   });
 
   const hold = skipped ? REVEAL_SKIP_MS : correct ? REVEAL_CORRECT_MS : REVEAL_WRONG_MS;
-  setTimeout(advanceAfterGrade, hold);
+  state.advanceTimer = setTimeout(advanceAfterGrade, hold);
 }
 
 function advanceAfterGrade() {
+  state.advanceTimer = null;
   if (state.index >= state.cards.length - 1) return finish();
   state.index += 1;
   render();
@@ -237,6 +274,7 @@ function advanceAfterGrade() {
 
 async function finish() {
   if (state.finished) return;
+  cancelPendingAdvance();
   state.finished = true;
   let record = {};
   try {
@@ -244,15 +282,35 @@ async function finish() {
   } catch (err) {
     console.error(err);
   }
-  const acc = record.total ? Math.round((record.correct / record.total) * 100) : 0;
+  const total = record.total ?? 0;
+  const acc = total ? Math.round((record.correct / total) * 100) : 0;
+  const score = record.score ?? state.score;
+  const streak = record.max_streak ?? 0;
+
+  // Score and streak are only meaningful against what was achievable, so grade
+  // them as a proportion rather than against an absolute that varies by scheme
+  // and deck length.
+  const scoreCeiling = total * 10;
   $("recap-grid").innerHTML = `
-    <div class="kv"><span class="lbl-sm">Score</span><b class="num">${record.score ?? state.score}</b></div>
-    <div class="kv"><span class="lbl-sm">Accuracy</span><b class="num">${acc}%</b></div>
-    <div class="kv"><span class="lbl-sm">Cards</span><b class="num">${record.total ?? 0}</b></div>
-    <div class="kv"><span class="lbl-sm">Best streak</span><b class="num">${record.max_streak ?? 0}</b></div>`;
+    <div class="kv"><span class="lbl-sm">Score</span>
+      <b class="num ${rateClass(scoreCeiling ? score / scoreCeiling : 0)}">${score}</b></div>
+    <div class="kv"><span class="lbl-sm">Accuracy</span>
+      <b class="num ${rateClass(acc / 100)}">${acc}%</b></div>
+    <div class="kv"><span class="lbl-sm">Cards</span><b class="num">${total}</b></div>
+    <div class="kv"><span class="lbl-sm">Best streak</span>
+      <b class="num ${rateClass(total ? streak / total : 0)}">${streak}</b></div>`;
 
   renderRecapCards();
   $("recap").hidden = false;
+}
+
+// Green above 85%, amber 60-85%, red below. The thresholds match the mastery
+// rule elsewhere in the app (miss_rate <= 0.15), so a green session and a
+// mastered character mean the same standard.
+function rateClass(ratio) {
+  if (ratio >= 0.85) return "rate-good";
+  if (ratio >= 0.6) return "rate-mid";
+  return "rate-poor";
 }
 
 // Every card the session covered, in the order it was seen. Misses are red so
@@ -453,6 +511,7 @@ $("card").addEventListener("click", flip);
 $("flip").addEventListener("click", flip);
 on("skip", "click", skipCard);
 on("back", "click", goPrevious);
+on("next", "click", goNext);
 on("voice-toggle", "click", toggleVoice);
 $("speaker").addEventListener("click", (event) => {
   event.stopPropagation();

@@ -5,7 +5,7 @@
   <span class="counter" id="counter">—</span>
   <span class="stat"><span class="lbl-sm">score</span> <b class="num" id="score">0</b></span>
   <span class="stat"><span class="lbl-sm">streak</span> <b class="num" id="streak">0</b></span>
-  <a class="btn ghost" href="/">End</a>
+  <a class="btn btn-ghost" href="/">End</a>
 {% endblock %}
 
 {% block content %}
@@ -66,7 +66,19 @@
     </div>
 
     <div class="stage-foot">
-      <button class="btn btn-sm" id="back" type="button">Back <span class="kbd">←</span></button>
+      <!-- Back and Next are one control: navigation, as opposed to the grading
+           and skipping beside them. Next is only live once you have gone back,
+           because forward from the current card is not navigation — it is an
+           answer. Returning forward is free; Skip is for "I don't know". -->
+      <span class="navpair" role="group" aria-label="Card navigation">
+        <button class="btn btn-sm navpair-half" id="back" type="button">
+          <span class="kbd">←</span> Back
+        </button>
+        <button class="btn btn-sm navpair-half" id="next" type="button" disabled
+                aria-disabled="true" title="Available after going back">
+          Next <span class="kbd">→</span>
+        </button>
+      </span>
       <button class="btn btn-sm btn-skip" id="skip" type="button">Skip <span class="kbd">S</span> <em>−1</em></button>
       <button class="btn btn-sm amber" id="flip" type="button">Flip <span class="kbd">Space</span></button>
       <button class="btn btn-sm" id="voice-toggle" type="button">Voice <em id="voice-label">female</em> <span class="kbd">V</span></button>
@@ -91,14 +103,14 @@
     <div class="help-card">
       <div class="panel-h">
         <span class="lbl">Keyboard shortcuts</span>
-        <button class="btn ghost" id="help-close" type="button">Close</button>
+        <button class="btn btn-ghost" id="help-close" type="button">Close</button>
       </div>
       <table class="help-table">
         <tbody>
           <tr><td><span class="kbd">Space</span> <span class="kbd">Enter</span></td><td>Flip the card</td></tr>
           <tr><td><span class="kbd">1</span> <span class="kbd">2</span> <span class="kbd">3</span></td><td>Choose that answer</td></tr>
-          <tr><td><span class="kbd">S</span></td><td>Skip — scores −1</td></tr>
-          <tr><td><span class="kbd">→</span></td><td>Next card (after answering)</td></tr>
+          <tr><td><span class="kbd">S</span></td><td>Skip — “I don't know”, scores −1</td></tr>
+          <tr><td><span class="kbd">→</span></td><td>Return forward after going back — free</td></tr>
           <tr><td><span class="kbd">←</span></td><td>Previous card</td></tr>
           <tr><td><span class="kbd">↑</span></td><td>Volume up</td></tr>
           <tr><td><span class="kbd">↓</span></td><td>Volume down</td></tr>
@@ -114,15 +126,17 @@
 
   <div class="recap" id="recap" hidden>
     <div class="recap-card ticked">
-      <p class="lbl">Session complete</p>
-      <div class="recap-grid" id="recap-grid"></div>
+      <div class="recap-scroll">
+        <p class="lbl">Session complete</p>
+        <div class="recap-grid" id="recap-grid"></div>
 
-      <div class="sec" style="margin-top:18px">
-        <span class="lbl">This session</span>
-        <span class="lbl-sm" id="recap-cards-note"></span>
+        <div class="sec" style="margin-top:18px">
+          <span class="lbl">This session</span>
+          <span class="lbl-sm" id="recap-cards-note"></span>
+        </div>
+        <div class="recap-cards" id="recap-cards"></div>
+        <div class="recap-act"><a class="btn amber" href="/">Back to dashboard</a></div>
       </div>
-      <div class="recap-cards" id="recap-cards"></div>
-      <div class="recap-act"><a class="btn amber" href="/">Back to dashboard</a></div>
     </div>
   </div>
 </main>

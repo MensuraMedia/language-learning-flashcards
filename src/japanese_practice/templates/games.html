@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Memory training — Japanese Practice{% endblock %}
+
+{% block topbar %}
+  <span class="stat"><span class="lbl-sm">pairs</span> <b class="num" id="g-pairs">—</b></span>
+  <span class="stat"><span class="lbl-sm">moves</span> <b class="num" id="g-moves">0</b></span>
+  <span class="stat"><span class="lbl-sm">time</span> <b class="num" id="g-time">0:00</b></span>
+  <a class="btn btn-ghost" href="/">End</a>
+{% endblock %}
+
+{% block content %}
+<main class="view on" id="games">
+
+  <div class="sec">
+    <span class="lbl">Memory training</span>
+    <span class="lbl-sm" id="g-source">built from your weakest characters</span>
+  </div>
+
+  <!-- mode picker: three boards, one engine -->
+  <div class="mode-picker" id="mode-picker">
+    <button class="mode-btn is-on" data-mode="matchup" type="button">
+      <span class="mode-name">Match Up</span>
+      <span class="mode-desc">All face up — pair each character with its reading</span>
+    </button>
+    <button class="mode-btn" data-mode="pelmanism" type="button">
+      <span class="mode-name">Pelmanism</span>
+      <span class="mode-desc">Face down — remember where each one was</span>
+    </button>
+    <button class="mode-btn" data-mode="confusion" type="button">
+      <span class="mode-name">Confusion Drill</span>
+      <span class="mode-desc">Deliberately full of look-alikes — シ/ツ, る/ろ, ぬ/め</span>
+    </button>
+  </div>
+
+  <div class="sec" style="margin-top:18px">
+    <span class="lbl-sm">Pairs</span>
+    <span class="seg" id="pair-picker">
+      <button class="seg-btn" data-pairs="4" type="button">4</button>
+      <button class="seg-btn is-on" data-pairs="6" type="button">6</button>
+      <button class="seg-btn" data-pairs="8" type="button">8</button>
+      <button class="seg-btn" data-pairs="10" type="button">10</button>
+    </span>
+    <button class="btn btn-sm amber" id="deal" type="button">Deal <span class="kbd">D</span></button>
+  </div>
+
+  <section class="panel" style="padding:16px; margin-top:14px">
+    <div class="board" id="board"></div>
+  </section>
+
+  <div class="game-done" id="game-done" hidden>
+    <div class="game-done-card">
+      <p class="lbl">Board cleared</p>
+      <div class="recap-grid" id="done-stats"></div>
+      <div class="recap-act">
+        <button class="btn amber" id="again" type="button">Deal another</button>
+        <a class="btn" href="/">Back to dashboard</a>
+      </div>
+    </div>
+  </div>
+
+  <p class="hint muted">
+    Click two tiles to pair a character with its reading ·
+    <span class="kbd">D</span> deals a new board ·
+    <span class="kbd">Esc</span> returns to the dashboard
+  </p>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/games.js', v=asset_version) }}"></script>
+{% endblock %}

@@ -93,3 +93,9 @@
 | 2026-08-07T06:35:00 | Warmed the VOICEVOX cache — 619 clips, 18 MB, zero failures |
 | 2026-08-07T06:40:00 | Verdict hold: correct 1.9s, wrong 2.9s — a miss is when the learner actually studies |
 | 2026-08-07T06:45:00 | Session recap grid: every card at option size, misses in red, romaji beneath |
+| 2026-08-07T18:40:00 | Fixed .ghost class collision — 'End' inherited the deck sheet's absolute positioning |
+| 2026-08-07T18:42:00 | Recap panel border made uniform; scrolling moved to an inner element |
+| 2026-08-07T18:45:00 | Score/accuracy/streak colour-coded green/amber/red against achievable maxima |
+| 2026-08-07T18:50:00 | Removed 'Response latency' and 'Confused with' dashboard panels |
+| 2026-08-07T19:00:00 | Added games.py + /games — Match Up, Pelmanism, Confusion Drill |
+| 2026-08-07T19:05:00 | Boards seed from weakest characters; mis-pairs feed confusion data, not the drill queue |

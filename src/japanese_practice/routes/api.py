@@ -11,7 +11,7 @@ from typing import Any
 
 from quart import Blueprint, Response, current_app, jsonify, request
 
-from .. import analytics, audio, tts_voicevox
+from .. import analytics, audio, games, tts_voicevox
 from .. import session as session_engine
 from ..db import Database, available_segments, get_character
 
@@ -161,6 +161,50 @@ async def end_session(session_id: int) -> Any:
     except ValueError as exc:
         return _error("not_found", str(exc), 404)
     return jsonify(asdict(record))
+
+
+@api_bp.post("/game/board")
+async def game_board() -> Any:
+    """Deal a memory board, seeded from the learner's weakest characters."""
+    body = await request.get_json(silent=True) or {}
+    try:
+        board = await games.build_board(
+            get_db(),
+            mode=body.get("mode", "matchup"),
+            pairs=int(body.get("pairs", games.DEFAULT_PAIRS)),
+            difficulty=body.get("difficulty", "hiragana:gojuon"),
+            character_ids=body.get("character_ids") or None,
+        )
+    except ValueError as exc:
+        return _error("invalid_request", str(exc), 400)
+    if not board.tiles:
+        return _error("empty_board", "no characters available for a board", 404)
+    return jsonify(board.as_dict())
+
+
+@api_bp.post("/game/mispair")
+async def game_mispair() -> Any:
+    """Record a wrong pairing.
+
+    Mis-pairings feed the confusion signal — an unambiguous "I think X reads as
+    Y" — but deliberately NOT the drill queue or SRS: as a board empties,
+    elimination makes a late match nearly free, so counting it as knowledge
+    would inflate mastery.
+    """
+    body = await request.get_json(silent=True) or {}
+    if "character_id" not in body:
+        return _error("invalid_request", "character_id is required", 400)
+    db = get_db()
+    session_id = body.get("session_id")
+    if session_id is None:
+        return jsonify({"recorded": False, "reason": "no session"})
+    await db.execute(
+        "INSERT INTO attempts(session_id, character_id, answered_at, correct,"
+        " skipped, latency_ms, first_attempt, given_answer)"
+        " VALUES (?, ?, datetime('now'), 0, 0, NULL, 0, ?)",
+        (int(session_id), int(body["character_id"]), body.get("given_answer")),
+    )
+    return jsonify({"recorded": True})
 
 
 @api_bp.get("/character/<int:character_id>")

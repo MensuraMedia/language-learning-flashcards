@@ -4,7 +4,7 @@
 It is the single place a new session (human or agent) reads to know where the
 project stands, what is real, what is assumed, and what to do next.
 
-- **Last updated:** 2026-08-07 05:45 UTC-4
+- **Last updated:** 2026-08-07 19:05 UTC-4
 - **Updated by:** session `30934411` (Claude Opus 5)
 - **Project root:** `/home/user/projects/japanese_practice`
 - **Remote:** https://github.com/MensuraMedia/language-learning-flashcards (public)
@@ -236,11 +236,11 @@ chosen deliberately to keep the real address out of public history.
 
 ## 8. Next actions, in order
 
-1. **Fix the detached `.btn` rendering.** The topbar "End" link and the help
-   panel's "Close" button render centred in their container rather than inline,
-   in WebKit. `.topbar-right .btn, .panel-h .btn { flex: 0 0 auto }` did not
-   resolve it and asset cache-busting ruled out staleness. Cosmetic, not
-   functional. Reproduce in the pywebview window, not Firefox.
+1. ~~Detached `.btn`~~ — **SOLVED 2026-08-07.** Not a flex problem at all:
+   `class="btn ghost"` collided with `.ghost`, the deck's fanned-sheet class
+   (`position:absolute; inset:0`, with a 記 `::after`). The button was pulled
+   clean out of its row. Renamed `.btn-ghost`. **This is the second such
+   collision** — see also `.skip`. Grep `theme.css` before naming a class.
 2. **Finish the dashboard layout** — check every panel below the fold renders
    (trend, retention, latency, time-of-day, leeches, mastery, calendar). Move the
    inline `style=` stopgaps into `theme.css`.
