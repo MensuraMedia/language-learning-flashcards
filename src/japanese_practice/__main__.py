@@ -22,6 +22,7 @@ import sys
 import threading
 import time
 from collections.abc import Sequence
+from pathlib import Path
 from types import FrameType
 from typing import TYPE_CHECKING, Any
 
@@ -226,6 +227,7 @@ def _import_webview() -> Any | None:
 
 def _open_window(webview: Any, url: str) -> None:
     """Open the desktop window and block until the user closes it."""
+    icon = Path(__file__).with_name("static") / "icons" / "app-icon.png"
     webview.create_window(
         WINDOW_TITLE,
         url,
@@ -234,7 +236,12 @@ def _open_window(webview: Any, url: str) -> None:
         resizable=True,
         min_size=WINDOW_MIN_SIZE,
     )
-    webview.start()
+    # `icon` is only honoured by some pywebview backends; passing it must never
+    # be the reason the window fails to open.
+    try:
+        webview.start(icon=str(icon) if icon.is_file() else None)
+    except TypeError:
+        webview.start()
 
 
 def _serve_until_signal(server: ServerThread, url: str) -> int:

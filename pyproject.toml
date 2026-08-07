@@ -55,6 +55,7 @@ japanese_practice = [
     "templates/*.html",
     "static/css/*.css",
     "static/js/*.js",
+    "static/icons/*",
     "static/audio/*",
     "static/audio/**/*",
 ]

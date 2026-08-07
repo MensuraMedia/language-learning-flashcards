@@ -53,3 +53,11 @@
 | 2026-08-06T23:35:00 | Added skipped state: schema column + migration, -1 score, 1.25x weight in weakness |
 | 2026-08-06T23:40:00 | Fixed .skip class collision with the accessibility skip-link; renamed .btn-skip |
 | 2026-08-06T23:45:00 | Tests 193 passing (+12 for choices and skipping) |
+| 2026-08-07T03:05:00 | Yoon deck preview trimmed to 2 glyphs — 3 digraphs overran the card border |
+| 2026-08-07T03:10:00 | Study symmetry: squared half-size choices, half-size controls, added Back button |
+| 2026-08-07T03:12:00 | Audio button reduced to the speaker icon alone |
+| 2026-08-07T03:15:00 | Dashboard type scale raised for all chrome text outside card faces |
+| 2026-08-07T03:18:00 | Added app icon — あ in amber on gray; window icon, favicon and brand mark |
+| 2026-08-07T03:20:00 | Withheld kanji Top 200/500 decks — frequency rank is not stored, labels were unbacked |
+| 2026-08-07T03:22:00 | Fixed calendar cells sized as SVG rects; fixed accuracy-by-set row wrapping |
+| 2026-08-07T03:30:00 | Choice cards: romaji centred at 21px, shortcut number moved to bottom-right corner |

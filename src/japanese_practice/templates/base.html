@@ -4,13 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}Japanese Practice{% endblock %}</title>
+<link rel="icon" type="image/png" sizes="64x64" href="{{ url_for('static', filename='icons/icon-64.png', v=asset_version) }}">
+<link rel="icon" type="image/png" sizes="256x256" href="{{ url_for('static', filename='icons/icon-256.png', v=asset_version) }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css', v=asset_version) }}">
 </head>
 <body>
 <div class="wrap">
   <header class="topbar">
     <a class="brand" href="/">
-      <span class="brand-mark"></span>
+      <img class="brand-mark" src="{{ url_for('static', filename='icons/icon-64.png', v=asset_version) }}" alt="" width="26" height="26">
       <span class="brand-name">Japanese Practice</span>
       <span class="brand-jp">日本語練習</span>
     </a>

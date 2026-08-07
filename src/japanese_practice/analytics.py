@@ -477,20 +477,10 @@ DECK_META: dict[str, dict[str, str]] = {
         "challenge": "recall",
         "scoring": "srs",
     },
-    "kanji:top200": {
-        "shelf": "vol",
-        "rung": "VOL 1 · TOP 200",
-        "jp": "頻出 200",
-        "challenge": "recognition",
-        "scoring": "streak",
-    },
-    "kanji:top500": {
-        "shelf": "vol",
-        "rung": "VOL 2 · TOP 500",
-        "jp": "頻出 500",
-        "challenge": "timed",
-        "scoring": "speed",
-    },
+    # kanji:top200 / kanji:top500 are deliberately absent. Frequency rank is not
+    # stored on `characters`, so those keys resolve to "all kanji" and would
+    # advertise the 107-character N5 set as the "Top 200" — a label the data
+    # cannot back. Restore them once a frequency column exists.
 }
 
 SHELVES: tuple[tuple[str, str, str], ...] = (
@@ -538,6 +528,11 @@ async def deck_shelves(db: Database) -> list[dict[str, Any]]:
         glyphs = await db.fetch_all(
             f"SELECT glyph FROM characters WHERE {_segment_clause(key)} ORDER BY id LIMIT 3"
         )
+        preview = [row["glyph"] for row in glyphs]
+        # Yoon are two-character digraphs (きゃ), so three of them overrun the
+        # card and crowd its border. Show two whenever the glyphs are wide.
+        if any(len(g) > 1 for g in preview):
+            preview = preview[:2]
 
         decks.append(
             {
@@ -545,7 +540,7 @@ async def deck_shelves(db: Database) -> list[dict[str, Any]]:
                 **meta,
                 "mastered": int(stats.get("mastered") or 0),
                 "accuracy": float(stats.get("accuracy") or 0.0),
-                "glyphs": [row["glyph"] for row in glyphs],
+                "glyphs": preview,
             }
         )
     return decks

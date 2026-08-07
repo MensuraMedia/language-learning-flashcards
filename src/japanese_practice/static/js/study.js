@@ -103,7 +103,6 @@ function render() {
 
   renderChoices(card);
   $("counter").textContent = `${state.index + 1} / ${state.cards.length}`;
-  $("spk-note").textContent = "Play";
   state.shownAt = performance.now();
 }
 
@@ -276,20 +275,17 @@ function toggleMute() {
 async function playAudio() {
   const card = state.cards[state.index];
   if (!card) return;
-  $("spk-note").textContent = "Playing…";
   $("speaker").classList.add("speaker-on");
   try {
     const audio = new Audio(`/api/audio/${card.id}`);
     audio.volume = effectiveVolume();
     state.audio = audio;
     audio.onended = () => {
-      $("spk-note").textContent = "Play";
-      $("speaker").classList.remove("speaker-on");
+          $("speaker").classList.remove("speaker-on");
     };
     await audio.play();
   } catch {
-    $("spk-note").textContent = "Play";
-    $("speaker").classList.remove("speaker-on");
+      $("speaker").classList.remove("speaker-on");
   }
 }
 
@@ -388,6 +384,7 @@ async function start() {
 $("card").addEventListener("click", flip);
 $("flip").addEventListener("click", flip);
 on("skip", "click", skipCard);
+on("back", "click", goPrevious);
 $("speaker").addEventListener("click", (event) => {
   event.stopPropagation();
   playAudio();
