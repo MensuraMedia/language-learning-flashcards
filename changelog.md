@@ -75,3 +75,6 @@
 | 2026-08-07T04:40:00 | Added docs/VOICE-LAB.md — MECE decomposition of the whole audio pipeline |
 | 2026-08-07T04:50:00 | Added voice toggle to study view (V key / button), persisted; /api/audio?voice= honoured |
 | 2026-08-07T04:52:00 | Verified live: window served the 15,926-byte male clip after toggling — bundled, not synthesised |
+| 2026-08-07T05:00:00 | Added docs/ROADMAP.md — 50 outstanding items with QA acceptance criteria, grouped and sequenced |
+| 2026-08-07T05:05:00 | Acoustic QA over all 630 clips via ffprobe; found and re-rendered a truncated hiragana/female/へ (0.24s) |
+| 2026-08-07T05:08:00 | Added cross-voice consistency check — an absolute duration floor cannot catch a clip too short for its character |

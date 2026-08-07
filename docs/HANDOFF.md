@@ -4,7 +4,7 @@
 It is the single place a new session (human or agent) reads to know where the
 project stands, what is real, what is assumed, and what to do next.
 
-- **Last updated:** 2026-08-07 04:40 UTC-4
+- **Last updated:** 2026-08-07 05:10 UTC-4
 - **Updated by:** session `30934411` (Claude Opus 5)
 - **Project root:** `/home/user/projects/japanese_practice`
 - **Remote:** https://github.com/MensuraMedia/language-learning-flashcards (public)
@@ -263,6 +263,7 @@ chosen deliberately to keep the real address out of public history.
 | `docs/ARCHITECTURE.md` | How the system works; stack rationale; supportability, applicability, universality |
 | `docs/BUILD-SPEC.md` | Binding implementation contract — paths, signatures, schema |
 | `docs/AUDIO.md` | Audio resolution chain, ElevenLabs setup, voice-selection criteria |
+| `docs/ROADMAP.md` | **Every outstanding item with QA acceptance criteria** — start here for what is left |
 | `docs/VOICE-LAB.md` | MECE toolset: credential → selection → derivation → synthesis → validation → storage → consumption |
 | `docs/TESTING.md` | Test suite structure, what each layer proves, coverage gaps |
 | `docs/PROJECT-CONTEXT.md` | Original brief, requirements decomposition, confirmed decisions |

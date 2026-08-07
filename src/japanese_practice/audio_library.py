@@ -251,3 +251,87 @@ def is_validated(script: str, glyph: str, voice: str = "female") -> bool:
         if path.is_file() and validate_clip(path).ok:
             return True
     return False
+
+
+# ── cross-voice consistency ──────────────────────────────────────────────────
+#
+# An absolute duration floor cannot catch a clip that is merely *too short for
+# this character* — a truncated render of へ came in at 0.24s and passed the
+# 150ms gate. The same character spoken by two narrators should take roughly
+# the same time; a large disagreement means one of them is wrong.
+
+#: Duration disagreement between voices, in seconds, that warrants review.
+CROSS_VOICE_TOLERANCE_S = 0.35
+
+#: Below this a clip is too short to be a mora, whatever the gate says.
+SUSPICIOUS_SHORT_S = 0.45
+
+
+def probe_duration_s(path: Path) -> float | None:
+    """Exact duration via ffprobe, or ``None`` when it is unavailable."""
+    import json
+    import subprocess
+
+    try:
+        out = subprocess.run(
+            ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", str(path)],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        ).stdout
+        return float(json.loads(out)["format"]["duration"])
+    except Exception:
+        return None
+
+
+def cross_voice_report() -> list[dict]:
+    """Characters whose voices disagree on duration, or that are implausibly short.
+
+    This is a *review* signal, not a hard gate — it produces a prioritised list
+    for a human to listen to, which is the only way pronunciation accuracy can
+    actually be confirmed.
+    """
+    durations: dict[tuple[str, str, str], float] = {}
+    for script in SCRIPTS:
+        for voice in VOICES:
+            directory = LIBRARY_ROOT / script / voice
+            if not directory.is_dir():
+                continue
+            for clip in sorted(directory.iterdir()):
+                if clip.suffix not in {".mp3", ".wav"}:
+                    continue
+                seconds = probe_duration_s(clip)
+                if seconds is not None:
+                    durations[(script, voice, clip.stem)] = seconds
+
+    findings: list[dict] = []
+    for (script, voice, glyph), seconds in sorted(durations.items()):
+        if seconds < SUSPICIOUS_SHORT_S:
+            findings.append(
+                {
+                    "glyph": glyph,
+                    "script": script,
+                    "issue": "too_short",
+                    "detail": f"{seconds:.2f}s in {voice}",
+                }
+            )
+
+    seen: set[tuple[str, str]] = set()
+    for script, _voice, glyph in durations:
+        if (script, glyph) in seen:
+            continue
+        seen.add((script, glyph))
+        f = durations.get((script, "female", glyph))
+        m = durations.get((script, "male", glyph))
+        if f is None or m is None:
+            continue
+        if abs(f - m) > CROSS_VOICE_TOLERANCE_S:
+            findings.append(
+                {
+                    "glyph": glyph,
+                    "script": script,
+                    "issue": "voices_disagree",
+                    "detail": f"female {f:.2f}s vs male {m:.2f}s",
+                }
+            )
+    return findings

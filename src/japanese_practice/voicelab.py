@@ -249,6 +249,14 @@ async def cmd_verify(args: argparse.Namespace) -> int:
 
     drift = lib.verify_against_manifest()
     print(f"drift       : {drift or 'none'}")
+
+    # Acoustic review signals — these do not fail the run, they queue human
+    # listening. Pronunciation accuracy cannot be confirmed any other way.
+    findings = lib.cross_voice_report()
+    print(f"review queue: {len(findings)}")
+    for f in findings[:20]:
+        print(f"  {f['script']}/{f['glyph']}  {f['issue']}: {f['detail']}")
+
     return 0 if not bad else 1
 
 
