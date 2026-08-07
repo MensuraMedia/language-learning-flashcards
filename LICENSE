@@ -1,0 +1,125 @@
+# Japanese Practice — Personal Use Licence
+
+**Copyright © 2026 Mensura Media (メンスラ・メディア). All rights reserved.**
+
+This is a source-available, **non-commercial** licence. It is **not** an open
+source licence as defined by the Open Source Initiative, and it is **not** a
+Free Software licence.
+
+---
+
+## 1. Definitions
+
+- **"Software"** — the source code, documentation, configuration, stylesheets,
+  scripts, icons and other materials in this repository, excluding the
+  Third-Party Materials described in Section 7.
+- **"Licensor"** — Mensura Media, the copyright holder.
+- **"You"** — the individual exercising the permissions in this Licence.
+- **"Personal Use"** — use by a natural person for their own private study,
+  learning, evaluation or curiosity, and for no other purpose.
+- **"Commercial Use"** — any use intended for or directed toward commercial
+  advantage or monetary compensation, including without limitation: use within
+  a business, institution or organisation; use in providing a paid or ad-funded
+  service; bundling with a product offered for sale; use in paid tuition,
+  training or coursework delivery; and internal use by any entity in the course
+  of its operations.
+
+## 2. Grant of Personal-Use Rights
+
+Subject to every condition and restriction below, the Licensor grants You a
+worldwide, royalty-free, non-exclusive, non-transferable, revocable licence to:
+
+1. **Download, install and run** the Software on devices You own or control,
+   for Personal Use;
+2. **Read and study** the source code for Personal Use;
+3. **Make a personal backup copy** of the Software.
+
+No other rights are granted, by implication, estoppel or otherwise.
+
+## 3. Restrictions
+
+Without the **prior express written consent** of the Licensor, You may **not**:
+
+1. **Use the Software for any Commercial Use.**
+2. **Modify, adapt, translate or create derivative works** of the Software.
+3. **Distribute, publish, sublicense, sell, rent, lease or lend** the Software
+   or any part of it, in original or modified form.
+4. **Host or make the Software available** to third parties, including as a
+   hosted, networked or software-as-a-service offering.
+5. **Incorporate** the Software, or any portion of it, into another work.
+6. **Remove, obscure or alter** any copyright, attribution or licence notice,
+   including the third-party attributions required by Section 7.
+7. **Use any name, logo or trademark** of the Licensor.
+8. **Reverse engineer** the Software except to the limited extent that such
+   restriction is expressly prohibited by applicable law.
+
+## 4. Requesting Consent
+
+Rights beyond Personal Use — including commercial use, modification,
+redistribution, or incorporation into another work — require prior express
+written consent, which may be granted, withheld or conditioned at the
+Licensor's sole discretion.
+
+Requests should identify the requester, the intended use, the scope, and the
+duration, and should be directed to the Licensor via the repository at
+<https://github.com/MensuraMedia/language-learning-flashcards>.
+
+Consent is valid only if given in writing and signed or otherwise
+unambiguously issued by the Licensor. Silence, inaction or continued
+availability of the Software is **not** consent.
+
+## 5. Contributions
+
+Any contribution You submit to the Licensor for inclusion in the Software is
+provided under this Licence, and You grant the Licensor a perpetual,
+irrevocable, worldwide, royalty-free right to use, reproduce, modify,
+sublicense and distribute that contribution without restriction or obligation
+to You.
+
+## 6. Termination
+
+This Licence terminates automatically and immediately if You breach any of its
+terms. On termination You must cease all use and destroy all copies in Your
+possession or control. Sections 5, 7, 8, 9 and 10 survive termination.
+
+## 7. Third-Party Materials
+
+The Software incorporates or interoperates with third-party materials that
+carry **their own separate terms**. This Licence does not grant You any rights
+in them, and nothing here overrides them.
+
+| Material | Provenance | Terms |
+|---|---|---|
+| Bundled pronunciation clips in `src/japanese_practice/static/audio/` | Synthesised via ElevenLabs | Subject to the ElevenLabs terms of service in force at the time of generation |
+| VOICEVOX audio generated at runtime | Generated locally by a VOICEVOX engine You supply | Governed by the VOICEVOX and voice-library terms. **Attribution naming the speaker is mandatory** — the application displays this and it must not be removed |
+| VOICEVOX engine | Not distributed with this Software | LGPL v3 or the VOICEVOX commercial licence. Obtain it separately |
+| Japanese character data | Derived from the MensuraMedia `language-learning` reference set | Free to use and distribute, per that project |
+| Python dependencies (`quart`, `aiosqlite`, `pywebview` and their transitive dependencies) | PyPI | Each under its own licence; not distributed with this Software |
+
+**You are responsible for complying with all of the above.** Where the terms of
+a Third-Party Material conflict with this Licence, that material's terms govern
+that material.
+
+## 8. No Warranty
+
+THE SOFTWARE IS PROVIDED **"AS IS"**, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, ACCURACY AND NON-INFRINGEMENT.
+
+**In particular, no warranty is given as to the linguistic accuracy of any
+character, reading, meaning or audio pronunciation.** This Software is a study
+aid and must not be relied upon as an authoritative reference.
+
+## 9. Limitation of Liability
+
+IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR ITS USE OR OTHER DEALINGS.
+
+## 10. General
+
+This Licence is the entire agreement between You and the Licensor concerning
+the Software. If any provision is held unenforceable, the remainder continues
+in full force. Failure to enforce any provision is not a waiver of it. The
+Licensor may release future versions under different terms; doing so does not
+alter the terms applying to the version You received.

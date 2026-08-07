@@ -39,6 +39,36 @@ MIN_PAIRS = 3
 MAX_PAIRS = 12
 
 
+#: What the dashboard needs to present each game. Kept beside the engine so a
+#: new mode cannot be added without describing what it trains.
+GAME_CARDS: tuple[dict[str, str], ...] = (
+    {
+        "mode": "matchup",
+        "name": "Match Up",
+        "jp": "対応",
+        "trains": "Reading → character, the reverse direction no card tests",
+        "detail": "All tiles face up. Pair each character with its reading.",
+        "motif": "grid",
+    },
+    {
+        "mode": "pelmanism",
+        "name": "Pelmanism",
+        "jp": "神経衰弱",
+        "trains": "Holding a glyph's shape in mind between turns",
+        "detail": "Face down. Remember where each one was.",
+        "motif": "hidden",
+    },
+    {
+        "mode": "confusion",
+        "name": "Confusion Drill",
+        "jp": "紛らわしい",
+        "trains": "Telling look-alikes apart — シ/ツ, る/ろ, ぬ/め",
+        "detail": "A board stacked with the pairs learners actually mix up.",
+        "motif": "pairs",
+    },
+)
+
+
 @dataclass(frozen=True)
 class Tile:
     """One face on the board."""

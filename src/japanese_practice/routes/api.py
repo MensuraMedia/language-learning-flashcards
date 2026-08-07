@@ -163,6 +163,25 @@ async def end_session(session_id: int) -> Any:
     return jsonify(asdict(record))
 
 
+@api_bp.get("/games")
+async def game_catalogue() -> Response:
+    """The games the dashboard offers, with a live preview of each board."""
+    db = get_db()
+    cards = []
+    for card in games.GAME_CARDS:
+        board = await games.build_board(db, mode=card["mode"], pairs=3)
+        cards.append(
+            {
+                **card,
+                # A couple of real characters, so the card previews the board it
+                # will actually deal rather than showing decoration.
+                "preview": [t.text for t in board.tiles if t.kind == "glyph"][:3],
+                "source": board.source,
+            }
+        )
+    return jsonify({"games": cards})
+
+
 @api_bp.post("/game/board")
 async def game_board() -> Any:
     """Deal a memory board, seeded from the learner's weakest characters."""

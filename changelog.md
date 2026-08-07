@@ -103,3 +103,7 @@
 | 2026-08-07T19:22:00 | Boards laid out as a centred square block, columns in groups of three |
 | 2026-08-07T19:30:00 | FIX: restored the /games route, lost to a `git checkout` used to undo a temp patch |
 | 2026-08-07T19:32:00 | Added a route-reachability test so a lost view cannot ship silently again |
+| 2026-08-07T19:50:00 | Dashboard game cards linking to each mode, styled as boards rather than decks |
+| 2026-08-07T20:00:00 | Verified stack/modularity/universality: 0 import cycles, 0 platform paths, 33-package closure |
+| 2026-08-07T20:05:00 | Added docs/FEATURES.md and docs/STACK-VERIFICATION.md |
+| 2026-08-07T20:08:00 | Added LICENSE — personal use only; corrected pyproject (was MIT) and README (was "free to distribute") |

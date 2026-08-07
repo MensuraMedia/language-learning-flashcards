@@ -7,11 +7,12 @@ name = "japanese-practice"
 description = "A local flash-card trainer for hiragana, katakana and JLPT kanji."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = { file = "LICENSE" }
 authors = [{ name = "Japanese Practice" }]
 keywords = ["japanese", "kana", "kanji", "flashcards", "jlpt", "srs"]
 classifiers = [
     "Development Status :: 3 - Alpha",
+    "License :: Other/Proprietary License",
     "Environment :: Web Environment",
     "Intended Audience :: Education",
     "Natural Language :: Japanese",

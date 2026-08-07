@@ -140,6 +140,54 @@ function renderStats(totals, fve, trend, decks) {
   }
 }
 
+// ── memory-training cards ───────────────────────────────────────────────────
+// Deliberately a different object from a study deck. A deck is a stack of cards
+// with a mastery meter; a game is a board. So these are landscape, show a
+// miniature of the board they will deal, and report what they train rather than
+// how far through you are — because none of them are scored.
+
+function gameCard(game) {
+  const node = el("a", `game-card motif-${game.motif}`);
+  node.href = `/games?mode=${encodeURIComponent(game.mode)}`;
+  node.setAttribute("aria-label", `${game.name} — ${game.detail}`);
+
+  // A miniature of the board. Real characters, so the card previews what it
+  // will actually deal rather than showing decoration.
+  const cells = [];
+  for (let i = 0; i < 6; i += 1) {
+    const glyph = game.preview[i % Math.max(game.preview.length, 1)];
+    const hidden = game.motif === "hidden" && i % 2 === 1;
+    cells.push(
+      `<span class="mini-tile${hidden ? " is-covered" : ""}">${hidden ? "" : (glyph ?? "")}</span>`
+    );
+  }
+
+  node.innerHTML = `
+    <span class="game-mini">${cells.join("")}</span>
+    <span class="game-body">
+      <span class="game-name">${game.name}</span>
+      <span class="game-jp jp">${game.jp}</span>
+      <span class="game-trains">${game.trains}</span>
+    </span>
+    <span class="game-foot">
+      <span class="tag">unscored</span>
+      <span class="game-go">Play →</span>
+    </span>`;
+  return node;
+}
+
+async function renderGames() {
+  const host = $("game-shelf");
+  if (!host) return;
+  try {
+    const payload = await fetch("/api/games").then((r) => r.json());
+    host.innerHTML = "";
+    (payload.games || []).forEach((g) => host.appendChild(gameCard(g)));
+  } catch {
+    host.innerHTML = `<p class="muted">Games unavailable.</p>`;
+  }
+}
+
 // ── session history ─────────────────────────────────────────────────────────
 
 function renderHistory(rows) {
@@ -396,6 +444,7 @@ async function main() {
   renderMastery(summary.mastery_by_group || []);
   renderCalendar(summary.streak_calendar || []);
   renderHistory(summary.session_history || []);
+  renderGames();
 
   $("tb-streak").textContent = totals.best_streak ?? 0;
   $("tb-sessions").textContent = totals.sessions ?? 0;

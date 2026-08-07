@@ -1,262 +1,167 @@
 # Japanese Practice — Flash Card Desktop Application
 
-**日本語練習** · A local desktop application for learning Hiragana, Katakana and Kanji through interactive flash cards, with per-session scoring and long-term performance analytics.
+**日本語練習** · A local desktop application for learning Hiragana, Katakana and
+Kanji: multiple-choice flash cards, memory-training boards, native Japanese
+pronunciation, and analytics that show precisely which characters are failing.
 
 Built by [Mensura Media](https://github.com/MensuraMedia) · Companion to the
-[language-learning](https://github.com/MensuraMedia/language-learning) worksheet collection.
+[language-learning](https://github.com/MensuraMedia/language-learning) worksheet
+collection.
+
+> **Licence: personal use only.** Commercial use, modification and
+> redistribution require prior written consent — see [LICENSE](LICENSE).
 
 ---
 
-## What This Is
+## What it is
 
-A **native desktop application** — its own window, not a browser tab — that turns
-the printable flash-card sets from the `language-learning` workbooks into an
-interactive, self-scoring study tool.
+A **native desktop application** — its own window, not a browser tab — that runs
+entirely on your machine. No account, no network, no telemetry.
 
-The core interaction is deliberately simple:
+The study loop:
 
-1. A card appears showing **one character and nothing else**
-2. You recall the sound, then **click to flip**
-3. The reverse shows the written reading and a **speaker icon** that plays the pronunciation
-4. You mark it right or wrong, and the app records it
+1. A card shows **one character and nothing else**
+2. Three options appear beside it — one correct, two drawn from characters that
+   are genuinely confusable with it
+3. Choosing scores automatically and flips the card, so a wrong answer still
+   teaches
+4. Every answer is recorded, and the dashboard shows what you keep missing
 
-Everything else in the application — the dashboard, the challenge segments, the
-analytics — exists to make that loop productive over months of study.
-
-## Why It Exists
-
-Printed flash cards do not know what you keep getting wrong. This application
-tracks every card you have ever seen, surfaces the characters that are actually
-failing, and lets you drill precisely those. It runs entirely on your machine —
-no account, no network, no telemetry.
+Printed flash cards do not know what you keep getting wrong. This does.
 
 ---
 
-## Core Features
+## Features
 
-### Flash Cards
-- **Character-only front face.** No hints, no romaji, no meaning — the recall test is honest.
-- **True 3D flip animation** on click, not a fade or a swap.
-- **Audio pronunciation** via a speaker control on the reverse face.
-- **Hybrid audio:** bundled native-speaker clips for the fixed kana set, text-to-speech fallback for the open-ended Kanji vocabulary.
-- Reverse face shows romaji for kana; English meaning plus **on'yomi** and **kun'yomi** for Kanji.
+Full reference: **[docs/FEATURES.md](docs/FEATURES.md)**
 
-### Exercise Segments
-Sessions are differentiated along three independent axes, so the same character
-set can be drilled many ways:
-
-| Axis | Options |
+| Area | Summary |
 |---|---|
-| **Challenge type** | Recognition · Recall · Timed · Listening · Mixed |
-| **Scoring scheme** | Accuracy · Speed-weighted · Streak · Spaced repetition |
-| **Difficulty** | Kana groups and JLPT/Joyo levels — see below |
-
-### Difficulty Ladder
-Levels follow the authentic structure of the writing system rather than an
-arbitrary easy/medium/hard scale:
-
-- **Kana track** — gojuon → dakuon → han-dakuon → yoon → full mixed set
-- **Kanji track (JLPT)** — N5 → N4 → N3 → N2 → N1
-- **Kanji track (Joyo)** — Grade 1 → Grade 6 → Secondary
-- **Kanji volume tiers** — Top 200 → Top 500 → Complete
-
-### Scoring & Analytics
-- A score is recorded **every time** the application is run
-- Landing dashboard shows performance across **every past session**, not just totals
-- Accuracy trend over time, per-character-set breakdown, weak-character
-  identification, streak tracking, and time-of-day performance
+| **Study** | 3-option multiple choice, true 3D flip, skip, back/next navigation, full keyboard control |
+| **Memory games** | Match Up, Pelmanism, Confusion Drill — unscored boards dealt from your weakest characters |
+| **Audio** | 630 bundled clips in two voices, plus local Japanese-native VOICEVOX synthesis with editable pitch accent |
+| **Analytics** | Per-character miss-rate heatmap, weakest-character drill queue, retention curve, mastery by group, leeches, streak calendar, session history |
+| **Content** | Hiragana 104 · Katakana 104 · Kanji JLPT N5 107 — verified against the reference workbooks |
+| **Scoring** | Four schemes: accuracy, speed, streak, SM-2 spaced repetition |
 
 ---
 
-## Content Model
+## Status
 
-Character data follows the
-[language-learning](https://github.com/MensuraMedia/language-learning) reference
-sets exactly — no invented readings, no approximated counts.
+Working and in daily use. **239 tests passing.**
 
-| Set | Characters |
-|---|---:|
-| Hiragana ひらがな | 104 |
-| Katakana カタカナ | 104 |
-| Kanji — JLPT N5 | 107 |
-| Kanji — JLPT N4 | 174 |
-| Kanji — JLPT N3 | 394 |
-| Kanji — JLPT N2 | 248 |
-| Kanji — JLPT N1 | 382 |
-| Kanji — Joyo complete | 1,521 |
+| Component | State |
+|---|---|
+| Study cards, scoring, analytics | ✅ Complete |
+| Memory games | ✅ Complete |
+| Audio — bundled + VOICEVOX | ✅ Complete |
+| Desktop window + browser mode | ✅ Complete |
+| Kanji beyond N5 | ❌ Not seeded — decks exist, characters do not |
+| Typed-recall mode | ❌ Planned |
+| Packaging (`.deb`, AppImage) | ❌ Planned |
 
-Thematic groupings available as exercise segments: Numbers & Counting · People &
-Family · Nature & Weather · Time & Calendar · Actions · Descriptions · Places.
+Everything outstanding is tracked with acceptance criteria in
+**[docs/ROADMAP.md](docs/ROADMAP.md)**.
 
-Vocabulary topic sets: Days 曜日 · Months 月 · Numbers 数字 · Time 時間.
+---
+
+## Getting started
+
+### Requirements
+
+- Linux, macOS or Windows · **Python 3.10+**
+- A CJK font (`fonts-noto-cjk` on Debian/Ubuntu) for glyph rendering
+- A WebKit runtime for the desktop window (`gir1.2-webkit2-4.0` on Debian/Ubuntu).
+  Without it the app runs in browser mode instead — it does not fail.
+
+### Install
+
+```bash
+git clone https://github.com/MensuraMedia/language-learning-flashcards.git
+cd language-learning-flashcards
+
+# --system-site-packages is required on Linux, or pywebview cannot find
+# PyGObject and silently falls back to browser mode.
+python3 -m venv --system-site-packages .venv
+.venv/bin/pip install -e ".[dev]"
+```
+
+### Run
+
+```bash
+.venv/bin/python -m japanese_practice              # desktop window
+.venv/bin/python -m japanese_practice --no-window  # browser mode
+```
+
+### Develop
+
+```bash
+.venv/bin/python -m pytest                  # 239 tests, ~3s
+.venv/bin/python -m ruff check src/ tests/
+.venv/bin/python -m black src/ tests/
+```
+
+### Optional — better pronunciation
+
+The app ships 630 clips and works offline without any setup. For Japanese-native
+synthesis with correct pitch accent, run a local
+[VOICEVOX engine](https://github.com/VOICEVOX/voicevox_engine); the app detects
+it automatically and falls through silently when it is absent. See
+[docs/VOICEVOX-EVALUATION.md](docs/VOICEVOX-EVALUATION.md).
 
 ---
 
 ## Technology
 
-| Layer | Choice | Rationale |
+Three runtime dependencies. **33 packages** in the entire closure, no build step,
+no `node_modules`.
+
+| Layer | Choice | Why not the alternative |
 |---|---|---|
-| Desktop shell | **pywebview** | Native window using the system WebKit runtime — no bundled browser, no Node dependency |
-| Server | **Quart** (ASGI) | Async Flask-compatible API; non-blocking audio and database work |
-| Language | **Python 3.10+** | |
-| Persistence | **SQLite** via `aiosqlite` | Single-user local app; zero configuration |
-| Frontend | Server-rendered templates + vanilla JS/CSS | No bundler, no framework lock-in — the same UI opens unchanged in any browser |
-| Audio | Bundled clips + TTS fallback | Correct native pronunciation where it matters, coverage everywhere else |
+| Desktop shell | **pywebview** | Uses the OS WebView already present. Electron would ship a ~150 MB browser and a Node runtime for a UI of a few hundred KB. |
+| Server | **Quart** (ASGI) | Flask's API with native `async`. Audio shells out to a subprocess and analytics runs multi-table SQL — both would block a WSGI worker. |
+| Persistence | **SQLite** via `aiosqlite` | Single-user, local. Zero configuration, one file to back up. The analytics are genuinely relational. |
+| Frontend | Server-rendered templates + vanilla ES modules | No bundler, no framework. The source that ships is the source that runs — which is what makes the same UI open unchanged in a browser. |
+| Charts | Inline SVG built in JS | A charting library would be the largest dependency in the project and the only one needing a CDN or bundle step. |
 
-**Design principle:** the application is a web app that happens to be delivered in
-a native window. That keeps it cross-platform and browser-compatible by
-construction rather than by effort.
-
----
-
-## Design Language
-
-Dark, technical, single-accent. Near-black grounds with layered gray panels, one
-high-chroma accent carrying all emphasis, thin rules and small letter-spaced
-labels, monospace numerals, and data-dense composition.
-
-The Japanese glyph is always the visual hero — set large, with generous space,
-in `Noto Sans CJK JP`.
-
-Five complete design directions were prototyped as interactive mockups before any
-application code was written. See [`mockups/`](mockups/) and
-[`mockups/COMPARISON.md`](mockups/COMPARISON.md).
+Verified, not asserted — see
+**[docs/STACK-VERIFICATION.md](docs/STACK-VERIFICATION.md)**: zero import cycles,
+zero hard-coded platform paths, zero external network references in the shipped
+frontend.
 
 ---
 
-## Getting Started
-
-> **Status: pre-implementation.** Design mockups are complete; the application
-> itself is not yet built. The commands below describe the intended interface.
-
-### Requirements
-- Debian/Ubuntu Linux (other platforms planned — see Roadmap)
-- Python 3.10 or newer
-- `fonts-noto-cjk` for Japanese glyph rendering
-- WebKit runtime (`gir1.2-webkit2-4.0` or equivalent) for the pywebview shell
-
-### Install
-```bash
-git clone https://github.com/MensuraMedia/language-learning-flashcards.git
-cd language-learning-flashcards
-python3 -m venv .venv
-.venv/bin/pip install -e .
-```
-
-### Run
-```bash
-# Native desktop window
-.venv/bin/python -m japanese_practice
-
-# Browser mode / headless
-.venv/bin/python -m japanese_practice --no-window
-```
-
-### Develop
-```bash
-.venv/bin/python -m pytest                  # tests
-.venv/bin/python -m ruff check .            # lint
-.venv/bin/python -m black .                 # format
-```
-
----
-
-## Roadmap
-
-### Phase 1 — Foundation ✅
-- [x] Project scaffolding and standards adoption
-- [x] Japanese content model locked to authoritative reference sets
-- [x] Five interactive design directions prototyped
-- [ ] Design direction selected
-
-### Phase 2 — Core Application
-- [ ] Quart application skeleton with pywebview shell
-- [ ] SQLite schema: characters, sessions, attempts, scores
-- [ ] Character data seeded for Hiragana and Katakana (104 each)
-- [ ] Flash card component with 3D flip
-- [ ] Single exercise loop end to end
-
-### Phase 3 — Audio
-- [ ] Audio playback layer with caching
-- [ ] Bundled kana pronunciation clips
-- [ ] TTS fallback engine and abstraction
-- [ ] Listening-mode challenge type
-
-### Phase 4 — Exercises & Scoring
-- [ ] All five challenge types
-- [ ] All four scoring schemes
-- [ ] Full difficulty ladder across kana and Kanji
-- [ ] Kanji sets: N5 through N1, Joyo grades
-
-### Phase 5 — Analytics
-- [ ] Per-session history dashboard
-- [ ] Accuracy trend and retention curves
-- [ ] Weak-character heatmap
-- [ ] Streak and consistency tracking
-
-### Phase 6 — Polish & Distribution
-- [ ] Keyboard-only operation
-- [ ] Accessibility pass
-- [ ] Packaging: `.deb`, AppImage, PyPI
-- [ ] Windows and macOS builds
-
----
-
-## Future Features
-
-Under consideration, not committed:
-
-- **Spaced repetition (SRS)** — a proper SM-2 or FSRS scheduler so review timing adapts to individual retention
-- **Stroke order animation** — animated stroke-by-stroke writing on the card reverse
-- **Handwriting input** — draw the character and have it graded, closing the recall loop
-- **Vocabulary and sentence mode** — extend beyond single characters into the themed sentence tables from the workbook collection
-- **Custom decks** — user-defined character subsets and import/export
-- **Progress export** — CSV/JSON dump of full study history
-- **Multi-profile support** — several learners sharing one installation
-- **Print bridge** — generate a printable worksheet from your weakest characters, closing the loop back to the original workbooks
-- **Additional languages** — the architecture is script-agnostic; Korean Hangul and Chinese Hanzi are natural extensions
-
----
-
-## Expectations & Scope
-
-**What this application is:**
-- A focused, offline, single-user study tool
-- Honest about recall: no hints on the front face, no partial credit
-- Backed by authentic reference data, not approximations
-
-**What it is not:**
-- Not a full Japanese course — it drills characters, it does not teach grammar
-- Not a cloud service — there is no account, no sync, no server
-- Not a spaced-repetition system on day one (see Future Features)
-
-**Performance targets:**
-- Card interactions under 100ms perceived latency
-- Flip animation at 60fps
-- Cold start under 2 seconds
-
-**Data ownership:** all study history stays in a local SQLite file. Nothing is
-transmitted anywhere.
-
----
-
-## Project Documentation
+## Documentation
 
 | Document | Contents |
 |---|---|
-| [`docs/PROJECT-CONTEXT.md`](docs/PROJECT-CONTEXT.md) | Original brief, requirements decomposition, confirmed decisions |
-| [`mockups/DESIGN-BRIEF.md`](mockups/DESIGN-BRIEF.md) | What every design direction had to demonstrate |
-| [`mockups/COMPARISON.md`](mockups/COMPARISON.md) | Evaluation of the five directions and recommendation |
-| [`mockups/_reference/JAPANESE-CONTENT-MODEL.md`](mockups/_reference/JAPANESE-CONTENT-MODEL.md) | Authoritative character sets, counts, terminology |
-| [`CLAUDE.md`](CLAUDE.md) | Build commands and conventions |
-| [`changelog.md`](changelog.md) | Append-only local change log |
+| [FEATURES.md](docs/FEATURES.md) | Complete feature and function reference |
+| [STACK-VERIFICATION.md](docs/STACK-VERIFICATION.md) | Stack, modularity and universality audit |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the system works; supportability |
+| [ROADMAP.md](docs/ROADMAP.md) | Everything outstanding, with QA criteria |
+| [TESTING.md](docs/TESTING.md) | Test suite structure and coverage gaps |
+| [AUDIO.md](docs/AUDIO.md) · [VOICE-LAB.md](docs/VOICE-LAB.md) · [VOICEVOX-EVALUATION.md](docs/VOICEVOX-EVALUATION.md) | The audio pipeline end to end |
+| [HANDOFF.md](docs/HANDOFF.md) | Session-to-session continuity |
+| [BUILD-SPEC.md](docs/BUILD-SPEC.md) | Implementation contract |
 
 ---
 
-## Related Projects
+## Attribution
 
-- **[language-learning](https://github.com/MensuraMedia/language-learning)** — the printable worksheet, reference chart and flash card collection this application is built from
+Pronunciation audio generated with **VOICEVOX** — the application displays the
+required speaker credit, and it must not be removed. Bundled clips were
+synthesised with ElevenLabs. Character data derives from the MensuraMedia
+`language-learning` reference set.
 
-## License
+## Licence
 
-Free to use and distribute. Created by **Mensura Media** (メンスラ・メディア).
+**Personal use only.** Copyright © 2026 Mensura Media (メンスラ・メディア).
+All rights reserved.
+
+You may download, run and study this software for your own private learning.
+**Commercial use, modification, redistribution and derivative works require
+prior express written consent.** See [LICENSE](LICENSE) for the full terms,
+including Section 7 on third-party materials that carry their own conditions.
+
+This is a source-available, non-commercial licence. It is **not** an OSI
+open-source licence.

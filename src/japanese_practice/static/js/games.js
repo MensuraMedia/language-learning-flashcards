@@ -14,8 +14,11 @@ const el = (tag, cls, html) => {
 
 const MISMATCH_HOLD_MS = 900;   // long enough to read the wrong pair
 
+// Deep-linked from the dashboard game cards: /games?mode=pelmanism
+const requestedMode = new URLSearchParams(location.search).get("mode");
+
 const state = {
-  mode: "matchup",
+  mode: ["matchup", "pelmanism", "confusion"].includes(requestedMode) ? requestedMode : "matchup",
   pairs: 6,
   tiles: [],
   selected: [],      // indices awaiting resolution
@@ -226,7 +229,12 @@ $("mode-picker").addEventListener("click", (event) => {
   if (!btn) return;
   state.mode = btn.dataset.mode;
   [...$("mode-picker").children].forEach((b) => b.classList.toggle("is-on", b === btn));
-  deal();
+  // Reflect a deep-linked mode in the picker before the first deal.
+[...$("mode-picker").children].forEach((b) =>
+  b.classList.toggle("is-on", b.dataset.mode === state.mode)
+);
+
+deal();
 });
 
 $("pair-picker").addEventListener("click", (event) => {

@@ -2768,3 +2768,81 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
   background: linear-gradient(180deg, var(--panel), #131317);
   box-shadow: 0 30px 70px -30px #000;
 }
+
+/* ═══════════════════════ DASHBOARD — MEMORY GAME CARDS ════════════════════ */
+/* Deliberately NOT a deck. A deck is a portrait stack with fanned sheets and a
+   mastery meter; a game is a board. These are landscape, carry a miniature of
+   the board they deal, and state what they train instead of progress — because
+   none of them are scored. */
+
+.game-shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(268px, 1fr));
+  gap: 14px;
+}
+
+.game-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  gap: 4px 14px;
+  padding: 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  background: linear-gradient(122deg, #191921 0%, #14141a 60%, #101015 100%);
+  border: 1px solid var(--line-2);
+  /* a board edge rather than a card stack: one flat inner rule, no depth */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+  transition: border-color .18s var(--ease), transform .18s var(--ease);
+}
+.game-card:hover { border-color: var(--amber-line); transform: translateY(-2px); }
+.game-card:focus-visible { outline: 2px solid var(--amber-line); outline-offset: 2px; }
+
+/* the miniature board */
+.game-mini {
+  grid-row: 1 / 3;
+  display: grid;
+  grid-template-columns: repeat(3, 20px);
+  grid-auto-rows: 20px;
+  gap: 3px;
+  align-self: start;
+}
+.mini-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  border: 1px solid var(--line-2);
+  background: var(--panel-2);
+  font-family: var(--jp);
+  font-size: 11px;
+  color: var(--ink-2);
+  overflow: hidden;
+}
+.mini-tile.is-covered {
+  background: repeating-linear-gradient(45deg, #1e1e26 0 2px, #15151b 2px 5px);
+  border-color: var(--line);
+}
+.game-card:hover .mini-tile { border-color: var(--line-3); }
+
+.game-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.game-name { font-size: 14px; font-weight: 600; color: var(--ink); }
+.game-jp { font-size: 11px; color: var(--ink-3); }
+.game-trains { margin-top: 4px; font-size: 11.5px; color: var(--ink-2); line-height: 1.35; }
+
+.game-foot {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.game-go { font-size: 11.5px; font-weight: 600; color: var(--amber); }
+
+/* each mode gets its own accent edge, so they are distinguishable at a glance */
+.game-card.motif-grid   { border-left: 2px solid rgba(240, 180, 41, .5); }
+.game-card.motif-hidden { border-left: 2px solid rgba(122, 162, 247, .45); }
+.game-card.motif-pairs  { border-left: 2px solid rgba(239, 108, 108, .5); }
