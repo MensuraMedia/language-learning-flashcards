@@ -4,11 +4,11 @@
 It is the single place a new session (human or agent) reads to know where the
 project stands, what is real, what is assumed, and what to do next.
 
-- **Last updated:** 2026-08-06 20:40 UTC-4
+- **Last updated:** 2026-08-06 21:05 UTC-4
 - **Updated by:** session `30934411` (Claude Opus 5)
 - **Project root:** `/home/user/projects/japanese_practice`
 - **Remote:** https://github.com/MensuraMedia/language-learning-flashcards (public)
-- **Current state:** application runs end to end; UI functional; polish and tests outstanding
+- **Current state:** application runs end to end; 155 tests passing; UI polish outstanding
 
 ---
 
@@ -41,7 +41,7 @@ works on this project **must**:
 | UI layout polish | ⚠️ Functional, not finished |
 | Audio (local TTS) | ✅ Real espeak synthesis working |
 | Audio (ElevenLabs) | ⚠️ Integrated, never called against the live API |
-| Tests | ❌ Not written |
+| Tests | ✅ **155 passing**, lint + format clean — see [TESTING.md](TESTING.md) |
 | Packaging / distribution | ❌ Not started |
 
 **Chosen design direction:** `mockups/05-tactile-deck.html`, with the analytics
@@ -127,6 +127,7 @@ correctly (Noto Sans CJK JP present system-wide).
 ## 5. What works / what does not
 
 ### Works
+- **Test suite: 155 passing in ~1s**, `ruff` and `black` clean
 - Full session lifecycle: start → answer → score → end, persisted to SQLite
 - All 13 analytics metrics, computed at query time from `attempts`
 - Per-character miss-rate heatmap, amber-intensity encoded, click-to-drill
@@ -146,11 +147,15 @@ correctly (Noto Sans CJK JP present system-wide).
   speaker. The 3D flip transform works. **Keyboard controls (Space/J/F/Esc) and
   the click handlers are still unexercised** — no input-injection tool is
   installed (`xdotool` absent).
-- **No tests.** `tests/` does not exist. `pyproject.toml` is configured for
-  pytest + pytest-asyncio.
-- **`first_vs_eventual` is degenerate** — all seeded attempts have
-  `first_attempt=1`, so it reports a 0% gap. The metric is correct; the seed data
-  cannot exercise it. Real usage will.
+- ~~No tests~~ — **155 tests passing** as of 2026-08-06 (scoring 35, content 58,
+  analytics 41, API 21). Full breakdown and coverage gaps in
+  [TESTING.md](TESTING.md). Not covered: frontend JS, keyboard controls, the CSS
+  flip animation, and the live ElevenLabs call.
+- **`first_vs_eventual` reads 0% against the demo data** — the seeded history
+  sets `first_attempt=1` on every row, so there is nothing to contrast. The
+  metric itself is correct and is now proven by
+  `test_first_vs_eventual_separates_recall_from_recognition`, which asserts
+  first 0.5 / eventual 0.75 / gap 0.25. Real usage will populate it.
 - **Kanji beyond N5 is not seeded.** `content/kanji_n5.py` only. N4–N1 and Joyo
   difficulty keys exist in the spec but return empty decks.
 - **`.claude/rules/` contains a duplicate** — `memory-rules.md` and
@@ -206,14 +211,13 @@ chosen deliberately to keep the real address out of public history.
 
 ## 8. Next actions, in order
 
-1. **Visually verify `study.html`** — run a session, confirm the 3D flip, the
-   speaker button, and Space/J/F/Esc keys. Nothing about the card view has been
-   seen working.
+1. **Install `xdotool`** and exercise the keyboard controls (Space/J/F/Esc) and
+   click handlers — the only part of the study view still unverified.
 2. **Finish the dashboard layout** — check every panel below the fold renders
    (trend, retention, latency, time-of-day, leeches, mastery, calendar). Move the
    inline `style=` stopgaps into `theme.css`.
-3. **Write the test suite** — `tests/test_scoring.py`, `test_analytics.py`
-   (including every empty-database case), `test_api.py`, `test_content.py`.
+3. **Add `pytest-cov`** and set a coverage floor; the suite exists but coverage
+   is unmeasured.
 4. **Seed Kanji N4–N1** so those difficulty keys stop returning empty decks.
 5. **Bundle real kana audio clips** to replace TTS for the fixed 104-character sets.
 6. **Decide the `.claude/rules/` duplicate** and whether to drop the non-applicable
@@ -231,6 +235,7 @@ chosen deliberately to keep the real address out of public history.
 | `docs/ARCHITECTURE.md` | How the system works; stack rationale; supportability, applicability, universality |
 | `docs/BUILD-SPEC.md` | Binding implementation contract — paths, signatures, schema |
 | `docs/AUDIO.md` | Audio resolution chain, ElevenLabs setup, voice-selection criteria |
+| `docs/TESTING.md` | Test suite structure, what each layer proves, coverage gaps |
 | `docs/PROJECT-CONTEXT.md` | Original brief, requirements decomposition, confirmed decisions |
 | `docs/REPO-ACCESS.md` | **Local only, never pushed** — credential paths and working git commands |
 | `mockups/COMPARISON.md` | Evaluation of the five design directions |
