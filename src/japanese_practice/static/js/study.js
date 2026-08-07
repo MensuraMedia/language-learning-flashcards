@@ -7,6 +7,15 @@
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 
+// Small DOM helper. study.js is a standalone module — it cannot borrow
+// dashboard.js's helpers, which is exactly the bug this replaces.
+const el = (tag, cls, html) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (html != null) n.innerHTML = html;
+  return n;
+};
+
 const VOLUME_STEP = 0.1;
 const VOLUME_KEY = "jp.volume";
 const MUTED_KEY = "jp.muted";
@@ -21,6 +30,7 @@ const state = {
   shownAt: 0,
   scheme: "accuracy",
   graded: new Set(),
+  locked: false,
   volume: readVolume(),
   muted: readMuted(),
   audio: null,
@@ -91,9 +101,54 @@ function render() {
     $("back-readings").innerHTML = "";
   }
 
+  renderChoices(card);
   $("counter").textContent = `${state.index + 1} / ${state.cards.length}`;
   $("spk-note").textContent = "Play";
   state.shownAt = performance.now();
+}
+
+// ── multiple choice ──────────────────────────────────────────────────────────
+// The deck arrives with its options already shuffled by the server, so the
+// correct answer is never in a predictable slot.
+
+function renderChoices(card) {
+  const host = $("choices");
+  host.innerHTML = "";
+  state.locked = state.graded.has(state.index);
+
+  (card.choices || []).forEach((option, i) => {
+    const button = el("button", "choice");
+    button.type = "button";
+    button.innerHTML = `<span class="key">${i + 1}</span><span class="txt">${option}</span>`;
+    button.setAttribute("aria-label", `Option ${i + 1}: ${option}`);
+    if (state.locked) button.disabled = true;
+    button.addEventListener("click", () => choose(i));
+    host.appendChild(button);
+  });
+}
+
+function choose(index) {
+  if (state.locked) return;
+  const card = state.cards[state.index];
+  const option = (card.choices || [])[index];
+  if (option === undefined) return;
+
+  state.locked = true;
+  const correct = option === card.answer;
+  const buttons = [...$("choices").children];
+
+  buttons.forEach((b, i) => {
+    b.disabled = true;
+    const value = card.choices[i];
+    if (value === card.answer) b.classList.add("is-right");
+    else if (i === index) b.classList.add("is-wrong");
+    else b.classList.add("is-muted");
+  });
+
+  // Show the reading behind the glyph so a wrong answer still teaches.
+  if (!state.flipped) flip();
+
+  grade(correct, { given: correct ? null : option });
 }
 
 function flip() {
@@ -117,7 +172,7 @@ function goNext() {
 
 // ── grading ──────────────────────────────────────────────────────────────────
 
-async function grade(correct) {
+async function grade(correct, { given = null, skipped = false } = {}) {
   const card = state.cards[state.index];
   if (!card || state.finished) return;
 
@@ -132,20 +187,22 @@ async function grade(correct) {
     const res = await post(`/api/session/${state.sessionId}/attempt`, {
       character_id: card.id,
       correct,
+      skipped,
       latency_ms: latency,
       streak: state.streak,
-      // On a miss, record the neighbouring card as what it was confused with —
-      // this is what feeds the confusion-pair panel.
-      given_answer: correct ? null : (state.cards[(state.index + 1) % state.cards.length] || {}).glyph,
+      // The option actually chosen is what feeds the confusion-pair panel —
+      // a real answer, not a guess at what the learner might have meant.
+      given_answer: given,
     });
     state.streak = res.streak;
     state.score = res.score;
     $("score").textContent = res.score;
     $("streak").textContent = res.streak;
+    if (skipped) toast("Skipped · −1");
   } catch (err) {
     console.error("attempt failed", err);
   }
-  advanceAfterGrade();
+  setTimeout(advanceAfterGrade, skipped ? 250 : 900);
 }
 
 function advanceAfterGrade() {
@@ -170,6 +227,16 @@ async function finish() {
     <div class="kv"><span class="lbl-sm">Cards</span><b class="num">${record.total ?? 0}</b></div>
     <div class="kv"><span class="lbl-sm">Best streak</span><b class="num">${record.max_streak ?? 0}</b></div>`;
   $("recap").hidden = false;
+}
+
+function skipCard() {
+  if (state.locked) return advanceAfterGrade();
+  state.locked = true;
+  [...$("choices").children].forEach((b) => {
+    b.disabled = true;
+    b.classList.add("is-muted");
+  });
+  grade(false, { skipped: true });
 }
 
 // ── audio ────────────────────────────────────────────────────────────────────
@@ -251,8 +318,13 @@ function toggleHelp() {
 const KEYMAP = {
   Space: flip,
   Enter: flip,
-  KeyJ: () => grade(true),
-  KeyF: () => grade(false),
+  Digit1: () => choose(0),
+  Digit2: () => choose(1),
+  Digit3: () => choose(2),
+  Numpad1: () => choose(0),
+  Numpad2: () => choose(1),
+  Numpad3: () => choose(2),
+  KeyS: skipCard,
   ArrowRight: goNext,
   ArrowLeft: goPrevious,
   ArrowUp: () => changeVolume(VOLUME_STEP),
@@ -315,8 +387,7 @@ async function start() {
 
 $("card").addEventListener("click", flip);
 $("flip").addEventListener("click", flip);
-$("right").addEventListener("click", () => grade(true));
-$("wrong").addEventListener("click", () => grade(false));
+on("skip", "click", skipCard);
 $("speaker").addEventListener("click", (event) => {
   event.stopPropagation();
   playAudio();

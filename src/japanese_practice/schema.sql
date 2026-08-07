@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS attempts (
   character_id  INTEGER NOT NULL REFERENCES characters(id),
   answered_at   TEXT NOT NULL,
   correct       INTEGER NOT NULL,   -- 0|1
+  skipped       INTEGER NOT NULL DEFAULT 0,  -- 1 = passed without answering
   latency_ms    INTEGER,
   first_attempt INTEGER NOT NULL DEFAULT 1,
   given_answer  TEXT                -- for confusion analysis

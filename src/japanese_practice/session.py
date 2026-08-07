@@ -95,8 +95,17 @@ async def record_attempt(
     latency_ms: int | None = None,
     given_answer: str | None = None,
     streak: int = 0,
+    skipped: bool = False,
 ) -> dict[str, Any]:
-    """Persist one answer, update scheduling, and return the running totals."""
+    """Persist one answer, update scheduling, and return the running totals.
+
+    A skip is stored as an incorrect attempt carrying ``skipped = 1``. That
+    keeps every "did not get it" signal in one place for the weakness
+    analytics, while still letting the UI and scoring treat a pass differently
+    from a wrong guess.
+    """
+    if skipped:
+        correct = False
     session_row = await db.fetch_one("SELECT * FROM sessions WHERE id = ?", (session_id,))
     if session_row is None:
         raise ValueError(f"no such session: {session_id}")
@@ -112,16 +121,19 @@ async def record_attempt(
         latency_ms=latency_ms,
         streak=new_streak,
         reps=reps,
+        skipped=skipped,
     )
 
     await db.execute(
         "INSERT INTO attempts(session_id, character_id, answered_at, correct,"
-        " latency_ms, first_attempt, given_answer) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        " skipped, latency_ms, first_attempt, given_answer)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         (
             session_id,
             character_id,
             _now(),
             1 if correct else 0,
+            1 if skipped else 0,
             latency_ms,
             1,
             given_answer,
@@ -152,6 +164,7 @@ async def record_attempt(
     row = await db.fetch_one("SELECT * FROM sessions WHERE id = ?", (session_id,))
     return {
         "awarded": awarded,
+        "skipped": bool(skipped),
         "streak": new_streak,
         "score": row["score"],
         "total": row["total"],
@@ -169,3 +182,68 @@ async def end_session(db: Database, session_id: int) -> Session:
     if row is None:
         raise ValueError(f"no such session: {session_id}")
     return Session.from_row(row)
+
+
+#: How many options a card offers. Three is enough to make a guess meaningful
+#: without turning the card into a reading exercise.
+CHOICE_COUNT = 3
+
+
+def answer_text(character: Character) -> str:
+    """What the learner is choosing between: romaji for kana, meaning for kanji."""
+    if character.script == "kanji":
+        return character.meaning or character.glyph
+    return character.romaji or character.glyph
+
+
+async def build_choices(db: Database, character: Character, count: int = CHOICE_COUNT) -> list[str]:
+    """Return ``count`` shuffled options, exactly one of which is correct.
+
+    Distractors are drawn from the same script so the choice tests recall of
+    this character rather than the ability to spot the odd one out — offering
+    an English meaning beside two romaji would give the answer away.
+    """
+    correct = answer_text(character)
+    column = "meaning" if character.script == "kanji" else "romaji"
+    wanted = max(0, count - 1)
+
+    # Prefer distractors from the same kana group (or JLPT level for kanji):
+    # offering "hyo" and "bi" against "a" can be solved by elimination, which
+    # tests nothing. Same-group options force actual recall.
+    peer_column = "kana_group" if character.script != "kanji" else "jlpt_level"
+    peer_value = character.kana_group if character.script != "kanji" else character.jlpt_level
+
+    options: list[str] = []
+    if peer_value:
+        rows = await db.fetch_all(
+            f"""
+            SELECT DISTINCT {column} AS option
+            FROM characters
+            WHERE script = ? AND {peer_column} = ?
+              AND {column} IS NOT NULL AND {column} <> '' AND {column} <> ?
+            ORDER BY RANDOM() LIMIT ?
+            """,
+            (character.script, peer_value, correct, wanted),
+        )
+        options = [row["option"] for row in rows]
+
+    # Top up from the wider script when the group is too small to fill the row.
+    if len(options) < wanted:
+        rows = await db.fetch_all(
+            f"""
+            SELECT DISTINCT {column} AS option
+            FROM characters
+            WHERE script = ? AND {column} IS NOT NULL AND {column} <> ''
+              AND {column} <> ?
+            ORDER BY RANDOM() LIMIT ?
+            """,
+            (character.script, correct, wanted * 3),
+        )
+        for row in rows:
+            if len(options) >= wanted:
+                break
+            if row["option"] not in options:
+                options.append(row["option"])
+    options.append(correct)
+    random.shuffle(options)
+    return options

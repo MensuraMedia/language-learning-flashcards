@@ -47,3 +47,9 @@
 | 2026-08-06T23:00:00 | Rebuilt dashboard to the approved mockup: deck cards with rung/glyphs/obi meter/tags |
 | 2026-08-06T23:02:00 | Added 6-tile instrument row with accuracy sparkline, session history table, accuracy-by-set |
 | 2026-08-06T23:05:00 | Tests 187 passing; empty shelves hidden rather than rendered as blank cards |
+| 2026-08-06T23:20:00 | Removed cursor-tilt hover motion — only the flip animation remains |
+| 2026-08-06T23:25:00 | Replaced self-grading Right/Wrong with 3-option multiple choice beside the card |
+| 2026-08-06T23:30:00 | Choices drawn from same kana group / JLPT level so they cannot be solved by elimination |
+| 2026-08-06T23:35:00 | Added skipped state: schema column + migration, -1 score, 1.25x weight in weakness |
+| 2026-08-06T23:40:00 | Fixed .skip class collision with the accessibility skip-link; renamed .btn-skip |
+| 2026-08-06T23:45:00 | Tests 193 passing (+12 for choices and skipping) |

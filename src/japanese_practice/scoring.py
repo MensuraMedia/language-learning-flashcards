@@ -41,6 +41,10 @@ SCHEMES: tuple[str, ...] = ("accuracy", "speed", "streak", "srs")
 #: by ``speed`` when latency was not measured (it equals a 2.5 s answer).
 BASE_AWARD = 10
 
+#: A skip is not neutral. Passing on a card is an admission of not knowing it,
+#: and costing a point stops skipping from being a free way to protect a score.
+SKIP_PENALTY = -1
+
 SPEED_MAX = 20
 SPEED_MIN = 2
 SPEED_MS_PER_POINT = 250
@@ -75,6 +79,7 @@ def score_attempt(
     latency_ms: int | None,
     streak: int,
     reps: int | None = None,
+    skipped: bool = False,
 ) -> int:
     """Points awarded for a single answered card.
 
@@ -97,6 +102,8 @@ def score_attempt(
         ValueError: If ``scheme`` is not one of :data:`SCHEMES`.
     """
     validate_scheme(scheme)
+    if skipped:
+        return SKIP_PENALTY
     if not correct:
         return 0
 

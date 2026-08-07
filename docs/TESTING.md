@@ -2,7 +2,7 @@
 
 How the suite is built, what each layer proves, and why it is shaped this way.
 
-- **Last run:** 2026-08-06 · **181 passed, 0 failed** · 1.21s
+- **Last run:** 2026-08-06 · **193 passed, 0 failed** · 1.49s
 - **Lint:** `ruff` clean · `black` clean (25 files)
 
 ---
@@ -40,9 +40,9 @@ so `async def` tests need no per-test decorator.
 | [`tests/test_scoring.py`](../tests/test_scoring.py) | **35** | 186 | pure functions | Four scoring schemes and SM-2 scheduling are exactly right |
 | [`tests/test_content.py`](../tests/test_content.py) | **58** | 256 | data | No Japanese character teaches something false |
 | [`tests/test_analytics.py`](../tests/test_analytics.py) | **41** | 484 | SQL | Every metric computes correctly, and survives an empty DB |
-| [`tests/test_api.py`](../tests/test_api.py) | **21** | 292 | HTTP | The whole stack works end to end through real requests |
+| [`tests/test_api.py`](../tests/test_api.py) | **33** | 400 | HTTP | The whole stack works end to end, including multiple choice and skip scoring |
 | [`tests/test_audio_library.py`](../tests/test_audio_library.py) | **26** | 213 | assets | No silent, truncated or corrupt clip reaches a learner |
-| **Total** | **181** | **1,535** | | |
+| **Total** | **193** | **1,643** | | |
 
 The distribution is deliberate. **Content has the most tests despite being the
 simplest code**, because it carries the highest consequence — see §4.

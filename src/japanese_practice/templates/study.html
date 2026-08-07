@@ -61,15 +61,17 @@
           </div>
         </div>
       </div>
+
+      <!-- the answer options — one is correct, order is randomised per card -->
+      <div class="choices" id="choices" role="group" aria-label="Choose the reading"></div>
     </div>
 
     <div class="stage-foot">
-      <button class="btn" id="wrong" type="button">Wrong <span class="kbd">F</span></button>
+      <button class="btn btn-skip" id="skip" type="button">Skip <span class="kbd">S</span> <em class="lbl-sm">−1</em></button>
       <button class="btn amber" id="flip" type="button">Flip <span class="kbd">Space</span></button>
-      <button class="btn" id="right" type="button">Right <span class="kbd">J</span></button>
     </div>
     <p class="hint muted">
-      Space flips · J right · F wrong · ← → move · ↑ ↓ volume · P plays ·
+      1 2 3 answers · S skips (−1) · Space flips · ← → move · ↑ ↓ volume · P plays ·
       <button class="linklike" id="help-open" type="button">? shortcuts</button>
     </p>
 
@@ -93,8 +95,8 @@
       <table class="help-table">
         <tbody>
           <tr><td><span class="kbd">Space</span> <span class="kbd">Enter</span></td><td>Flip the card</td></tr>
-          <tr><td><span class="kbd">J</span></td><td>Mark right</td></tr>
-          <tr><td><span class="kbd">F</span></td><td>Mark wrong</td></tr>
+          <tr><td><span class="kbd">1</span> <span class="kbd">2</span> <span class="kbd">3</span></td><td>Choose that answer</td></tr>
+          <tr><td><span class="kbd">S</span></td><td>Skip — scores −1</td></tr>
           <tr><td><span class="kbd">→</span></td><td>Next card (no grade)</td></tr>
           <tr><td><span class="kbd">←</span></td><td>Previous card</td></tr>
           <tr><td><span class="kbd">↑</span></td><td>Volume up</td></tr>

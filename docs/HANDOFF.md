@@ -4,7 +4,7 @@
 It is the single place a new session (human or agent) reads to know where the
 project stands, what is real, what is assumed, and what to do next.
 
-- **Last updated:** 2026-08-06 23:05 UTC-4
+- **Last updated:** 2026-08-06 23:45 UTC-4
 - **Updated by:** session `30934411` (Claude Opus 5)
 - **Project root:** `/home/user/projects/japanese_practice`
 - **Remote:** https://github.com/MensuraMedia/language-learning-flashcards (public)
@@ -43,7 +43,7 @@ works on this project **must**:
 | Audio (ElevenLabs) | ⚠️ Integrated, never called against the live API |
 | Clip library + validation | ✅ `audio_library.py`, manifest + checksums |
 | Keyboard controls | ✅ **All verified with xdotool** |
-| Tests | ✅ **181 passing**, lint + format clean — see [TESTING.md](TESTING.md) |
+| Tests | ✅ **193 passing**, lint + format clean — see [TESTING.md](TESTING.md) |
 | Packaging / distribution | ❌ Not started |
 
 **Chosen design direction:** `mockups/05-tactile-deck.html`, with the analytics
@@ -125,7 +125,13 @@ correctly (Noto Sans CJK JP present system-wide).
    error. This cost real debugging time — the page looked blank while the API was
    returning 200s.
 
-3. **CJK text in `--mono`.** The mockup set kanji readings in `var(--mono)`, a
+3. **Class-name collision with the design system.** A pass control classed
+   `skip` silently inherited `.skip`, the accessibility skip-to-content link
+   (`position:absolute; top:-40px`), and was yanked out of the button row.
+   **Check `theme.css` for an existing rule before naming a new class.** Now
+   `.btn-skip`.
+
+4. **CJK text in `--mono`.** The mockup set kanji readings in `var(--mono)`, a
    stack with no CJK member, which renders tofu. Fixed in `.back-sound`.
    **Rule: `--mono` is for numerals only. All Japanese text uses `--jp`.**
 
@@ -134,7 +140,13 @@ correctly (Noto Sans CJK JP present system-wide).
 ## 5. What works / what does not
 
 ### Works
-- **Test suite: 155 passing in ~1s**, `ruff` and `black` clean
+- **Multiple-choice answering** — three options per card, server-shuffled, drawn
+  from the same kana group / JLPT level so they cannot be solved by elimination.
+  Selection auto-scores; no self-grading buttons remain.
+- **Skip scores −1** and is stored as `attempts.skipped = 1`, which feeds the
+  weakness views (skips weigh 1.25x a wrong guess in `weighted_miss`, since a
+  pass means no recall at all rather than a partial trace).
+- **Test suite: 193 passing in ~1.5s**, `ruff` and `black` clean
 - Full session lifecycle: start → answer → score → end, persisted to SQLite
 - All 13 analytics metrics, computed at query time from `attempts`
 - Per-character miss-rate heatmap, amber-intensity encoded, click-to-drill

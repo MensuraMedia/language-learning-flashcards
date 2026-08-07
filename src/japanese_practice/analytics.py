@@ -51,6 +51,7 @@ async def per_character_miss_rate(db: Database, script: str | None = None) -> li
         SELECT c.id AS character_id, c.glyph, c.script, c.kana_group, c.jlpt_level,
                COUNT(*) AS seen,
                SUM(1 - a.correct) AS missed,
+               SUM(a.skipped) AS skipped,
                ROUND(CAST(SUM(1 - a.correct) AS REAL) / COUNT(*), 4) AS miss_rate,
                MAX(a.answered_at) AS last_seen
         FROM attempts a
@@ -155,8 +156,11 @@ async def weakest_characters(db: Database, limit: int = 12) -> list[dict[str, An
                COUNT(*) AS seen,
                SUM(1 - a.correct) AS missed,
                ROUND(CAST(SUM(1 - a.correct) AS REAL) / COUNT(*), 4) AS miss_rate,
+               SUM(a.skipped) AS skipped,
+               -- A skip weighs more than a wrong guess: guessing wrong still
+               -- shows a partial trace, whereas passing means no recall at all.
                ROUND(SUM(
-                   (1 - a.correct) * 1.0
+                   (1 - a.correct) * (1.0 + 0.25 * a.skipped)
                    / (1.0 + MAX(julianday('now') - julianday(a.answered_at), 0))
                ), 4) AS weighted_miss,
                MAX(a.answered_at) AS last_seen

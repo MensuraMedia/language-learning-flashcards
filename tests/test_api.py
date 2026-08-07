@@ -120,7 +120,14 @@ async def test_full_session_lifecycle(client):
             json={"character_id": cards[0]["id"], "correct": True, "latency_ms": 800},
         )
     ).get_json()
-    assert first == {"awarded": 10, "correct": 1, "score": 10, "streak": 1, "total": 1}
+    assert first == {
+        "awarded": 10,
+        "skipped": False,
+        "correct": 1,
+        "score": 10,
+        "streak": 1,
+        "total": 1,
+    }
 
     second = await (
         await client.post(
@@ -290,3 +297,99 @@ async def test_error_responses_share_one_shape(client):
     ):
         payload = await (await request).get_json()
         assert set(payload) == {"code", "message"}
+
+
+# -- multiple choice -------------------------------------------------------
+
+
+async def test_each_card_carries_three_choices_including_the_answer(client):
+    created = await (
+        await client.post("/api/session", json={"difficulty": "hiragana:gojuon", "limit": 5})
+    ).get_json()
+
+    for card in created["cards"]:
+        assert len(card["choices"]) == 3
+        assert card["answer"] in card["choices"], "the correct option must be offered"
+        assert len(set(card["choices"])) == 3, "options must be distinct"
+
+
+async def test_kana_choices_are_romaji_and_kanji_choices_are_meanings(client):
+    kana = await (
+        await client.post("/api/session", json={"difficulty": "hiragana:gojuon", "limit": 1})
+    ).get_json()
+    assert kana["cards"][0]["answer"] == kana["cards"][0]["romaji"]
+
+    kanji = await (
+        await client.post("/api/session", json={"difficulty": "kanji:N5", "limit": 1})
+    ).get_json()
+    assert kanji["cards"][0]["answer"] == kanji["cards"][0]["meaning"]
+
+
+async def test_choice_order_is_not_fixed(client):
+    """A correct answer always in slot 1 would be trivially guessable."""
+    positions = set()
+    for _ in range(12):
+        created = await (
+            await client.post("/api/session", json={"difficulty": "hiragana:gojuon", "limit": 1})
+        ).get_json()
+        card = created["cards"][0]
+        positions.add(card["choices"].index(card["answer"]))
+    assert len(positions) > 1, f"answer always landed in slot(s) {positions}"
+
+
+# -- skipping --------------------------------------------------------------
+
+
+async def test_skip_costs_a_point_and_breaks_the_streak(client):
+    created = await (
+        await client.post("/api/session", json={"difficulty": "hiragana:gojuon", "limit": 3})
+    ).get_json()
+    sid, cards = created["session_id"], created["cards"]
+
+    await client.post(
+        f"/api/session/{sid}/attempt",
+        json={"character_id": cards[0]["id"], "correct": True},
+    )
+    skipped = await (
+        await client.post(
+            f"/api/session/{sid}/attempt",
+            json={"character_id": cards[1]["id"], "skipped": True, "streak": 1},
+        )
+    ).get_json()
+
+    assert skipped["awarded"] == -1
+    assert skipped["skipped"] is True
+    assert skipped["streak"] == 0
+    assert skipped["score"] == 9  # 10 for the correct card, minus 1
+
+
+async def test_skip_counts_against_the_character_in_the_weakness_view(client):
+    created = await (
+        await client.post("/api/session", json={"difficulty": "hiragana:gojuon", "limit": 2})
+    ).get_json()
+    sid, cards = created["session_id"], created["cards"]
+
+    await client.post(
+        f"/api/session/{sid}/attempt",
+        json={"character_id": cards[0]["id"], "skipped": True},
+    )
+
+    summary = await (await client.get("/api/summary")).get_json()
+    row = summary["per_character_miss_rate"][0]
+    assert row["glyph"] == cards[0]["glyph"]
+    assert row["miss_rate"] == 1.0
+    assert row["skipped"] == 1
+    assert summary["weakest_characters"][0]["glyph"] == cards[0]["glyph"]
+
+
+async def test_a_skip_is_never_counted_as_correct(client):
+    created = await (
+        await client.post("/api/session", json={"difficulty": "hiragana:gojuon", "limit": 2})
+    ).get_json()
+    sid = created["session_id"]
+    await client.post(
+        f"/api/session/{sid}/attempt",
+        json={"character_id": created["cards"][0]["id"], "correct": True, "skipped": True},
+    )
+    final = await (await client.post(f"/api/session/{sid}/end")).get_json()
+    assert final["correct"] == 0, "skipped must override a correct flag"

@@ -37,9 +37,11 @@ def _error(code: str, message: str, status: int) -> tuple[Response, int]:
     return jsonify({"code": code, "message": message}), status
 
 
-def _card(character: Any) -> dict[str, Any]:
+def _card(character: Any, choices: list[str] | None = None) -> dict[str, Any]:
     """A character as the study view needs it — front and back separated."""
     return {
+        "choices": choices or [],
+        "answer": session_engine.answer_text(character),
         "id": character.id,
         "glyph": character.glyph,
         "script": character.script,
@@ -96,13 +98,17 @@ async def create_session() -> Any:
     if not cards:
         return _error("empty_deck", f"no characters for {difficulty!r}", 404)
 
+    payload = []
+    for card in cards:
+        payload.append(_card(card, await session_engine.build_choices(db, card)))
+
     return jsonify(
         {
             "session_id": record.id,
             "challenge": challenge,
             "scoring": scoring,
             "difficulty": difficulty,
-            "cards": [_card(c) for c in cards],
+            "cards": payload,
         }
     )
 
@@ -122,6 +128,7 @@ async def record_attempt(session_id: int) -> Any:
             latency_ms=body.get("latency_ms"),
             given_answer=body.get("given_answer"),
             streak=int(body.get("streak", 0)),
+            skipped=bool(body.get("skipped", False)),
         )
     except ValueError as exc:
         return _error("invalid_request", str(exc), 400)

@@ -140,7 +140,23 @@ class Database:
         async with self._write_lock:
             await self.connection.executescript(ddl)
             await self.connection.commit()
+        await self._migrate()
         return self
+
+    async def _migrate(self) -> None:
+        """Additive migrations for databases created by an earlier version.
+
+        ``CREATE TABLE IF NOT EXISTS`` silently leaves an existing table alone,
+        so a new column never appears on an established install without this.
+        """
+        async with self.connection.execute("PRAGMA table_info(attempts)") as cursor:
+            columns = {row[1] for row in await cursor.fetchall()}
+        if "skipped" not in columns:
+            async with self._write_lock:
+                await self.connection.execute(
+                    "ALTER TABLE attempts ADD COLUMN skipped INTEGER NOT NULL DEFAULT 0"
+                )
+                await self.connection.commit()
 
     async def close(self) -> None:
         """Close the connection if it is open."""
