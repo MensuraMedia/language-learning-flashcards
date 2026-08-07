@@ -99,3 +99,7 @@
 | 2026-08-07T18:50:00 | Removed 'Response latency' and 'Confused with' dashboard panels |
 | 2026-08-07T19:00:00 | Added games.py + /games — Match Up, Pelmanism, Confusion Drill |
 | 2026-08-07T19:05:00 | Boards seed from weakest characters; mis-pairs feed confusion data, not the drill queue |
+| 2026-08-07T19:20:00 | Memory tiles: unmistakable selection state (amber border, fill, lift, glow, corner dot) |
+| 2026-08-07T19:22:00 | Boards laid out as a centred square block, columns in groups of three |
+| 2026-08-07T19:30:00 | FIX: restored the /games route, lost to a `git checkout` used to undo a temp patch |
+| 2026-08-07T19:32:00 | Added a route-reachability test so a lost view cannot ship silently again |

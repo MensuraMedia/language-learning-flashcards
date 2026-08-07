@@ -87,10 +87,30 @@ async function deal() {
   }
 }
 
+// Columns come in groups of three, and the board stays as square as that
+// allows. A long horizontal strip is the worst possible shape for a memory
+// game: position is the thing being remembered.
+function columnsFor(tileCount) {
+  // Try each multiple of three and keep the one whose grid is closest to
+  // square. Ties go wider, which suits a landscape window.
+  let best = 3;
+  let bestDiff = Infinity;
+  for (let cols = 3; cols <= 12; cols += 3) {
+    const rows = Math.ceil(tileCount / cols);
+    const diff = Math.abs(rows - cols);
+    if (diff <= bestDiff) {
+      bestDiff = diff;
+      best = cols;
+    }
+  }
+  return best;
+}
+
 function renderBoard(faceDown) {
   const host = $("board");
   host.innerHTML = "";
   host.classList.toggle("is-facedown", Boolean(faceDown));
+  host.style.setProperty("--board-cols", String(columnsFor(state.tiles.length)));
 
   state.tiles.forEach((tile, index) => {
     const node = el("button", "tile" + (faceDown ? " is-hidden" : ""));

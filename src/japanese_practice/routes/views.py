@@ -13,6 +13,12 @@ async def dashboard() -> str:
     return await render_template("dashboard.html")
 
 
+@views_bp.get("/games")
+async def games_view() -> str:
+    """Memory-training boards: Match Up, Pelmanism, Confusion Drill."""
+    return await render_template("games.html")
+
+
 @views_bp.get("/study")
 async def study() -> str:
     """The flash-card view. Session parameters arrive as query args."""

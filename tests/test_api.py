@@ -490,3 +490,17 @@ async def test_a_new_learner_still_gets_a_board(client):
 async def test_mispair_needs_a_character(client):
     response = await client.post("/api/game/mispair", json={})
     assert response.status_code == 400
+
+
+async def test_every_view_route_is_reachable(client):
+    """A view can be lost without any test noticing — /games shipped once with
+    its template, JS and API present but no route at all."""
+    for path in ("/", "/study", "/games"):
+        response = await client.get(path)
+        assert response.status_code == 200, f"{path} returned {response.status_code}"
+
+
+async def test_games_view_links_back_to_the_dashboard(client):
+    """Every sub-view must offer a way home."""
+    body = await (await client.get("/games")).get_data(as_text=True)
+    assert 'href="/"' in body, "no route back to the dashboard"

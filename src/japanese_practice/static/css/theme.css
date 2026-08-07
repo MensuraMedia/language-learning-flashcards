@@ -2656,7 +2656,17 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
 .seg-btn.is-on { background: var(--amber-soft); border-color: var(--amber-line); color: var(--amber); }
 
 /* the board */
-.board { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+/* A memory board must be scanned as a shape, not read as a line. Columns are
+   set in groups of three by the client (see games.js), and the board is centred
+   at its natural width rather than stretched across the panel — spreading 12
+   tiles into one long row destroys the spatial memory the game is training. */
+.board {
+  display: grid;
+  grid-template-columns: repeat(var(--board-cols, 3), 108px);
+  gap: 12px;
+  justify-content: center;
+  margin: 0 auto;
+}
 
 .tile {
   position: relative;
@@ -2698,7 +2708,31 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
 .tile.is-hidden .tile-face { opacity: 0; }
 .tile .tile-face { transition: opacity .18s var(--ease); }
 
-.tile.is-open { border-color: var(--line-3); }
+/* The first pick had no visible response beyond a near-invisible grey border,
+   so the board felt unresponsive until the second click resolved the pair. */
+.tile.is-open {
+  border-color: var(--amber);
+  background: linear-gradient(158deg, #2a2415 0%, #1d1a10 100%);
+  transform: translateY(-3px);
+  box-shadow:
+    0 0 0 1px var(--amber-line),
+    0 0 18px -4px rgba(240, 180, 41, .45),
+    0 14px 22px -14px #000;
+}
+.tile.is-open .tile-glyph,
+.tile.is-open .tile-reading { color: var(--amber); }
+/* a corner tick, so the state reads even at a glance across the board */
+.tile.is-open::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 8px 1px rgba(240, 180, 41, .7);
+}
 .tile.is-matched {
   border-color: rgba(74, 222, 128, .5);
   background: linear-gradient(158deg, #16281c 0%, #12211a 100%);

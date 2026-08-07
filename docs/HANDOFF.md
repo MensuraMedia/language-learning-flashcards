@@ -4,7 +4,7 @@
 It is the single place a new session (human or agent) reads to know where the
 project stands, what is real, what is assumed, and what to do next.
 
-- **Last updated:** 2026-08-07 19:05 UTC-4
+- **Last updated:** 2026-08-07 19:30 UTC-4
 - **Updated by:** session `30934411` (Claude Opus 5)
 - **Project root:** `/home/user/projects/japanese_practice`
 - **Remote:** https://github.com/MensuraMedia/language-learning-flashcards (public)
@@ -200,6 +200,7 @@ correctly (Noto Sans CJK JP present system-wide).
 | **`gh` CLI is not installed** | `~/.gitconfig` points its credential helper at a missing `/usr/bin/gh`, so plain `git push` fails |
 | **Git auth works via header** | See below. Token lives in `~/.config/gh/hosts.yml` |
 | **`pkill -f japanese_practice` kills the calling shell** | The pattern matches the shell's own command line. Use a narrower pattern |
+| **Never `git checkout <file>` to undo a temporary patch** | That file may also hold uncommitted work. It cost the `/games` route: the route was added, temp-patched for a screenshot, then `git checkout`-ed to undo the patch — which silently deleted the route too. Copy the file aside first, or edit the patch back out |
 | **Firefox headless screenshots are unreliable here** | It restores previous session tabs, times out, and renders app pages BLANK even when the app is correct. It cost significant debugging time chasing a non-bug. **Always verify UI in the real pywebview window** + ImageMagick `import -window <id>` |
 | **No `xdotool`, no `xvfb-run`** | `wmctrl` and `import` are available |
 
