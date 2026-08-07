@@ -124,7 +124,11 @@ Ordered by learning value per unit of work, not by the order they were named.
 | A4 | **Per-character reading review.** Kanji clips speak the primary kun'yomi. Some characters may be better served by on'yomi | M | A native speaker signs off on the kanji clip set |
 | A6 | **🔴 Phonetic accuracy is unverified.** ElevenLabs claims the multilingual model handles Japanese pitch accent; the user reports it does not fully measure up. Nothing in this project has confirmed pronunciation by ear | M | A Japanese speaker listens to a sample and either signs off or lists the failures. See §6a |
 | A7 | **Reference comparison harness.** Build a side-by-side player: our clip against a verified reference, per character, with a pass/fail toggle that writes back to the manifest | M | A reviewer can audit 104 kana in one sitting and the result is recorded |
-| A8 | **Alternative sources if ElevenLabs is rejected.** Forvo (native recordings, per-word licensing), a hired native VO session, or a Japanese-native TTS (VOICEVOX is open-source and Japanese-first) | L | A decision recorded in `decisions.md` with the reason |
+| A8 | ~~Alternative sources~~ — **evaluated 2026-08-07, see [VOICEVOX-EVALUATION.md](VOICEVOX-EVALUATION.md)**. Verdict: adopt VOICEVOX as primary, keep ElevenLabs as fallback | — | Done |
+| A9 | **Integrate VOICEVOX as a provider.** Add `tts_voicevox.py`; slot it into `get_audio()` above ElevenLabs; `voicelab --provider voicevox`. Engine discovery must be optional and silent | M | `voicelab build --provider voicevox` produces a validated library; with no engine running the app falls through without error |
+| A10 | **🔴 Decide the clip-shipping model.** VOICEVOX terms are *silent* on redistributing generated audio, and this repo is public. Either generate on first run (recommended — 4.7 min locally, no key, no quota) or obtain written clarification | S | A decision recorded in `decisions.md` |
+| A11 | **VOICEVOX attribution.** Credit is mandatory, e.g. `VOICEVOX:九州そら`, somewhere a user naturally finds it | S | Credit visible on an about/credits surface |
+| A12 | **Pitch-accent teaching aid.** VOICEVOX returns per-mora pitch; the card could *show* the accent contour. No other provider makes this possible | M | A card displays the pitch pattern for its reading |
 | A5 | **Pronunciation dictionary.** For any character the model reads wrongly, use ElevenLabs' `pronunciation_dictionary_locators` rather than an inline hack | M | Known-bad readings corrected without changing `speech_text_for()` |
 
 ### 6a. On verifying pronunciation

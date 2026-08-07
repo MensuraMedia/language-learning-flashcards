@@ -5,6 +5,12 @@ configured, and what makes a voice suitable for language learning.
 
 ---
 
+> **Provider direction (2026-08-07):** VOICEVOX has been evaluated and is
+> recommended as the primary source — it is Japanese-native, free, local, and
+> exposes editable per-mora pitch accent. See
+> [VOICEVOX-EVALUATION.md](VOICEVOX-EVALUATION.md). The chain below describes
+> what ships today.
+
 ## 1. Resolution chain
 
 `audio.get_audio(character, gender=...)` resolves in this order and **never

@@ -78,3 +78,6 @@
 | 2026-08-07T05:00:00 | Added docs/ROADMAP.md — 50 outstanding items with QA acceptance criteria, grouped and sequenced |
 | 2026-08-07T05:05:00 | Acoustic QA over all 630 clips via ffprobe; found and re-rendered a truncated hiragana/female/へ (0.24s) |
 | 2026-08-07T05:08:00 | Added cross-voice consistency check — an absolute duration floor cannot catch a clip too short for its character |
+| 2026-08-07T05:20:00 | Evaluated VOICEVOX: ran engine 0.25.2 locally, verified pitch accent on minimal pairs |
+| 2026-08-07T05:25:00 | Added docs/VOICEVOX-EVALUATION.md — verdict: adopt as primary, ElevenLabs as fallback |
+| 2026-08-07T05:28:00 | Roadmap A8 closed; A9-A12 added (integration, shipping model, attribution, pitch-accent aid) |
