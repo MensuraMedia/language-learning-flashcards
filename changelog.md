@@ -73,3 +73,5 @@
 | 2026-08-07T04:30:00 | Built 630 clips (315 characters x 2 voices) — all validated, zero rejected, no drift |
 | 2026-08-07T04:35:00 | /api/audio gained ?voice=female|male; bundled lookup is now per-voice |
 | 2026-08-07T04:40:00 | Added docs/VOICE-LAB.md — MECE decomposition of the whole audio pipeline |
+| 2026-08-07T04:50:00 | Added voice toggle to study view (V key / button), persisted; /api/audio?voice= honoured |
+| 2026-08-07T04:52:00 | Verified live: window served the 15,926-byte male clip after toggling — bundled, not synthesised |

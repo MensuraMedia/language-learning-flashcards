@@ -19,6 +19,7 @@ const el = (tag, cls, html) => {
 const VOLUME_STEP = 0.1;
 const VOLUME_KEY = "jp.volume";
 const MUTED_KEY = "jp.muted";
+const VOICE_KEY = "jp.voice";
 
 const state = {
   sessionId: null,
@@ -33,6 +34,7 @@ const state = {
   locked: false,
   volume: readVolume(),
   muted: readMuted(),
+  voice: storageGet("jp.voice") === "male" ? "male" : "female",
   audio: null,
   finished: false,
 };
@@ -272,6 +274,15 @@ function changeVolume(delta) {
   showVolume();
 }
 
+function toggleVoice() {
+  state.voice = state.voice === "female" ? "male" : "female";
+  storageSet(VOICE_KEY, state.voice);
+  const label = $("voice-label");
+  if (label) label.textContent = state.voice;
+  toast(`Voice: ${state.voice}`);
+  playAudio();
+}
+
 function toggleMute() {
   state.muted = !state.muted;
   storageSet(MUTED_KEY, state.muted ? "1" : "0");
@@ -284,7 +295,7 @@ async function playAudio() {
   if (!card) return;
   $("speaker").classList.add("speaker-on");
   try {
-    const audio = new Audio(`/api/audio/${card.id}`);
+    const audio = new Audio(`/api/audio/${card.id}?voice=${state.voice}`);
     audio.volume = effectiveVolume();
     state.audio = audio;
     audio.onended = () => {
@@ -333,6 +344,7 @@ const KEYMAP = {
   ArrowUp: () => changeVolume(VOLUME_STEP),
   ArrowDown: () => changeVolume(-VOLUME_STEP),
   KeyM: toggleMute,
+  KeyV: toggleVoice,
   KeyP: playAudio,
   KeyR: playAudio,
   Escape: finish,
@@ -392,6 +404,7 @@ $("card").addEventListener("click", flip);
 $("flip").addEventListener("click", flip);
 on("skip", "click", skipCard);
 on("back", "click", goPrevious);
+on("voice-toggle", "click", toggleVoice);
 $("speaker").addEventListener("click", (event) => {
   event.stopPropagation();
   playAudio();
