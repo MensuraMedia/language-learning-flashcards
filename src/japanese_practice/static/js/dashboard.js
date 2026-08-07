@@ -25,59 +25,176 @@ function node(name, attrs) {
   return n;
 }
 
-// ── deck shelf ───────────────────────────────────────────────────────────────
-function renderShelf(segments) {
-  const shelf = $("shelf");
-  shelf.innerHTML = "";
-  segments.forEach((seg) => {
-    const deck = el("article", "deck");
-    // .deck3d defaults to a viewport-relative width; inside the fixed-width
-    // .deck slot it must fill the slot instead, or it overflows the shelf.
-    deck.innerHTML = `
-      <div class="deck3d" style="width:100%;aspect-ratio:auto;height:150px">
-        <div class="deck-face">
-          <div class="deck-id">${seg.script}</div>
-          <div class="deck-jp">${seg.script === "kanji" ? "漢字" : seg.script === "katakana" ? "カタ" : "かな"}</div>
-        </div>
-      </div>
-      <div class="deck-top">
-        <div class="deck-name">${seg.label}</div>
-        <div class="deck-count">${seg.count} cards</div>
-      </div>
-      <div class="obi"><div class="obi-row"><span>start</span><b>→</b></div></div>`;
-    deck.tabIndex = 0;
-    deck.setAttribute("role", "button");
-    const go = () => {
-      location.href = `/study?difficulty=${encodeURIComponent(seg.key)}&challenge=recognition&scoring=accuracy`;
-    };
-    deck.addEventListener("click", go);
-    deck.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.code === "Space") {
-        e.preventDefault();
-        go();
-      }
-    });
-    shelf.appendChild(deck);
-  });
-  $("deck-note").textContent = `${segments.length} segments available`;
+// ── deck shelves ────────────────────────────────────────────────────────────
+// A deck is a physical object: fanned sheets, a rung badge, a glyph preview,
+// and an obi band that doubles as its mastery meter. Everything on it is real
+// data — the preview glyphs are the deck's first three characters, and the
+// meter is the same mastery rule the analytics use.
+
+function deckNode(deck) {
+  const pct = deck.count ? Math.round((deck.mastered / deck.count) * 100) : 0;
+  const node = el("button", "deck");
+  node.type = "button";
+  node.setAttribute(
+    "aria-label",
+    `${deck.label} — ${deck.challenge}, ${deck.scoring} scoring, ${deck.count} cards, ${pct}% mastered`
+  );
+  node.innerHTML = `
+    <span class="sheet s3"></span>
+    <span class="sheet s2"></span>
+    <span class="deck-face">
+      <span class="deck-top">
+        <span class="rung">${deck.rung}</span>
+        <span class="deck-count">${deck.count}</span>
+      </span>
+      <span class="deck-glyphs jp">${deck.glyphs.map((g) => `<span>${g}</span>`).join("")}</span>
+      <span class="deck-id">
+        <span class="deck-name" style="display:block">${deck.label}</span>
+        <span class="deck-jp jp" style="display:block">${deck.jp}</span>
+      </span>
+      <span class="obi" style="display:block">
+        <span class="obi-row" style="display:flex"><span class="lbl">Mastered</span><b>${pct}%</b></span>
+        <span class="track" style="display:block"><span class="fill" style="display:block;width:${pct}%"></span></span>
+        <span class="obi-sub" style="display:flex">
+          <span>${deck.mastered} / ${deck.count}</span><span>acc ${pct2(deck.accuracy)}</span>
+        </span>
+      </span>
+      <span class="deck-tags" style="display:flex">
+        <span class="tag">${deck.challenge}</span>
+        <span class="tag sc">${deck.scoring}</span>
+      </span>
+    </span>`;
+  const go = () => {
+    location.href =
+      `/study?difficulty=${encodeURIComponent(deck.key)}` +
+      `&challenge=${deck.challenge}&scoring=${deck.scoring}`;
+  };
+  node.addEventListener("click", go);
+  return node;
 }
 
-// ── headline tiles ───────────────────────────────────────────────────────────
-function renderTiles(t, fve) {
+function renderShelves(decks) {
+  for (const shelf of ["kana", "jlpt", "vol"]) {
+    const host = $(`shelf-${shelf}`);
+    if (!host) continue;
+    host.innerHTML = "";
+    const mine = decks.filter((d) => d.shelf === shelf);
+    mine.forEach((d) => host.appendChild(deckNode(d)));
+    // Hide a shelf with nothing on it rather than leaving an empty rail.
+    if (!mine.length) {
+      host.hidden = true;
+      const heading = host.previousElementSibling;
+      if (heading && heading.classList.contains("sec")) heading.hidden = true;
+    }
+  }
+}
+
+// ── headline instrument row ─────────────────────────────────────────────────
+
+const pct2 = (v) => `${Math.round((v || 0) * 100)}%`;
+
+function renderStats(totals, fve, trend, decks) {
+  const inPlay = decks.filter((d) => d.mastered > 0).length;
+  const avgSeconds = (totals.avg_latency_ms || 0) / 1000;
+  // Six tiles, matching the approved design's instrument row.
   const tiles = [
-    ["Sessions", t.sessions ?? 0, "runs recorded"],
-    ["Attempts", t.attempts ?? 0, "cards answered"],
-    ["Accuracy", pct(t.accuracy), "all time"],
-    ["Best streak", t.best_streak ?? 0, "consecutive"],
-    ["Score", t.score ?? 0, "cumulative"],
-    ["First-attempt", pct(fve.first_attempt_accuracy), `gap ${pct(fve.gap)}`],
+    { l: "Sessions run", v: totals.sessions ?? 0, s: `score ${totals.score ?? 0}` },
+    { l: "Cards reviewed", v: totals.attempts ?? 0, s: "all time" },
+    { l: "Overall accuracy", v: pct2(totals.accuracy), s: `first-attempt ${pct2(fve.first_attempt_accuracy)}` },
+    { l: "Best streak", v: totals.best_streak ?? 0, u: "consecutive", s: "personal best" },
+    { l: "Avg response", v: avgSeconds ? avgSeconds.toFixed(1) : "—", u: avgSeconds ? "s" : "", s: "per card" },
+    { l: "Decks in play", v: `${inPlay}`, s: `${decks.length} available` },
   ];
-  $("tiles").innerHTML = tiles
+  const host = $("stats");
+  host.innerHTML = "";
+  tiles.forEach((t) => {
+    const n = el("div", "stat");
+    n.innerHTML =
+      `<div class="lbl">${t.l}</div>` +
+      `<div class="v">${t.v}${t.u ? `<small>${t.u}</small>` : ""}</div>` +
+      `<div class="sub"><span>${t.s}</span></div>`;
+    host.appendChild(n);
+  });
+
+  // Sparkline of the accuracy trend, dropped into the accuracy tile — the
+  // number says where you are, the line says which way you are going.
+  if (trend.length > 1) {
+    const sub = host.children[2].querySelector(".sub");
+    const s = svg(68, 18);
+    s.style.width = "68px";
+    s.style.height = "18px";
+    s.style.marginLeft = "auto";
+    const xs = (i) => (i * 66) / (trend.length - 1) + 1;
+    const ys = (v) => 16.5 - v * 15;
+    s.appendChild(
+      node("path", {
+        d: trend.map((r, i) => `${i ? "L" : "M"}${xs(i)},${ys(r.accuracy)}`).join(" "),
+        fill: "none",
+        stroke: "#f0b429",
+        "stroke-width": 1.4,
+        "stroke-linejoin": "round",
+        "stroke-linecap": "round",
+      })
+    );
+    sub.appendChild(s);
+  }
+}
+
+// ── session history ─────────────────────────────────────────────────────────
+
+function renderHistory(rows) {
+  const table = $("history");
+  if (!rows.length) {
+    table.innerHTML = `<tbody><tr><td class="muted">No sessions recorded yet.</td></tr></tbody>`;
+    return;
+  }
+  const head =
+    "<thead><tr>" +
+    ["Date", "Deck", "Challenge", "Scoring", "Cards", "Accuracy", "Avg", "Streak", "Score"]
+      .map((h) => `<td class="lbl-sm">${h}</td>`)
+      .join("") +
+    "</tr></thead>";
+  const body = rows
     .map(
-      ([k, v, d]) =>
-        `<div class="tile"><span class="lbl-sm">${k}</span><b class="num">${v}</b><span class="d">${d}</span></div>`
+      (r) =>
+        "<tr>" +
+        `<td class="num">${r.started_at.slice(0, 10)}</td>` +
+        `<td>${r.difficulty}</td>` +
+        `<td><span class="tag">${r.challenge}</span></td>` +
+        `<td><span class="tag sc">${r.scoring}</span></td>` +
+        `<td class="num">${r.total}</td>` +
+        `<td class="num">${pct2(r.accuracy)}</td>` +
+        `<td class="num">${r.avg_latency_ms ? (r.avg_latency_ms / 1000).toFixed(1) + "s" : "—"}</td>` +
+        `<td class="num">${r.max_streak}</td>` +
+        `<td class="num">${r.score}</td>` +
+        "</tr>"
     )
     .join("");
+  table.innerHTML = head + `<tbody>${body}</tbody>`;
+  $("history-note").textContent = `${rows.length} most recent`;
+}
+
+// ── accuracy by set ─────────────────────────────────────────────────────────
+
+function renderBySet(decks) {
+  const box = $("by-set");
+  box.innerHTML = "";
+  const played = decks.filter((d) => d.mastered > 0 || d.accuracy > 0);
+  if (!played.length) {
+    box.appendChild(el("p", "muted", "No deck has been studied yet."));
+    return;
+  }
+  played.forEach((d) => {
+    box.appendChild(
+      el(
+        "div",
+        "bar-row",
+        `<span class="bar-name">${d.label} <em>${d.count}</em></span>
+         <span class="bar-t"><i class="bar-f" style="width:${(d.accuracy * 100).toFixed(0)}%"></i></span>
+         <b class="bar-val">${pct2(d.accuracy)}</b>`
+      )
+    );
+  });
 }
 
 // ── per-character miss-rate heatmap (the headline panel) ─────────────────────
@@ -288,15 +405,16 @@ function renderCalendar(rows) {
 
 // ── boot ─────────────────────────────────────────────────────────────────────
 async function main() {
-  const [summary, segs] = await Promise.all([
-    fetch("/api/summary").then((r) => r.json()),
-    fetch("/api/segments").then((r) => r.json()),
-  ]);
+  const summary = await fetch("/api/summary").then((r) => r.json());
+  const decks = summary.decks || [];
+  const trend = summary.accuracy_by_session || [];
+  const totals = summary.totals || {};
 
-  renderShelf(segs.segments || []);
-  renderTiles(summary.totals || {}, summary.first_vs_eventual || {});
+  renderShelves(decks);
+  renderStats(totals, summary.first_vs_eventual || {}, trend, decks);
   renderHeatmap(summary.per_character_miss_rate || []);
-  renderTrend(summary.accuracy_by_session || []);
+  renderTrend(trend);
+  renderBySet(decks);
   renderRetention(summary.retention_curve || []);
   renderLatency(summary.latency_distribution || []);
   renderTod(summary.time_of_day || []);
@@ -305,8 +423,15 @@ async function main() {
   renderLeeches(summary.leeches || []);
   renderMastery(summary.mastery_by_group || []);
   renderCalendar(summary.streak_calendar || []);
+  renderHistory(summary.session_history || []);
 
-  if (!(summary.totals || {}).attempts) $("empty").hidden = false;
+  $("tb-streak").textContent = totals.best_streak ?? 0;
+  $("tb-sessions").textContent = totals.sessions ?? 0;
+  const latest = (summary.session_history || [])[0];
+  $("tb-last").textContent = latest ? `last run ${latest.started_at.slice(0, 10)}` : "no runs yet";
+  $("trend-note").textContent = trend.length ? `last ${trend.length} sessions` : "";
+
+  if (!totals.attempts) $("empty").hidden = false;
 }
 
 main().catch((err) => {

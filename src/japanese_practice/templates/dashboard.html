@@ -2,24 +2,33 @@
 {% block title %}Dashboard — Japanese Practice{% endblock %}
 
 {% block topbar %}
-  <span class="lbl-sm">Local · offline</span>
+  <span class="stat"><span class="lbl-sm">streak</span> <b class="num" id="tb-streak">—</b></span>
+  <span class="stat"><span class="lbl-sm">sessions</span> <b class="num" id="tb-sessions">—</b></span>
+  <span class="lbl-sm" id="tb-last">—</span>
 {% endblock %}
 
 {% block content %}
 <main class="view on" id="dashboard">
 
-  <!-- headline counters -->
-  <section class="tiles" id="tiles"></section>
+  <!-- headline instrument row -->
+  <section class="stats" id="stats"></section>
 
-  <!-- deck shelf: the tactile-deck metaphor, and the entry point to study -->
-  <div class="sec"><span class="lbl">Decks</span><span class="lbl-sm" id="deck-note"></span></div>
-  <div class="shelf-scroll" id="shelf"></div>
+  <!-- ── shelves: every difficulty key as a physical deck ─────────────── -->
+  <section class="sec"><span class="lbl">Kana Shelf</span>
+    <span class="lbl-sm">gojuon → dakuon → han-dakuon → yoon → 104 mixed</span></section>
+  <div class="shelf-scroll" id="shelf-kana"></div>
 
-  <!-- headline weakness view -->
-  <div class="sec">
-    <span class="lbl">Per-character miss rate</span>
-    <span class="lbl-sm">click a character to drill it</span>
-  </div>
+  <section class="sec"><span class="lbl">Kanji Shelf — Proficiency</span>
+    <span class="lbl-sm">JLPT N5 → N1</span></section>
+  <div class="shelf-scroll" id="shelf-jlpt"></div>
+
+  <section class="sec" id="sec-vol"><span class="lbl">Kanji Shelf — Volume</span>
+    <span class="lbl-sm">Top 200 → Top 500</span></section>
+  <div class="shelf-scroll" id="shelf-vol"></div>
+
+  <!-- ── the diagnostic surface ───────────────────────────────────────── -->
+  <section class="sec"><span class="lbl">Per-character miss rate</span>
+    <span class="lbl-sm">click a character to drill it</span></section>
   <section class="panel" style="padding:14px">
     <div class="heatmap" id="heatmap"></div>
     <div class="hm-legend">
@@ -29,20 +38,18 @@
     </div>
   </section>
 
-  <div class="sec" style="margin-top:22px"><span class="lbl">Performance</span></div>
+  <section class="sec" style="margin-top:22px"><span class="lbl">Performance</span></section>
 
   <div class="grid">
     <section class="panel span-2">
-      <div class="panel-h"><span class="lbl">Accuracy by session</span></div>
+      <div class="panel-h"><span class="lbl">Accuracy per session</span>
+        <span class="lbl-sm" id="trend-note"></span></div>
       <div class="chart-wrap" id="trend" style="padding:12px"></div>
     </section>
 
     <section class="panel">
-      <div class="panel-h">
-        <span class="lbl">Weakest characters</span>
-        <button class="btn go" id="drill-weak" type="button">Drill all →</button>
-      </div>
-      <div class="weak-grid" id="weak" style="padding:12px"></div>
+      <div class="panel-h"><span class="lbl">Accuracy by set</span></div>
+      <div class="bars" id="by-set" style="padding:14px"></div>
     </section>
 
     <section class="panel">
@@ -80,6 +87,25 @@
       <div class="cal" id="calendar" style="padding:14px"></div>
     </section>
   </div>
+
+  <!-- ── session history ──────────────────────────────────────────────── -->
+  <section class="sec" style="margin-top:22px"><span class="lbl">Session history</span>
+    <span class="lbl-sm" id="history-note"></span></section>
+  <section class="panel">
+    <div class="tbl-scroll">
+      <table class="help-table" id="history"></table>
+    </div>
+  </section>
+
+  <!-- ── the drill queue ──────────────────────────────────────────────── -->
+  <section class="sec" style="margin-top:22px">
+    <span class="lbl">Cards falling out of the deck</span>
+    <span class="lbl-sm">lowest retention — click to drill</span>
+    <button class="btn go" id="drill-weak" type="button">Drill all →</button>
+  </section>
+  <section class="panel" style="padding:14px">
+    <div class="weak-grid" id="weak"></div>
+  </section>
 
   <div class="empty" id="empty" hidden>
     <p class="lbl">No study history yet</p>

@@ -4,7 +4,7 @@
 It is the single place a new session (human or agent) reads to know where the
 project stands, what is real, what is assumed, and what to do next.
 
-- **Last updated:** 2026-08-06 22:35 UTC-4
+- **Last updated:** 2026-08-06 23:05 UTC-4
 - **Updated by:** session `30934411` (Claude Opus 5)
 - **Project root:** `/home/user/projects/japanese_practice`
 - **Remote:** https://github.com/MensuraMedia/language-learning-flashcards (public)
@@ -38,7 +38,7 @@ works on this project **must**:
 | Application skeleton | ✅ Runs end to end |
 | Analytics engine | ✅ All 13 metrics compute from real data |
 | Desktop window (pywebview) | ✅ Opens and renders |
-| UI layout polish | ⚠️ Functional, not finished |
+| UI layout polish | ✅ Dashboard rebuilt to the approved mockup (deck shelves, instrument row, history) |
 | Audio (local TTS) | ✅ **Working end to end.** espeak-ng + `ja` voice; API returns audible WAV (peaks 0.385–0.786); renders cached |
 | Audio (ElevenLabs) | ⚠️ Integrated, never called against the live API |
 | Clip library + validation | ✅ `audio_library.py`, manifest + checksums |
@@ -166,8 +166,11 @@ correctly (Noto Sans CJK JP present system-wide).
   metric itself is correct and is now proven by
   `test_first_vs_eventual_separates_recall_from_recognition`, which asserts
   first 0.5 / eventual 0.75 / gap 0.25. Real usage will populate it.
-- **Kanji beyond N5 is not seeded.** `content/kanji_n5.py` only. N4–N1 and Joyo
-  difficulty keys exist in the spec but return empty decks.
+- **Kanji beyond N5 is not seeded.** `content/kanji_n5.py` only. The dashboard
+  shelf code fully supports N4–N1 and the Top 200/500 volume tiers — `DECK_META`
+  defines all of them — but with no characters seeded those shelves are hidden
+  rather than rendered as empty cards. This is the single largest visible gap
+  against the mockup, and it is a **content** gap, not a UI one.
 - **`.claude/rules/` contains a duplicate** — `memory-rules.md` and
   `universal-memory-rules.md` are byte-identical. Kept both because the standards
   forbid removing universal rules; worth a decision.

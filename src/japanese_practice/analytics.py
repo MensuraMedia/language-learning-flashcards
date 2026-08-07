@@ -327,6 +327,11 @@ async def totals(db: Database) -> dict[str, Any]:
     row = dict(row or {})
     acc = await db.fetch_value("SELECT ROUND(AVG(CAST(correct AS REAL)), 4) FROM attempts")
     row["accuracy"] = acc or 0.0
+    row["avg_latency_ms"] = (
+        await db.fetch_value(
+            "SELECT ROUND(AVG(latency_ms)) FROM attempts WHERE latency_ms IS NOT NULL"
+        )
+    ) or 0
     return row
 
 
@@ -346,4 +351,229 @@ async def dashboard_summary(db: Database) -> dict[str, Any]:
         "leeches": await leeches(db),
         "first_vs_eventual": await first_vs_eventual(db),
         "progress_velocity": await progress_velocity(db),
+        "decks": await deck_shelves(db),
+        "shelves": [{"id": i, "title": t, "sub": sub} for i, t, sub in SHELVES],
+        "session_history": await session_history(db),
     }
+
+
+# ── deck shelves ─────────────────────────────────────────────────────────────
+#
+# The dashboard presents difficulty keys as physical decks on shelves, the way
+# the approved design does: a rung badge, a glyph preview, a mastery meter and
+# the challenge/scoring pairing the deck defaults to. All of it is derived from
+# the same tables the rest of the analytics use — nothing here is decorative
+# filler.
+
+#: Which shelf a difficulty key belongs on, its rung label, the Japanese name
+#: shown under the deck title, and the challenge/scoring pairing it opens with.
+DECK_META: dict[str, dict[str, str]] = {
+    "hiragana:gojuon": {
+        "shelf": "kana",
+        "rung": "LV 1 · GOJUON",
+        "jp": "ひらがな 五十音",
+        "challenge": "recognition",
+        "scoring": "accuracy",
+    },
+    "hiragana:dakuon": {
+        "shelf": "kana",
+        "rung": "LV 2 · DAKUON",
+        "jp": "濁音",
+        "challenge": "recall",
+        "scoring": "streak",
+    },
+    "hiragana:handakuon": {
+        "shelf": "kana",
+        "rung": "LV 3 · HAN-DAKUON",
+        "jp": "半濁音",
+        "challenge": "recognition",
+        "scoring": "accuracy",
+    },
+    "hiragana:yoon": {
+        "shelf": "kana",
+        "rung": "LV 4 · YOON",
+        "jp": "拗音",
+        "challenge": "recall",
+        "scoring": "speed",
+    },
+    "hiragana:all": {
+        "shelf": "kana",
+        "rung": "LV 5 · MIXED 104",
+        "jp": "ひらがな 全104",
+        "challenge": "mixed",
+        "scoring": "srs",
+    },
+    "katakana:gojuon": {
+        "shelf": "kana",
+        "rung": "LV 1 · GOJUON",
+        "jp": "カタカナ 五十音",
+        "challenge": "recognition",
+        "scoring": "accuracy",
+    },
+    "katakana:dakuon": {
+        "shelf": "kana",
+        "rung": "LV 2 · DAKUON",
+        "jp": "濁音",
+        "challenge": "recall",
+        "scoring": "streak",
+    },
+    "katakana:handakuon": {
+        "shelf": "kana",
+        "rung": "LV 3 · HAN-DAKUON",
+        "jp": "半濁音",
+        "challenge": "recognition",
+        "scoring": "accuracy",
+    },
+    "katakana:yoon": {
+        "shelf": "kana",
+        "rung": "LV 4 · YOON",
+        "jp": "拗音",
+        "challenge": "recall",
+        "scoring": "speed",
+    },
+    "katakana:all": {
+        "shelf": "kana",
+        "rung": "LV 5 · MIXED 104",
+        "jp": "カタカナ 全104",
+        "challenge": "mixed",
+        "scoring": "srs",
+    },
+    "kanji:N5": {
+        "shelf": "jlpt",
+        "rung": "N5 · FOUNDATION",
+        "jp": "漢字 N5",
+        "challenge": "recognition",
+        "scoring": "accuracy",
+    },
+    "kanji:N4": {
+        "shelf": "jlpt",
+        "rung": "N4 · EVERYDAY",
+        "jp": "漢字 N4",
+        "challenge": "recall",
+        "scoring": "srs",
+    },
+    "kanji:N3": {
+        "shelf": "jlpt",
+        "rung": "N3 · ABSTRACT",
+        "jp": "漢字 N3",
+        "challenge": "mixed",
+        "scoring": "speed",
+    },
+    "kanji:N2": {
+        "shelf": "jlpt",
+        "rung": "N2 · PROFESSIONAL",
+        "jp": "漢字 N2",
+        "challenge": "timed",
+        "scoring": "streak",
+    },
+    "kanji:N1": {
+        "shelf": "jlpt",
+        "rung": "N1 · LITERARY",
+        "jp": "漢字 N1",
+        "challenge": "recall",
+        "scoring": "srs",
+    },
+    "kanji:top200": {
+        "shelf": "vol",
+        "rung": "VOL 1 · TOP 200",
+        "jp": "頻出 200",
+        "challenge": "recognition",
+        "scoring": "streak",
+    },
+    "kanji:top500": {
+        "shelf": "vol",
+        "rung": "VOL 2 · TOP 500",
+        "jp": "頻出 500",
+        "challenge": "timed",
+        "scoring": "speed",
+    },
+}
+
+SHELVES: tuple[tuple[str, str, str], ...] = (
+    ("kana", "Kana Shelf", "gojuon → dakuon → han-dakuon → yoon → 104 mixed"),
+    ("jlpt", "Kanji Shelf — Proficiency", "JLPT N5 → N1"),
+    ("vol", "Kanji Shelf — Volume", "Top 200 → Top 500"),
+)
+
+
+async def deck_shelves(db: Database) -> list[dict[str, Any]]:
+    """Every seeded difficulty key as a deck, with real progress on it."""
+    from .db import available_segments
+
+    decks: list[dict[str, Any]] = []
+    for segment in await available_segments(db):
+        key = segment["key"]
+        meta = DECK_META.get(key)
+        if meta is None:
+            continue
+
+        stats = (
+            await db.fetch_one(
+                f"""
+            WITH per_char AS (
+                SELECT c.id,
+                       COUNT(a.id) AS seen,
+                       CASE WHEN COUNT(a.id) > 0
+                            THEN CAST(SUM(1 - a.correct) AS REAL) / COUNT(a.id)
+                            ELSE 1.0 END AS miss_rate
+                FROM characters c
+                LEFT JOIN attempts a ON a.character_id = c.id
+                WHERE c.id IN (SELECT id FROM characters WHERE {_segment_clause(key)})
+                GROUP BY c.id
+            )
+            SELECT
+                SUM(CASE WHEN seen >= ? AND miss_rate <= ? THEN 1 ELSE 0 END) AS mastered,
+                ROUND(1.0 - AVG(CASE WHEN seen > 0 THEN miss_rate ELSE 1.0 END), 4) AS accuracy
+            FROM per_char
+            """,
+                (MASTERY_MIN_SEEN, MASTERY_MAX_MISS_RATE),
+            )
+            or {}
+        )
+
+        glyphs = await db.fetch_all(
+            f"SELECT glyph FROM characters WHERE {_segment_clause(key)} ORDER BY id LIMIT 3"
+        )
+
+        decks.append(
+            {
+                **segment,
+                **meta,
+                "mastered": int(stats.get("mastered") or 0),
+                "accuracy": float(stats.get("accuracy") or 0.0),
+                "glyphs": [row["glyph"] for row in glyphs],
+            }
+        )
+    return decks
+
+
+def _segment_clause(key: str) -> str:
+    """Inline WHERE fragment for a difficulty key. Keys are a closed set, so
+    this cannot carry user input into SQL."""
+    script, group = key.split(":", 1)
+    if group == "all":
+        return f"script = '{script}'"
+    if script == "kanji" and group.startswith("N"):
+        return f"script = 'kanji' AND jlpt_level = '{group}'"
+    if script == "kanji":
+        return "script = 'kanji'"
+    return f"script = '{script}' AND kana_group = '{group}'"
+
+
+async def session_history(db: Database, limit: int = 12) -> list[dict[str, Any]]:
+    """Recent sessions, newest first, for the history table."""
+    return await db.fetch_all(
+        """
+        SELECT id, started_at, challenge, scoring, difficulty, total, correct,
+               score, max_streak,
+               CASE WHEN total > 0
+                    THEN ROUND(CAST(correct AS REAL) / total, 4) ELSE 0 END AS accuracy,
+               (SELECT ROUND(AVG(latency_ms)) FROM attempts a WHERE a.session_id = s.id)
+                   AS avg_latency_ms
+        FROM sessions s
+        WHERE total > 0
+        ORDER BY started_at DESC
+        LIMIT ?
+        """,
+        (limit,),
+    )

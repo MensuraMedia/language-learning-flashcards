@@ -140,6 +140,9 @@ async def test_dashboard_summary_assembles_without_data(db: Database):
         "leeches",
         "first_vs_eventual",
         "progress_velocity",
+        "decks",
+        "shelves",
+        "session_history",
     }
     assert set(summary) == expected_keys
 
@@ -482,3 +485,63 @@ async def test_dashboard_summary_carries_real_values(seeded_db: Database, iso):
     assert summary["per_character_miss_rate"][0]["glyph"] == "し"
     assert summary["confusion_pairs"][0]["mistaken_for"] == "つ"
     assert summary["weakest_characters"][0]["glyph"] == "し"
+
+
+# -- deck shelves ----------------------------------------------------------
+
+
+async def test_deck_shelves_carry_progress_and_preview_glyphs(seeded_db: Database, iso):
+    """Each deck reports real mastery, not a placeholder."""
+    db = seeded_db
+    a = await char_id(db, "あ")
+    sid = await add_session(db, iso(0))
+    for _ in range(4):
+        await add_attempt(db, sid, a, iso(0), correct=True)
+
+    decks = {d["key"]: d for d in await analytics.deck_shelves(db)}
+    gojuon = decks["hiragana:gojuon"]
+
+    assert gojuon["shelf"] == "kana"
+    assert gojuon["rung"].startswith("LV 1")
+    assert gojuon["mastered"] == 1  # あ: seen 4, zero misses
+    assert gojuon["count"] == 3  # あ, し, つ in the fixture
+    assert gojuon["glyphs"] == ["あ", "し", "つ"]
+    assert gojuon["challenge"] and gojuon["scoring"]
+
+
+async def test_deck_shelves_are_empty_without_content(db: Database):
+    assert await analytics.deck_shelves(db) == []
+
+
+async def test_every_deck_has_shelf_metadata(seeded_db: Database):
+    """A deck without metadata would render as a blank card."""
+    for deck in await analytics.deck_shelves(seeded_db):
+        assert deck["shelf"] in {"kana", "jlpt", "vol"}
+        assert deck["rung"] and deck["jp"]
+        assert 0.0 <= deck["accuracy"] <= 1.0
+
+
+async def test_session_history_is_newest_first(seeded_db: Database, iso):
+    db = seeded_db
+    await add_session(db, iso(5), total=10, correct=5, difficulty="hiragana:gojuon")
+    await add_session(db, iso(1), total=4, correct=4, difficulty="katakana:all")
+
+    rows = await analytics.session_history(db)
+    assert [r["difficulty"] for r in rows] == ["katakana:all", "hiragana:gojuon"]
+    assert rows[0]["accuracy"] == 1.0
+
+
+async def test_session_history_skips_empty_sessions(seeded_db: Database, iso):
+    await add_session(seeded_db, iso(1), total=0, correct=0)
+    assert await analytics.session_history(seeded_db) == []
+
+
+async def test_totals_include_average_latency(seeded_db: Database, iso):
+    db = seeded_db
+    a = await char_id(db, "あ")
+    sid = await add_session(db, iso(0))
+    await add_attempt(db, sid, a, iso(0), correct=True, latency_ms=1000)
+    await add_attempt(db, sid, a, iso(0), correct=True, latency_ms=2000)
+
+    totals = await analytics.totals(db)
+    assert totals["avg_latency_ms"] == 1500
