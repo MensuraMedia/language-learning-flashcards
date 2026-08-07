@@ -11,7 +11,7 @@ from typing import Any
 
 from quart import Blueprint, Response, current_app, jsonify, request
 
-from .. import analytics, audio
+from .. import analytics, audio, tts_voicevox
 from .. import session as session_engine
 from ..db import Database, available_segments, get_character
 
@@ -58,6 +58,24 @@ def _card(character: Any, choices: list[str] | None = None) -> dict[str, Any]:
 async def summary() -> Response:
     """Everything the dashboard renders, in one round trip."""
     return jsonify(await analytics.dashboard_summary(get_db()))
+
+
+@api_bp.get("/credits")
+async def credits() -> Response:
+    """Attribution for whichever audio provider is actually in use.
+
+    VOICEVOX requires visible credit naming the speaker. This endpoint reports
+    what must be shown, so the UI never has to guess or hard-code it.
+    """
+    voicevox = await tts_voicevox.is_available()
+    return jsonify(
+        {
+            "provider": "voicevox" if voicevox else "bundled",
+            "required": (
+                [tts_voicevox.credit("female"), tts_voicevox.credit("male")] if voicevox else []
+            ),
+        }
+    )
 
 
 @api_bp.get("/segments")

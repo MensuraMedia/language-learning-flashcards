@@ -34,7 +34,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
-from . import tts_elevenlabs
+from . import tts_elevenlabs, tts_voicevox
 from .config import Config
 from .db import SCRIPTS
 from .models import Character
@@ -256,19 +256,47 @@ async def get_audio(
 ) -> tuple[bytes, str]:
     """Return ``(audio_bytes, mimetype)`` for ``character``.
 
-    Resolution order is bundled clip, ElevenLabs (when an API key is
-    configured), cached local TTS render, freshly generated local TTS render.
-    The result is always playable: on any failure — no backend, a dead
-    subprocess, an unwritable cache, an API outage — a short silent WAV is
+    Resolution order:
+
+    1. **VOICEVOX** — cached, then freshly synthesised. Preferred because it is
+       Japanese-native and models pitch accent; see ``docs/VOICEVOX-EVALUATION.md``.
+    2. Validated bundled clip.
+    3. ElevenLabs, when an API key is configured.
+    4. Local espeak/pico, cached then fresh.
+    5. A short silent WAV.
+
+    VOICEVOX sits *above* the bundled clips deliberately: the shipped clips are
+    ElevenLabs renders, and a reachable engine produces better Japanese. Users
+    without an engine are unaffected — the probe is short and its failure
+    silent, and everything below still applies.
+
+    The result is always playable: on any failure — no engine, no backend, a
+    dead subprocess, an unwritable cache, an API outage — a short silent WAV is
     returned instead of an exception.
     """
     try:
+        cfg = config if config is not None else _active_config()
+        text = speech_text(character)
+
+        # 1. VOICEVOX, when an engine is reachable. Cached per (text, speaker)
+        #    so the ~0.45s synthesis is paid once per character per voice.
+        if await tts_voicevox.is_available():
+            speaker = tts_voicevox.speaker_for(gender)  # type: ignore[arg-type]
+            vv_key = f"voicevox:{speaker.style_id}"
+            cached_vv = await _read_bytes(cfg.audio_cache_dir / f"{_cache_key(text, vv_key)}.wav")
+            if cached_vv:
+                return cached_vv, tts_voicevox.MIME_WAV
+            rendered = await tts_voicevox.synthesize(text, gender=gender)  # type: ignore[arg-type]
+            if rendered is not None:
+                data, mimetype = rendered
+                await _store_cached_bytes(cfg, f"{_cache_key(text, vv_key)}.wav", data)
+                return data, mimetype
+            # fall through — a reachable engine that failed is still a failure
+
+        # 2. Bundled clips (ElevenLabs renders, shipped with the app).
         bundled = await _load_bundled(character, gender)
         if bundled is not None:
             return bundled
-
-        cfg = config if config is not None else _active_config()
-        text = speech_text(character)
 
         # ElevenLabs, when configured. Cached by (text, voice) so a given
         # character in a given voice is only ever paid for once.

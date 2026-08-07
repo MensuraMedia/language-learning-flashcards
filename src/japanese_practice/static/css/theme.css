@@ -2488,3 +2488,12 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
   opacity: .75;
 }
 .choices { width: clamp(96px, 10vw, 118px); }
+
+/* Attribution required by the VOICEVOX voice-library terms. */
+.credits {
+  margin-top: 26px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-4);
+  text-align: center;
+}

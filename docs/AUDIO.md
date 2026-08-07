@@ -18,12 +18,19 @@ raises**:
 
 | # | Source | Format | Notes |
 |---|---|---|---|
-| 1 | **Validated** bundled clip — `static/audio/<script>/<voice>/<glyph>.mp3` | mp3/wav | Local, validated against the manifest. Highest quality, zero cost, works offline |
-| 2 | **ElevenLabs**, cached | mp3 | Only when `ELEVENLABS_API_KEY` is set. Cached per `(text, voice_id)` |
-| 3 | **ElevenLabs**, fresh | mp3 | Result written to cache |
-| 4 | Local TTS cache | wav | `espeak-ng` / `pico2wave` render, cached per `(text, backend)` |
-| 5 | Local TTS, fresh | wav | |
-| 6 | Silent WAV stub | wav | Floor. Playback never errors |
+| 1 | **VOICEVOX**, cached | wav | Japanese-native, local, free. Cached per `(text, speaker_id)` |
+| 2 | **VOICEVOX**, fresh | wav | ~0.45 s; result cached. Requires a reachable engine |
+| 3 | **Validated** bundled clip — `static/audio/<script>/<voice>/<glyph>.mp3` | mp3/wav | ElevenLabs renders shipped with the app. Works with no engine and no key |
+| 4 | **ElevenLabs**, cached | mp3 | Only when `ELEVENLABS_API_KEY` is set |
+| 5 | **ElevenLabs**, fresh | mp3 | Result written to cache |
+| 6 | Local TTS cache / fresh | wav | `espeak-ng` / `pico2wave` |
+| 7 | Silent WAV stub | wav | Floor. Playback never errors |
+
+VOICEVOX sits **above** the bundled clips deliberately: the shipped clips are
+ElevenLabs renders, and a reachable engine produces better Japanese. Users
+without an engine are unaffected — the probe is 1.5 s, memoised, and its failure
+silent. Measured: a request with the engine pointed at a dead port returns the
+bundled clip in **20 ms** with zero errors logged.
 
 Any failure at any step falls through to the next. An expired key, a rate
 limit, a network outage or a missing binary all degrade silently — **audio must

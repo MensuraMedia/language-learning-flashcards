@@ -32,6 +32,8 @@ from pathlib import Path
 
 from . import audio_library as lib
 from . import tts_elevenlabs as el
+from . import tts_voicevox as vv
+from .config import Config
 from .content.hiragana import HIRAGANA
 from .content.kanji_n5 import KANJI_N5
 from .content.katakana import KATAKANA
@@ -260,6 +262,95 @@ async def cmd_verify(args: argparse.Namespace) -> int:
     return 0 if not bad else 1
 
 
+def cache_path_for(config: Config, text: str, speaker_id: int) -> Path:
+    """Where a VOICEVOX render lives in the runtime cache.
+
+    VOICEVOX clips deliberately do NOT enter the shipped library: the voice
+    terms permit commercial use and require attribution but are *silent* on
+    redistributing generated audio, and this repository is public. Warming the
+    runtime cache on the user's own machine sidesteps the question entirely —
+    and is only practical because VOICEVOX is free, local and fast.
+    """
+    import hashlib
+
+    digest = hashlib.sha1()
+    digest.update(text.encode("utf-8"))
+    digest.update(b"\x00")
+    digest.update(f"voicevox:{speaker_id}".encode())
+    return config.audio_cache_dir / f"{digest.hexdigest()}.wav"
+
+
+async def cmd_warm(args: argparse.Namespace) -> int:
+    """Pre-render every character through VOICEVOX into the runtime cache."""
+    if not await vv.is_available():
+        print(f"No VOICEVOX engine at {vv.engine_url()}", file=sys.stderr)
+        print("Start one, or set JP_VOICEVOX_URL.", file=sys.stderr)
+        return 2
+
+    config = Config.from_env().ensure_dirs()
+    seeds = all_seeds()
+    voices = tuple(args.voices)
+    print(f"warming {len(seeds) * len(voices)} clips into {config.audio_cache_dir}")
+    print(f"credit required: {', '.join(vv.credit(v) for v in voices)}\n")
+
+    written = skipped = failed = 0
+    for i, seed in enumerate(seeds, 1):
+        text = speech_text_for(seed)
+        for voice in voices:
+            speaker = vv.speaker_for(voice)
+            target = cache_path_for(config, text, speaker.style_id)
+            if target.is_file() and target.stat().st_size > lib.MIN_BYTES:
+                skipped += 1
+                continue
+            rendered = await vv.synthesize(text, gender=voice)
+            if rendered is None:
+                failed += 1
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(rendered[0])
+            report = lib.validate_clip(target)
+            if not report.ok:
+                target.unlink(missing_ok=True)
+                print(f"  {seed.glyph} ({voice}) REJECTED: {report.reason}")
+                failed += 1
+                continue
+            written += 1
+        if i % 50 == 0 or i == len(seeds):
+            print(f"  [{i}/{len(seeds)}] {written} written, {skipped} already cached")
+
+    print(f"\n{written} written, {skipped} skipped, {failed} failed")
+    return 0 if failed == 0 else 1
+
+
+async def cmd_speakers(args: argparse.Namespace) -> int:
+    """List what the local VOICEVOX engine offers."""
+    rows = await vv.speakers()
+    if not rows:
+        print(f"No VOICEVOX engine at {vv.engine_url()}", file=sys.stderr)
+        return 2
+    for s in rows:
+        styles = ", ".join(f"{st['name']}({st['id']})" for st in s["styles"])
+        print(f"  {s['name']:<14} {styles}")
+    print(
+        f"\n{len(rows)} speakers. Current: female={vv.speaker_for('female')}, male={vv.speaker_for('male')}"
+    )
+    return 0
+
+
+async def cmd_accent(args: argparse.Namespace) -> int:
+    """Show the per-mora pitch accent VOICEVOX derives for a word."""
+    pattern = await vv.accent_pattern(args.text)
+    if not pattern:
+        print(f"No engine at {vv.engine_url()}, or nothing to analyse", file=sys.stderr)
+        return 2
+    print(f"  {args.text}")
+    for m in pattern:
+        mark = " ←accent" if m["is_accent"] else ""
+        bar = "█" * int(max(0.0, m["pitch"] - 5.0) * 40)
+        print(f"    {m['mora']:<3} pitch {m['pitch']:.2f} {bar}{mark}")
+    return 0
+
+
 async def _synthesize_with(text: str, voice_id: str) -> bytes | None:
     """One synthesis call against an explicit voice id."""
     import json
@@ -301,6 +392,17 @@ def main(argv: list[str] | None = None) -> int:
 
     p_ver = sub.add_parser("verify", help="validate the library and rewrite the manifest")
     p_ver.set_defaults(func=cmd_verify)
+
+    p_warm = sub.add_parser("warm", help="pre-render every character via local VOICEVOX")
+    p_warm.add_argument("--voices", nargs="+", default=["female", "male"])
+    p_warm.set_defaults(func=cmd_warm)
+
+    p_spk = sub.add_parser("speakers", help="list local VOICEVOX speakers and styles")
+    p_spk.set_defaults(func=cmd_speakers)
+
+    p_acc = sub.add_parser("accent", help="show the pitch accent VOICEVOX derives")
+    p_acc.add_argument("text")
+    p_acc.set_defaults(func=cmd_accent)
 
     args = parser.parse_args(argv)
     return asyncio.run(args.func(args))

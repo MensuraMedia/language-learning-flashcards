@@ -431,6 +431,18 @@ async function main() {
   $("tb-last").textContent = latest ? `last run ${latest.started_at.slice(0, 10)}` : "no runs yet";
   $("trend-note").textContent = trend.length ? `last ${trend.length} sessions` : "";
 
+  // Attribution is a licence condition, not decoration — render whatever the
+  // active provider requires.
+  try {
+    const credits = await fetch("/api/credits").then((r) => r.json());
+    if (credits.required && credits.required.length) {
+      $("credits").textContent = `Pronunciation audio: ${credits.required.join(" · ")}`;
+      $("credits").hidden = false;
+    }
+  } catch {
+    /* attribution is best-effort; never block the dashboard on it */
+  }
+
   if (!totals.attempts) $("empty").hidden = false;
 }
 

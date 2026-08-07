@@ -83,3 +83,8 @@
 | 2026-08-07T05:28:00 | Roadmap A8 closed; A9-A12 added (integration, shipping model, attribution, pitch-accent aid) |
 | 2026-08-07T05:40:00 | Local backup: git bundle (15 commits) + worktree archive + user data, checksummed |
 | 2026-08-07T05:42:00 | Verified restore — bundle cloned clean, 630 clips intact, 216/216 tests passed from it |
+| 2026-08-07T05:55:00 | Added tts_voicevox.py — Japanese-native provider, optional engine, silent fallback |
+| 2026-08-07T05:58:00 | VOICEVOX slotted above bundled clips in get_audio; cached per (text, speaker) |
+| 2026-08-07T06:00:00 | voicelab gained warm / speakers / accent commands |
+| 2026-08-07T06:02:00 | Added /api/credits + dashboard attribution — required by the VOICEVOX voice terms |
+| 2026-08-07T06:05:00 | Verified fallback: dead engine -> bundled clip in 20ms, zero errors, probe memoised |
