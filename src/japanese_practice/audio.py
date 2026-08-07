@@ -34,6 +34,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
+from . import tts_elevenlabs
 from .config import Config
 from .db import SCRIPTS
 from .models import Character
@@ -247,13 +248,19 @@ def _lists_japanese_voice(listing: str) -> bool:
 # --------------------------------------------------------------------------
 
 
-async def get_audio(character: Character, *, config: Config | None = None) -> tuple[bytes, str]:
+async def get_audio(
+    character: Character,
+    *,
+    config: Config | None = None,
+    gender: str = "female",
+) -> tuple[bytes, str]:
     """Return ``(audio_bytes, mimetype)`` for ``character``.
 
-    Resolution order is bundled clip, cached TTS render, freshly generated TTS
-    render. The result is always playable: on any failure — no backend, a dead
-    subprocess, an unwritable cache — a short silent WAV is returned instead of
-    an exception.
+    Resolution order is bundled clip, ElevenLabs (when an API key is
+    configured), cached local TTS render, freshly generated local TTS render.
+    The result is always playable: on any failure — no backend, a dead
+    subprocess, an unwritable cache, an API outage — a short silent WAV is
+    returned instead of an exception.
     """
     try:
         bundled = await _load_bundled(character)
@@ -262,6 +269,24 @@ async def get_audio(character: Character, *, config: Config | None = None) -> tu
 
         cfg = config if config is not None else _active_config()
         text = speech_text(character)
+
+        # ElevenLabs, when configured. Cached by (text, voice) so a given
+        # character in a given voice is only ever paid for once.
+        if tts_elevenlabs.is_configured():
+            voice = tts_elevenlabs.voice_for(gender)  # type: ignore[arg-type]
+            eleven_key = f"eleven:{voice.voice_id}"
+            cached_mp3 = await _read_bytes(
+                cfg.audio_cache_dir / f"{_cache_key(text, eleven_key)}.mp3"
+            )
+            if cached_mp3:
+                return cached_mp3, tts_elevenlabs.MIME_MPEG
+            rendered = await tts_elevenlabs.synthesize(text, gender=gender)  # type: ignore[arg-type]
+            if rendered is not None:
+                data, mimetype = rendered
+                await _store_cached_bytes(cfg, f"{_cache_key(text, eleven_key)}.mp3", data)
+                return data, mimetype
+            # fall through to the local chain
+
         backends = await detect_backends()
 
         cached = await _load_cached(cfg, text, backends)
@@ -541,3 +566,16 @@ async def _text_file(text: str):
         source = scratch / "utterance.txt"
         await asyncio.to_thread(source.write_text, text, encoding="utf-8")
         yield source
+
+
+async def _store_cached_bytes(config: Config, filename: str, data: bytes) -> None:
+    """Write ``data`` into the audio cache under ``filename``, ignoring failures.
+
+    Caching is an optimisation, never a requirement — an unwritable cache
+    directory must not break playback.
+    """
+    try:
+        config.audio_cache_dir.mkdir(parents=True, exist_ok=True)
+        await asyncio.to_thread((config.audio_cache_dir / filename).write_bytes, data)
+    except OSError:
+        logger.warning("could not cache %s", filename, exc_info=True)

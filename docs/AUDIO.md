@@ -1,0 +1,175 @@
+# Audio & Voice — Japanese Practice
+
+How pronunciation audio is produced, how the ElevenLabs integration is
+configured, and what makes a voice suitable for language learning.
+
+---
+
+## 1. Resolution chain
+
+`audio.get_audio(character, gender=...)` resolves in this order and **never
+raises**:
+
+| # | Source | Format | Notes |
+|---|---|---|---|
+| 1 | Bundled clip — `static/audio/<script>/<glyph>.mp3` | mp3 | Hand-recorded. Highest quality, zero cost, works offline |
+| 2 | **ElevenLabs**, cached | mp3 | Only when `ELEVENLABS_API_KEY` is set. Cached per `(text, voice_id)` |
+| 3 | **ElevenLabs**, fresh | mp3 | Result written to cache |
+| 4 | Local TTS cache | wav | `espeak-ng` / `pico2wave` render, cached per `(text, backend)` |
+| 5 | Local TTS, fresh | wav | |
+| 6 | Silent WAV stub | wav | Floor. Playback never errors |
+
+Any failure at any step falls through to the next. An expired key, a rate
+limit, a network outage or a missing binary all degrade silently — **audio must
+never be able to break a study session.**
+
+---
+
+## 2. Credentials
+
+**The API key is read from the environment only.** It is never stored in the
+repo, never committed, and never written to a config file.
+
+```bash
+export ELEVENLABS_API_KEY="sk_..."
+```
+
+Generate it in the ElevenLabs dashboard under **Settings → API Keys**. Scope it
+to text-to-speech only if the account plan supports scoping, and rotate it if it
+is ever pasted anywhere shared.
+
+> An account **password** is never a valid credential for this integration. The
+> REST API authenticates with the `xi-api-key` header. If you find yourself
+> needing to log into the web UI to make the app work, something is wrong with
+> the configuration, not with the key.
+
+Check whether the backend is live:
+
+```python
+from japanese_practice import tts_elevenlabs
+tts_elevenlabs.is_configured()   # False when no key is set
+```
+
+---
+
+## 3. Voice selection
+
+The brief calls for **one male and one female voice, both in a 30s age tone**,
+with a natural delivery suited to language learning.
+
+### Configure
+
+```bash
+export JP_VOICE_FEMALE="<voice_id>"
+export JP_VOICE_MALE="<voice_id>"
+```
+
+### Find real voice IDs
+
+Voice IDs are account-specific. The defaults in `tts_elevenlabs.py` are
+**placeholders from the shared library and are not verified** — neither against
+this account nor as natural Japanese narrators. Replace them:
+
+```bash
+ELEVENLABS_API_KEY=sk_... .venv/bin/python -c \
+"import asyncio,json;from japanese_practice import tts_elevenlabs as t;\
+print(json.dumps(asyncio.run(t.list_voices()), ensure_ascii=False, indent=2))"
+```
+
+### Selection criteria
+
+Pick voices that are:
+
+- **Native or near-native Japanese.** An English-accented voice teaches wrong
+  pronunciation, which is worse than no audio at all. This is the single
+  non-negotiable criterion.
+- **Aged 30s in tone** — settled and neutral. Younger voices tend to read with
+  more prosodic variation, which is exactly what a learner should not be
+  pattern-matching against.
+- **Neutral standard accent** (標準語 / Tokyo). Regional accents are a later
+  feature, not a default.
+- **Even and unhurried.** A single mora needs clarity, not expression.
+- **Consistent across renders** — the same character must sound the same every
+  time.
+
+Record the chosen IDs and the reason for each in
+`.claude/memory/decisions.md` once selected.
+
+---
+
+## 4. Model and delivery settings
+
+```python
+DEFAULT_MODEL = "eleven_multilingual_v2"
+```
+
+`eleven_multilingual_v2` is the model that handles Japanese properly. The
+monolingual/English models mangle kana readings — do not use them.
+
+```python
+VOICE_SETTINGS = {
+    "stability": 0.75,        # high = consistent; low = expressive
+    "similarity_boost": 0.75,
+    "style": 0.0,             # no dramatic interpretation
+    "use_speaker_boost": True,
+    "speed": 0.85,            # slightly slower than conversational
+}
+```
+
+The reasoning is deliberate and worth preserving: **language learning wants
+consistency, not personality.** High stability and zero style mean a character
+read twice sounds identical both times, so the learner keys on the glyph rather
+than on prosody. The reduced speed gives a single mora room to be heard.
+
+---
+
+## 5. What gets spoken
+
+From `audio.speech_text()`:
+
+- **Kana** — the glyph itself (`あ` → "あ")
+- **Kanji** — the primary **kun'yomi** if present, otherwise the primary
+  **on'yomi**; the glyph as a last resort
+
+Reading fields store alternatives separated by `/` with okurigana in
+parentheses. Only the first alternative is spoken and the brackets are dropped:
+`ひと(つ)` → "ひとつ".
+
+---
+
+## 6. Caching and cost
+
+Renders are cached under `config.audio_cache_dir`
+(`~/.local/share/japanese-practice/audio-cache/` by default), keyed by SHA-1 of
+`(text, voice_id)`. **A given character in a given voice is synthesised once,
+ever.** With 104 + 104 + 107 characters, a full two-voice build is roughly 630
+API calls total — after which the app runs indefinitely without touching the
+network.
+
+To pre-warm the cache rather than paying per first-use, iterate the character
+table and call `get_audio` for each glyph in each voice. Better still, promote
+the results to **bundled clips** under `static/audio/<script>/<glyph>.mp3`,
+which removes the API dependency entirely for the fixed kana sets.
+
+Clearing the cache is safe — it simply re-synthesises.
+
+---
+
+## 7. Current status
+
+| Item | Status |
+|---|---|
+| Resolution chain implemented | ✅ |
+| ElevenLabs module (`tts_elevenlabs.py`) | ✅ Written, imports clean |
+| Wired into `get_audio` ahead of local TTS | ✅ |
+| Caching per `(text, voice)` | ✅ |
+| Graceful degradation without a key | ✅ **Verified** — returns local espeak WAV |
+| **Called against the live API** | ❌ **Never** — no key available |
+| Real voice IDs chosen | ❌ Placeholders only |
+| `gender` exposed on `/api/audio/<id>` | ❌ Not yet — parameter exists on `get_audio`, the route does not pass it |
+| Bundled clips | ❌ None recorded |
+
+**Next steps:** provide a key, run `list_voices()`, choose a male and a female
+Japanese voice per §3, set `JP_VOICE_MALE` / `JP_VOICE_FEMALE`, then add a
+`?voice=male|female` query parameter to `/api/audio/<id>` and a voice toggle in
+the study view.

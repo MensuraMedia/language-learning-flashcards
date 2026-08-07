@@ -4,7 +4,7 @@
 It is the single place a new session (human or agent) reads to know where the
 project stands, what is real, what is assumed, and what to do next.
 
-- **Last updated:** 2026-08-06 06:20 UTC-4
+- **Last updated:** 2026-08-06 20:40 UTC-4
 - **Updated by:** session `30934411` (Claude Opus 5)
 - **Project root:** `/home/user/projects/japanese_practice`
 - **Remote:** https://github.com/MensuraMedia/language-learning-flashcards (public)
@@ -39,7 +39,8 @@ works on this project **must**:
 | Analytics engine | ✅ All 13 metrics compute from real data |
 | Desktop window (pywebview) | ✅ Opens and renders |
 | UI layout polish | ⚠️ Functional, not finished |
-| Audio | ✅ Real TTS working |
+| Audio (local TTS) | ✅ Real espeak synthesis working |
+| Audio (ElevenLabs) | ⚠️ Integrated, never called against the live API |
 | Tests | ❌ Not written |
 | Packaging / distribution | ❌ Not started |
 
@@ -139,9 +140,12 @@ correctly (Noto Sans CJK JP present system-wide).
   generated against the mockup's exact DOM; the templates approximate it. Several
   panels below the fold are unverified visually. Inline `style=` attributes were
   used as spacing stopgaps in `dashboard.html` — these should move into CSS.
-- **`study.html` has never been visually confirmed.** The card flip, speaker
-  button and keyboard controls are implemented but only the dashboard was
-  screenshotted. **Verify the flip before trusting it.**
+- ~~`study.html` unverified~~ — **VERIFIED 2026-08-06.** Study view renders in
+  the pywebview window: front face shows the glyph alone (ぬ, weakest-first
+  ordering confirmed), back face shows the reading (`nu`) plus the inline-SVG
+  speaker. The 3D flip transform works. **Keyboard controls (Space/J/F/Esc) and
+  the click handlers are still unexercised** — no input-injection tool is
+  installed (`xdotool` absent).
 - **No tests.** `tests/` does not exist. `pyproject.toml` is configured for
   pytest + pytest-asyncio.
 - **`first_vs_eventual` is degenerate** — all seeded attempts have
@@ -166,7 +170,7 @@ correctly (Noto Sans CJK JP present system-wide).
 | **`gh` CLI is not installed** | `~/.gitconfig` points its credential helper at a missing `/usr/bin/gh`, so plain `git push` fails |
 | **Git auth works via header** | See below. Token lives in `~/.config/gh/hosts.yml` |
 | **`pkill -f japanese_practice` kills the calling shell** | The pattern matches the shell's own command line. Use a narrower pattern |
-| **Firefox headless screenshots are unreliable here** | It restores previous session tabs and times out. Use the real pywebview window + ImageMagick `import -window <id>` |
+| **Firefox headless screenshots are unreliable here** | It restores previous session tabs, times out, and renders app pages BLANK even when the app is correct. It cost significant debugging time chasing a non-bug. **Always verify UI in the real pywebview window** + ImageMagick `import -window <id>` |
 | **No `xdotool`, no `xvfb-run`** | `wmctrl` and `import` are available |
 
 **Git push (the only method that works on this machine):**
@@ -226,6 +230,7 @@ chosen deliberately to keep the real address out of public history.
 | `docs/HANDOFF.md` | **This file** — session-to-session continuity |
 | `docs/ARCHITECTURE.md` | How the system works; stack rationale; supportability, applicability, universality |
 | `docs/BUILD-SPEC.md` | Binding implementation contract — paths, signatures, schema |
+| `docs/AUDIO.md` | Audio resolution chain, ElevenLabs setup, voice-selection criteria |
 | `docs/PROJECT-CONTEXT.md` | Original brief, requirements decomposition, confirmed decisions |
 | `docs/REPO-ACCESS.md` | **Local only, never pushed** — credential paths and working git commands |
 | `mockups/COMPARISON.md` | Evaluation of the five design directions |

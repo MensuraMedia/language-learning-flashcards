@@ -69,9 +69,7 @@ def _deduplicate(seeds: Sequence[CharacterSeed]) -> list[CharacterSeed]:
     return unique
 
 
-async def seed_content(
-    db: Database, seeds: Sequence[CharacterSeed] | None = None
-) -> int:
+async def seed_content(db: Database, seeds: Sequence[CharacterSeed] | None = None) -> int:
     """Upsert every bundled character seed. Returns the number of seeds applied.
 
     Safe to call on every start-up: existing rows keep their ids and are simply

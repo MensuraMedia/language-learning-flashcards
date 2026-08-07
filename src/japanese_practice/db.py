@@ -193,9 +193,7 @@ class Database:
         value = row[0]
         return default if value is None else value
 
-    async def execute(
-        self, sql: str, params: Sequence[Any] | Mapping[str, Any] = ()
-    ) -> int:
+    async def execute(self, sql: str, params: Sequence[Any] | Mapping[str, Any] = ()) -> int:
         """Run a write statement, commit, and return ``lastrowid``."""
         async with self._write_lock:
             async with self.connection.execute(sql, params) as cursor:
@@ -284,9 +282,7 @@ async def count_for_difficulty(db: Database, difficulty: str) -> int:
     """How many characters a difficulty key currently resolves to."""
     where, params, limit = _difficulty_clause(difficulty)
     total = int(
-        await db.fetch_value(
-            f"SELECT COUNT(*) FROM characters WHERE {where}", params, default=0
-        )
+        await db.fetch_value(f"SELECT COUNT(*) FROM characters WHERE {where}", params, default=0)
     )
     return min(total, limit) if limit is not None else total
 
@@ -296,9 +292,7 @@ async def list_characters(db: Database, script: str | None = None) -> list[Chara
     if script is None:
         rows = await db.fetch_all(f"{_SELECT_CHARACTER} ORDER BY id")
     else:
-        rows = await db.fetch_all(
-            f"{_SELECT_CHARACTER} WHERE script = ? ORDER BY id", [script]
-        )
+        rows = await db.fetch_all(f"{_SELECT_CHARACTER} WHERE script = ? ORDER BY id", [script])
     return [Character.from_row(row) for row in rows]
 
 

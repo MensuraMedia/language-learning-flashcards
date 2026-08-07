@@ -137,10 +137,6 @@ class Session:
             max_streak=row["max_streak"],
         )
 
-    def with_totals(
-        self, *, score: int, total: int, correct: int, max_streak: int
-    ) -> Session:
+    def with_totals(self, *, score: int, total: int, correct: int, max_streak: int) -> Session:
         """Return a copy carrying updated running totals."""
-        return replace(
-            self, score=score, total=total, correct=correct, max_streak=max_streak
-        )
+        return replace(self, score=score, total=total, correct=correct, max_streak=max_streak)

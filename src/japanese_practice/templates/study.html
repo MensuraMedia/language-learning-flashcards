@@ -9,31 +9,55 @@
 {% endblock %}
 
 {% block content %}
-<main class="view on stage" id="study">
-  <div class="felt">
+<main class="view on" id="study">
+  <!-- the felt table -->
+  <section class="felt">
     <div class="felt-head">
       <span class="lbl" id="breadcrumb">—</span>
       <span class="lbl-sm" id="scheme-note"></span>
     </div>
 
-    <div class="card-outer">
-      <!-- front face carries the glyph and nothing else -->
-      <div class="card3d" id="card" tabindex="0" role="button" aria-label="Flash card — activate to reveal the reading">
-        <div class="face front"><div class="glyph jp-lg" id="glyph"></div></div>
-        <div class="face back">
-          <div class="back-in">
-            <div class="back-mini jp" id="back-glyph"></div>
-            <div class="back-sound" id="back-sound"></div>
-            <div class="back-meaning" id="back-meaning"></div>
-            <div class="readings" id="back-readings"></div>
-            <button class="speaker" id="speaker" type="button" aria-label="Play pronunciation">
-              <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
-                <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>
-                <path d="M16.5 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                <path d="M19 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-              </svg>
-              <span class="spk-note" id="spk-note">Play</span>
-            </button>
+    <!-- .stage carries the perspective; .deck3d gives the card its box -->
+    <div class="stage">
+      <div class="deck3d">
+        <div class="contact"></div>
+        <div class="ghost g3"></div>
+        <div class="ghost g2"></div>
+        <div class="ghost g1"></div>
+        <div class="cut"></div>
+        <div class="tilt">
+          <div class="lift">
+            <div class="card3d" id="card" role="button" tabindex="0"
+                 aria-label="Flash card — activate to reveal the reading">
+
+              <!-- FRONT: the character alone, nothing else -->
+              <div class="face front">
+                <div class="glyph" id="glyph"></div>
+              </div>
+
+              <!-- BACK: the sound written out -->
+              <div class="face back">
+                <div class="back-in">
+                  <div class="back-mini jp" id="back-glyph"></div>
+                  <div class="back-sound" id="back-sound"></div>
+                  <div class="back-meaning" id="back-meaning"></div>
+                  <div class="readings" id="back-readings"></div>
+                  <div class="back-foot">
+                    <button class="speaker" id="speaker" type="button" aria-label="Play pronunciation">
+                      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+                        <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>
+                        <path d="M16.5 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor"
+                              stroke-width="1.8" stroke-linecap="round"/>
+                        <path d="M19 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor"
+                              stroke-width="1.8" stroke-linecap="round"/>
+                      </svg>
+                      <span class="spk-note" id="spk-note">Play</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
           </div>
         </div>
       </div>
@@ -45,15 +69,13 @@
       <button class="btn" id="right" type="button">Right <span class="kbd">J</span></button>
     </div>
     <p class="hint muted">Space flips · J right · F wrong · Esc ends the session</p>
-  </div>
+  </section>
 
   <div class="recap" id="recap" hidden>
-    <div class="recap-card">
+    <div class="recap-card ticked">
       <p class="lbl">Session complete</p>
       <div class="recap-grid" id="recap-grid"></div>
-      <div class="recap-act">
-        <a class="btn amber" href="/">Back to dashboard</a>
-      </div>
+      <div class="recap-act"><a class="btn amber" href="/">Back to dashboard</a></div>
     </div>
   </div>
 </main>
