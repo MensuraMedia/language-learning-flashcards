@@ -166,6 +166,7 @@ Clearing the cache is safe — it simply re-synthesises.
 | Graceful degradation without a key | ✅ **Verified** — falls through to local TTS |
 | Local clip library + validation | ✅ `audio_library.py`; 26 tests |
 | espeak-ng installed | ✅ 2026-08-06; Japanese voice `ja` present |
+| **End-to-end audio through `/api/audio`** | ✅ **Verified 2026-08-06** — audible WAV, peaks 0.385–0.786, cached to disk |
 | **Called against the live API** | ❌ **Never** — no key available |
 | Real voice IDs chosen | ❌ Placeholders only |
 | `gender` exposed on `/api/audio/<id>` | ❌ Not yet — parameter exists on `get_audio`, the route does not pass it |

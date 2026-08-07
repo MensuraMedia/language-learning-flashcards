@@ -4,7 +4,7 @@
 It is the single place a new session (human or agent) reads to know where the
 project stands, what is real, what is assumed, and what to do next.
 
-- **Last updated:** 2026-08-06 22:15 UTC-4
+- **Last updated:** 2026-08-06 22:35 UTC-4
 - **Updated by:** session `30934411` (Claude Opus 5)
 - **Project root:** `/home/user/projects/japanese_practice`
 - **Remote:** https://github.com/MensuraMedia/language-learning-flashcards (public)
@@ -39,7 +39,7 @@ works on this project **must**:
 | Analytics engine | ✅ All 13 metrics compute from real data |
 | Desktop window (pywebview) | ✅ Opens and renders |
 | UI layout polish | ⚠️ Functional, not finished |
-| Audio (local TTS) | ✅ espeak-ng **installed 2026-08-06**; real audio verified (peak 0.571) |
+| Audio (local TTS) | ✅ **Working end to end.** espeak-ng + `ja` voice; API returns audible WAV (peaks 0.385–0.786); renders cached |
 | Audio (ElevenLabs) | ⚠️ Integrated, never called against the live API |
 | Clip library + validation | ✅ `audio_library.py`, manifest + checksums |
 | Keyboard controls | ✅ **All verified with xdotool** |
@@ -144,6 +144,10 @@ correctly (Noto Sans CJK JP present system-wide).
 - Post-edit lint hook (black + ruff on Python edits)
 
 ### Does not work / not done
+- **Reverse-face glyph enlarged 2026-08-06** — `.back-mini` went from a flat
+  38px muted thumbnail to `clamp(64px, 8.5vw, 96px)` in full ink. Verified on
+  both a kana back (あ) and the worst-case kanji back (三 with meaning, on'yomi
+  and kun'yomi) — no overflow in either.
 - **UI layout is functional but unpolished.** `theme.css` (2159 lines) was
   generated against the mockup's exact DOM; the templates approximate it. Several
   panels below the fold are unverified visually. Inline `style=` attributes were

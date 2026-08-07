@@ -40,3 +40,6 @@
 | 2026-08-06T22:00:00 | Installed espeak-ng; CORRECTED false claim that audio was real synthesis (was silent stub) |
 | 2026-08-06T22:05:00 | Added audio_library.py — local clip tree, validation gates, manifest with checksums |
 | 2026-08-06T22:10:00 | Added tests/test_audio_library.py (26); full suite 181 passing |
+| 2026-08-06T22:20:00 | Verified audio end to end: /api/audio returns audible WAV (peaks 0.385-0.786), ja voice, cached |
+| 2026-08-06T22:30:00 | Enlarged reverse-face glyph: .back-mini 38px -> clamp(64px, 8.5vw, 96px), full ink |
+| 2026-08-06T22:35:00 | Verified enlarged back face on kana and worst-case kanji — no overflow |

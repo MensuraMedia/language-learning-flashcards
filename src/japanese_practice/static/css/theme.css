@@ -1651,7 +1651,16 @@ td .jp { font-family: var(--jp); font-size: 16px; color: var(--ink); line-height
   border-bottom: 1px solid var(--line);
   width: 72%;
 }
-.back-mini { font-family: var(--jp); font-size: 38px; color: var(--ink-2); line-height: 1.1; }
+/* The character stays the hero on the reverse too — the learner is checking
+   their recall against the glyph they just saw, so it must be large enough to
+   compare stroke for stroke, not a thumbnail. Scales with the card. */
+.back-mini {
+  font-family: var(--jp);
+  font-size: clamp(64px, 8.5vw, 96px);
+  color: var(--ink);
+  line-height: 1;
+  margin-bottom: 2px;
+}
 /* the sound written out — the answer, so amber */
 .back-sound {
   /* Readings can contain kana (セイ / い(きる)), and --mono has no CJK member —
