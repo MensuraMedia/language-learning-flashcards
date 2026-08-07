@@ -11,6 +11,7 @@ import random
 from datetime import datetime, timezone
 from typing import Any
 
+from .content.confusions import CONFUSION_PAIRS
 from .db import Database, characters_for_difficulty, get_character
 from .models import Character, Session
 from .scoring import next_review, score_attempt, validate_scheme
@@ -68,8 +69,11 @@ async def build_deck(
     unseen = [c for c in pool if c.id not in weak]
     seen = sorted((c for c in pool if c.id in weak), key=lambda c: -weak[c.id])
 
-    ordered = seen[: max(1, limit // 2)] + unseen
+    # Shuffle BEFORE concatenating: shuffling `unseen` afterwards mutates a list
+    # that `ordered` has already copied from, so it was a no-op and every
+    # session dealt あ い う え お in id order.
     random.shuffle(unseen)
+    ordered = seen[: max(1, limit // 2)] + unseen
     if challenge == "mixed":
         random.shuffle(ordered)
     return ordered[:limit] if limit else ordered
@@ -124,6 +128,12 @@ async def record_attempt(
         skipped=skipped,
     )
 
+    # first_attempt is only true the first time this character is answered in
+    # this session. Hardcoding 1 made first_vs_eventual() structurally zero.
+    seen_before = await db.fetch_value(
+        "SELECT COUNT(*) FROM attempts WHERE session_id = ? AND character_id = ?",
+        (session_id, character_id),
+    )
     await db.execute(
         "INSERT INTO attempts(session_id, character_id, answered_at, correct,"
         " skipped, latency_ms, first_attempt, given_answer)"
@@ -135,7 +145,7 @@ async def record_attempt(
             1 if correct else 0,
             1 if skipped else 0,
             latency_ms,
-            1,
+            0 if seen_before else 1,
             given_answer,
         ),
     )
@@ -214,7 +224,44 @@ async def build_choices(db: Database, character: Character, count: int = CHOICE_
     peer_value = character.kana_group if character.script != "kanji" else character.jlpt_level
 
     options: list[str] = []
-    if peer_value:
+
+    # 1. The curated visual-confusion partners first. These 45 pairs are the
+    #    real traps (シ/ツ, ソ/ン, る/ろ, ぬ/め, き/さ, は/ほ) and they were
+    #    sitting unused while distractors were drawn at random. A card that
+    #    offers シ against ヌ and ラ tests nothing; one that offers ツ tests
+    #    the exact discrimination the learner keeps failing.
+    partners = _confusion_partners(character.glyph)
+    if partners:
+        rows = await db.fetch_all(
+            f"""
+            SELECT DISTINCT {column} AS option FROM characters
+            WHERE glyph IN ({",".join("?" * len(partners))})
+              AND {column} IS NOT NULL AND {column} <> '' AND {column} <> ?
+            ORDER BY RANDOM() LIMIT ?
+            """,
+            (*partners, correct, wanted),
+        )
+        options = [row["option"] for row in rows]
+
+    # 2. Voicing siblings — the contrast a dakuon/han-dakuon deck exists to
+    #    teach. Without this the p- row only ever competes against itself.
+    if len(options) < wanted and character.script != "kanji":
+        siblings = voicing_siblings(correct)
+        if siblings:
+            rows = await db.fetch_all(
+                f"""
+                SELECT DISTINCT {column} AS option FROM characters
+                WHERE script = ? AND {column} IN ({",".join("?" * len(siblings))})
+                  AND {column} <> ?
+                ORDER BY RANDOM() LIMIT ?
+                """,
+                (character.script, *siblings, correct, wanted - len(options)),
+            )
+            for row in rows:
+                if row["option"] not in options:
+                    options.append(row["option"])
+
+    if len(options) < wanted and peer_value:
         rows = await db.fetch_all(
             f"""
             SELECT DISTINCT {column} AS option
@@ -223,9 +270,11 @@ async def build_choices(db: Database, character: Character, count: int = CHOICE_
               AND {column} IS NOT NULL AND {column} <> '' AND {column} <> ?
             ORDER BY RANDOM() LIMIT ?
             """,
-            (character.script, peer_value, correct, wanted),
+            (character.script, peer_value, correct, wanted - len(options)),
         )
-        options = [row["option"] for row in rows]
+        for row in rows:
+            if row["option"] not in options:
+                options.append(row["option"])
 
     # Top up from the wider script when the group is too small to fill the row.
     if len(options) < wanted:
@@ -247,3 +296,52 @@ async def build_choices(db: Database, character: Character, count: int = CHOICE_
     options.append(correct)
     random.shuffle(options)
     return options
+
+
+#: Consonants that alternate through the dakuten/handakuten marks. A dakuon or
+#: han-dakuon card exists to teach exactly this contrast — は / ば / ぱ — so its
+#: distractors must vary the consonant. Drawing from `kana_group` alone gives
+#: han-dakuon a five-member pool where every option is p-, which turns the
+#: hardest rung into a pure vowel test and never asks the question the deck is for.
+VOICING_FAMILIES: tuple[tuple[str, ...], ...] = (
+    ("k", "g"),
+    ("s", "z"),
+    ("sh", "j"),
+    ("t", "d"),
+    ("ch", "j"),
+    ("ts", "z"),
+    ("h", "b", "p"),
+    ("f", "b", "p"),
+)
+
+
+def voicing_siblings(romaji: str) -> list[str]:
+    """Readings that differ from ``romaji`` only by the voicing mark.
+
+    ``"pa"`` -> ``["ha", "ba"]``; ``"gi"`` -> ``["ki"]``.
+    """
+    if not romaji:
+        return []
+    out: list[str] = []
+    for family in VOICING_FAMILIES:
+        for onset in family:
+            if romaji.startswith(onset):
+                rest = romaji[len(onset) :]
+                for other in family:
+                    if other == onset:
+                        continue
+                    candidate = other + rest
+                    if candidate not in out:
+                        out.append(candidate)
+    return out
+
+
+def _confusion_partners(glyph: str) -> list[str]:
+    """Every glyph curated as visually confusable with ``glyph``."""
+    partners: list[str] = []
+    for a, b in CONFUSION_PAIRS:
+        if a == glyph and b not in partners:
+            partners.append(b)
+        elif b == glyph and a not in partners:
+            partners.append(a)
+    return partners

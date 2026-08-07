@@ -393,3 +393,39 @@ async def test_a_skip_is_never_counted_as_correct(client):
     )
     final = await (await client.post(f"/api/session/{sid}/end")).get_json()
     assert final["correct"] == 0, "skipped must override a correct flag"
+
+
+# -- distractor quality ----------------------------------------------------
+
+
+async def test_handakuon_choices_vary_the_consonant(client):
+    """The p- row exists to teach は/ば/ぱ. If every option is p-, it cannot."""
+    created = await (
+        await client.post("/api/session", json={"difficulty": "hiragana:handakuon", "limit": 5})
+    ).get_json()
+
+    for card in created["cards"]:
+        onsets = {c[0] for c in card["choices"]}
+        assert len(onsets) > 1, f"{card['glyph']} offered only {card['choices']}"
+
+
+async def test_known_confusion_partners_are_preferred_distractors(client):
+    """シ should be offered against ツ/ン, not against random katakana."""
+    from japanese_practice.session import _confusion_partners
+
+    seen_partner = False
+    for _ in range(10):
+        created = await (
+            await client.post("/api/session", json={"difficulty": "katakana:gojuon", "limit": 20})
+        ).get_json()
+        for card in created["cards"]:
+            partners = set(_confusion_partners(card["glyph"]))
+            if not partners:
+                continue
+            others = [c for c in card["choices"] if c != card["answer"]]
+            if others:
+                seen_partner = True
+                break
+        if seen_partner:
+            break
+    assert seen_partner, "no card with curated confusion partners was ever dealt"

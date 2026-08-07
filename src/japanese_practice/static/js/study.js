@@ -164,7 +164,14 @@ function goPrevious() {
 }
 
 function goNext() {
-  if (state.index >= state.cards.length - 1) return toast("Last card — J or F to finish");
+  // → must not be a free skip. Advancing an unanswered card without recording
+  // anything strictly dominated the Skip button — same escape, no penalty, and
+  // it preserved the streak — so a score-maximising learner never pressed S.
+  // Navigation forward is only available once the card has been answered.
+  if (!state.graded.has(state.index)) {
+    return toast("Answer it, or press S for don't know");
+  }
+  if (state.index >= state.cards.length - 1) return toast("Last card");
   state.index += 1;
   render();
 }

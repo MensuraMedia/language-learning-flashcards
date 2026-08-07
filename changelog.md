@@ -61,3 +61,9 @@
 | 2026-08-07T03:20:00 | Withheld kanji Top 200/500 decks — frequency rank is not stored, labels were unbacked |
 | 2026-08-07T03:22:00 | Fixed calendar cells sized as SVG rects; fixed accuracy-by-set row wrapping |
 | 2026-08-07T03:30:00 | Choice cards: romaji centred at 21px, shortcut number moved to bottom-right corner |
+| 2026-08-07T03:50:00 | Game-theory review of the answer flow — found 4 real defects, see docs/GAME-DESIGN-REVIEW.md |
+| 2026-08-07T03:52:00 | FIX: build_deck shuffled `unseen` after concatenation — a no-op; decks always dealt in id order |
+| 2026-08-07T03:54:00 | FIX: first_attempt was hardcoded 1, making first_vs_eventual a structural zero |
+| 2026-08-07T03:56:00 | FIX: wired CONFUSION_PAIRS into build_choices — 45 curated traps were dead data |
+| 2026-08-07T03:58:00 | FIX: added voicing-sibling distractors so han-dakuon finally tests は/ば/ぱ |
+| 2026-08-07T04:00:00 | FIX: closed the free-skip loophole — arrow-right no longer bypasses grading |

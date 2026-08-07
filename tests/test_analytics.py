@@ -545,3 +545,39 @@ async def test_totals_include_average_latency(seeded_db: Database, iso):
 
     totals = await analytics.totals(db)
     assert totals["avg_latency_ms"] == 1500
+
+
+async def test_first_attempt_is_false_on_a_repeat_within_a_session(seeded_db: Database, iso):
+    """first_attempt was hardcoded to 1, making first_vs_eventual a fixed zero."""
+    from japanese_practice import session as engine
+
+    db = seeded_db
+    record = await engine.start_session(db, "recognition", "accuracy", "hiragana:gojuon")
+    cid = await char_id(db, "あ")
+
+    await engine.record_attempt(db, record.id, cid, correct=False)
+    await engine.record_attempt(db, record.id, cid, correct=True)
+
+    flags = [
+        r["first_attempt"]
+        for r in await db.fetch_all(
+            "SELECT first_attempt FROM attempts WHERE character_id = ? ORDER BY id", (cid,)
+        )
+    ]
+    assert flags == [1, 0]
+
+    result = await analytics.first_vs_eventual(db)
+    assert result["first_attempt_accuracy"] == 0.0
+    assert result["eventual_accuracy"] == pytest.approx(0.5)
+    assert result["gap"] == pytest.approx(0.5), "the gap can now be non-zero"
+
+
+async def test_deck_order_is_not_always_id_order(seeded_db: Database):
+    """The unseen shuffle was applied after concatenation and did nothing."""
+    from japanese_practice import session as engine
+
+    orders = set()
+    for _ in range(15):
+        deck = await engine.build_deck(seeded_db, "hiragana:gojuon", "recognition", limit=3)
+        orders.add(tuple(c.glyph for c in deck))
+    assert len(orders) > 1, f"deck order never varied: {orders}"
