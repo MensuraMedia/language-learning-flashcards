@@ -263,7 +263,7 @@ async def get_audio(
     returned instead of an exception.
     """
     try:
-        bundled = await _load_bundled(character)
+        bundled = await _load_bundled(character, gender)
         if bundled is not None:
             return bundled
 
@@ -307,15 +307,20 @@ async def get_audio(
 # --------------------------------------------------------------------------
 
 
-async def _load_bundled(character: Character) -> tuple[bytes, str] | None:
-    """Load a hand-recorded clip for ``character``, or ``None`` if there is none."""
+async def _load_bundled(character: Character, gender: str = "female") -> tuple[bytes, str] | None:
+    """Load a validated bundled clip for ``character`` in ``gender``.
+
+    Clips live at ``static/audio/<script>/<voice>/<glyph>.<ext>`` — the layout
+    mirrors how audio is selected, so a missing set is visible in a listing.
+    """
     if character.script not in _VALID_SCRIPTS:
         return None
     glyph = character.glyph
     if not glyph or ".." in glyph or _UNSAFE_GLYPH_CHARS & set(glyph):
         logger.warning("refusing bundled-clip lookup for unsafe glyph %r", glyph)
         return None
-    directory = BUNDLED_AUDIO_DIR / character.script
+    voice = gender if gender in ("female", "male") else "female"
+    directory = BUNDLED_AUDIO_DIR / character.script / voice
     for suffix, mimetype in _BUNDLED_FORMATS:
         data = await _read_bytes(directory / f"{glyph}{suffix}")
         if data:

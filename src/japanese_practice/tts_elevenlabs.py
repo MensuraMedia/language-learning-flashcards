@@ -29,6 +29,7 @@ import os
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal
 
 logger = logging.getLogger(__name__)
@@ -58,13 +59,14 @@ class VoiceProfile:
     gender: Gender
 
 
-# Placeholder defaults. These are shared-library voice ids, NOT verified against
-# the project's ElevenLabs account and NOT verified as natural Japanese
-# narrators. Confirm and replace them — see `list_voices()` below, and the
-# selection criteria in docs/AUDIO.md.
+# Chosen 2026-08-07 by auditioning the candidate slate against a Japanese phrase
+# that exercises long vowels, moraic n, yoon and the geminate (see voicelab.py).
+# Both are middle-aged narration voices with an unhurried delivery — per-character
+# pronunciation needs evenness and clarity, not character. Override per-run with
+# JP_VOICE_FEMALE / JP_VOICE_MALE; re-pick with `voicelab audition`.
 DEFAULT_VOICES: dict[Gender, VoiceProfile] = {
-    "female": VoiceProfile("EXAVITQu4vr4xnSDxMaL", "Sarah (placeholder)", "female"),
-    "male": VoiceProfile("TX3LPaxmHKxFdv7VOQHJ", "Liam (placeholder)", "male"),
+    "female": VoiceProfile("XrExE9yKIg1WjnnlVkGX", "Matilda", "female"),
+    "male": VoiceProfile("onwK4e9ZLuTAKqWW03F9", "Daniel", "male"),
 }
 
 # Language-learning delivery: minimal expressiveness, maximum consistency. A
@@ -79,10 +81,27 @@ VOICE_SETTINGS = {
 }
 
 
+#: Fallback key location, deliberately OUTSIDE the repository so it cannot be
+#: committed by accident. Create it with mode 600.
+KEY_FILE = Path.home() / ".config" / "japanese-practice" / "elevenlabs.key"
+
+
 def api_key() -> str | None:
-    """The API key from the environment, or ``None`` when unconfigured."""
+    """The API key: environment first, then the private key file.
+
+    The environment wins so CI and one-off runs can override without touching
+    disk. The key file exists because a desktop app launched from a menu has no
+    shell to export a variable in.
+    """
     key = os.environ.get("ELEVENLABS_API_KEY", "").strip()
-    return key or None
+    if key:
+        return key
+    try:
+        if KEY_FILE.is_file():
+            return KEY_FILE.read_text(encoding="utf-8").strip() or None
+    except OSError:
+        logger.warning("could not read %s", KEY_FILE, exc_info=True)
+    return None
 
 
 def is_configured() -> bool:

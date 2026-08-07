@@ -67,3 +67,9 @@
 | 2026-08-07T03:56:00 | FIX: wired CONFUSION_PAIRS into build_choices — 45 curated traps were dead data |
 | 2026-08-07T03:58:00 | FIX: added voicing-sibling distractors so han-dakuon finally tests は/ば/ぱ |
 | 2026-08-07T04:00:00 | FIX: closed the free-skip loophole — arrow-right no longer bypasses grading |
+| 2026-08-07T04:10:00 | ElevenLabs key verified working (TTS scope only); stored at ~/.config outside the repo |
+| 2026-08-07T04:15:00 | Added voicelab.py — audition/cost/build/verify toolset for pronunciation clip sets |
+| 2026-08-07T04:20:00 | Auditioned 9 candidate voices; selected Matilda (female) and Daniel (male) on measured pace |
+| 2026-08-07T04:30:00 | Built 630 clips (315 characters x 2 voices) — all validated, zero rejected, no drift |
+| 2026-08-07T04:35:00 | /api/audio gained ?voice=female|male; bundled lookup is now per-voice |
+| 2026-08-07T04:40:00 | Added docs/VOICE-LAB.md — MECE decomposition of the whole audio pipeline |

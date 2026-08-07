@@ -166,5 +166,8 @@ async def character_audio(character_id: int) -> Any:
     character = await get_character(get_db(), character_id)
     if character is None:
         return _error("not_found", f"no character {character_id}", 404)
-    payload, mimetype = await audio.get_audio(character)
+    voice = request.args.get("voice", "female")
+    if voice not in ("female", "male"):
+        return _error("invalid_request", f"unknown voice: {voice!r}", 400)
+    payload, mimetype = await audio.get_audio(character, gender=voice)
     return Response(payload, mimetype=mimetype)

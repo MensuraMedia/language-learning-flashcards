@@ -167,10 +167,10 @@ Clearing the cache is safe — it simply re-synthesises.
 | Local clip library + validation | ✅ `audio_library.py`; 26 tests |
 | espeak-ng installed | ✅ 2026-08-06; Japanese voice `ja` present |
 | **End-to-end audio through `/api/audio`** | ✅ **Verified 2026-08-06** — audible WAV, peaks 0.385–0.786, cached to disk |
-| **Called against the live API** | ❌ **Never** — no key available |
-| Real voice IDs chosen | ❌ Placeholders only |
-| `gender` exposed on `/api/audio/<id>` | ❌ Not yet — parameter exists on `get_audio`, the route does not pass it |
-| Bundled clips | ❌ None recorded |
+| **Called against the live API** | ✅ **2026-08-07** — 630 clips rendered and validated |
+| Real voice IDs chosen | ✅ Matilda (female) / Daniel (male) — see [VOICE-LAB.md](VOICE-LAB.md) |
+| `gender` exposed on `/api/audio/<id>` | ✅ `?voice=female\|male` |
+| Bundled clips | ✅ **630** — every character in both voices, validated, manifested |
 
 ### Correction — 2026-08-06
 
