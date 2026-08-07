@@ -81,3 +81,5 @@
 | 2026-08-07T05:20:00 | Evaluated VOICEVOX: ran engine 0.25.2 locally, verified pitch accent on minimal pairs |
 | 2026-08-07T05:25:00 | Added docs/VOICEVOX-EVALUATION.md — verdict: adopt as primary, ElevenLabs as fallback |
 | 2026-08-07T05:28:00 | Roadmap A8 closed; A9-A12 added (integration, shipping model, attribution, pitch-accent aid) |
+| 2026-08-07T05:40:00 | Local backup: git bundle (15 commits) + worktree archive + user data, checksummed |
+| 2026-08-07T05:42:00 | Verified restore — bundle cloned clean, 630 clips intact, 216/216 tests passed from it |

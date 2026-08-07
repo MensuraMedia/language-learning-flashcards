@@ -4,7 +4,7 @@
 It is the single place a new session (human or agent) reads to know where the
 project stands, what is real, what is assumed, and what to do next.
 
-- **Last updated:** 2026-08-07 05:10 UTC-4
+- **Last updated:** 2026-08-07 05:45 UTC-4
 - **Updated by:** session `30934411` (Claude Opus 5)
 - **Project root:** `/home/user/projects/japanese_practice`
 - **Remote:** https://github.com/MensuraMedia/language-learning-flashcards (public)
@@ -272,3 +272,22 @@ chosen deliberately to keep the real address out of public history.
 | `mockups/_reference/JAPANESE-CONTENT-MODEL.md` | Authoritative character data — binding |
 | `changelog.md` | Append-only change log |
 | `.claude/memory/decisions.md` | Architectural decisions with rationale |
+
+---
+
+## 11. Backups
+
+Local backup set at `/home/user/projects/backups/japanese_practice/`, with
+`RESTORE.md` alongside the artefacts.
+
+| Artefact | Holds |
+|---|---|
+| `*.bundle` | Full git history — the authoritative copy |
+| `*-worktree-*.tar.gz` | Working tree **including git-ignored files** (`REPO-ACCESS.md`, `settings.local.json`) |
+| `*-userdata-*.tar.gz` | `~/.local/share/japanese-practice/` — the study database |
+
+The bundle omits ignored files; the tarball omits history. Keep both.
+
+**Verified 2026-08-07:** cloned from the bundle, 630 clips intact, 216/216 tests
+passed from the restored tree. The ElevenLabs key is confirmed absent from every
+artefact. Keep the worktree tarball local — it contains `REPO-ACCESS.md`.
