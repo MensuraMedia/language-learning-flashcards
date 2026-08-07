@@ -88,3 +88,8 @@
 | 2026-08-07T06:00:00 | voicelab gained warm / speakers / accent commands |
 | 2026-08-07T06:02:00 | Added /api/credits + dashboard attribution — required by the VOICEVOX voice terms |
 | 2026-08-07T06:05:00 | Verified fallback: dead engine -> bundled clip in 20ms, zero errors, probe memoised |
+| 2026-08-07T06:15:00 | Auditioned No.7 styles; set No.7 アナウンス (30) as female default on measured consistency |
+| 2026-08-07T06:20:00 | Verified audio reaches the speakers from the pywebview window (sink IDLE -> RUNNING) |
+| 2026-08-07T06:35:00 | Warmed the VOICEVOX cache — 619 clips, 18 MB, zero failures |
+| 2026-08-07T06:40:00 | Verdict hold: correct 1.9s, wrong 2.9s — a miss is when the learner actually studies |
+| 2026-08-07T06:45:00 | Session recap grid: every card at option size, misses in red, romaji beneath |

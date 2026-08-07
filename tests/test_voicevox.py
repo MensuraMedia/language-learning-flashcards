@@ -19,9 +19,11 @@ async def engine_up() -> bool:
 # -- configuration ---------------------------------------------------------
 
 
-def test_default_speakers_are_the_two_mature_narrators():
-    assert vv.speaker_for("female").name == "九州そら"
-    assert vv.speaker_for("male").name == "青山龍星"
+def test_default_speakers_are_the_chosen_narrators():
+    """Chosen on measured per-character consistency — see the audition in
+    docs/VOICEVOX-EVALUATION.md."""
+    assert vv.speaker_for("female").style_id == 30  # No.7 アナウンス
+    assert vv.speaker_for("male").style_id == 13  # 青山龍星
 
 
 def test_speaker_ids_can_be_overridden(monkeypatch):
@@ -48,7 +50,7 @@ def test_speed_defaults_and_survives_a_bad_value(monkeypatch):
 
 def test_credit_names_the_speaker():
     """The licence requires attribution naming the voice, not just the engine."""
-    assert vv.credit("female") == "VOICEVOX:九州そら"
+    assert vv.credit("female") == "VOICEVOX:No.7（アナウンス）"
     assert vv.credit("male") == "VOICEVOX:青山龍星"
 
 

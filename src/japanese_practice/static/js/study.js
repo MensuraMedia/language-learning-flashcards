@@ -16,6 +16,13 @@ const el = (tag, cls, html) => {
   return n;
 };
 
+// How long the verdict stays on screen before the next card. A correct answer
+// needs a beat to register; a wrong one needs longer, because that is the moment
+// the learner actually studies the option they should have picked.
+const REVEAL_CORRECT_MS = 1900;
+const REVEAL_WRONG_MS = 2900;
+const REVEAL_SKIP_MS = 250;
+
 const VOLUME_STEP = 0.1;
 const VOLUME_KEY = "jp.volume";
 const MUTED_KEY = "jp.muted";
@@ -31,6 +38,7 @@ const state = {
   shownAt: 0,
   scheme: "accuracy",
   graded: new Set(),
+  outcomes: new Map(),   // index -> {glyph, answer, correct, skipped}
   locked: false,
   volume: readVolume(),
   muted: readMuted(),
@@ -210,7 +218,15 @@ async function grade(correct, { given = null, skipped = false } = {}) {
   } catch (err) {
     console.error("attempt failed", err);
   }
-  setTimeout(advanceAfterGrade, skipped ? 250 : 900);
+  state.outcomes.set(state.index, {
+    glyph: card.glyph,
+    answer: card.answer,
+    correct: Boolean(correct),
+    skipped: Boolean(skipped),
+  });
+
+  const hold = skipped ? REVEAL_SKIP_MS : correct ? REVEAL_CORRECT_MS : REVEAL_WRONG_MS;
+  setTimeout(advanceAfterGrade, hold);
 }
 
 function advanceAfterGrade() {
@@ -234,7 +250,40 @@ async function finish() {
     <div class="kv"><span class="lbl-sm">Accuracy</span><b class="num">${acc}%</b></div>
     <div class="kv"><span class="lbl-sm">Cards</span><b class="num">${record.total ?? 0}</b></div>
     <div class="kv"><span class="lbl-sm">Best streak</span><b class="num">${record.max_streak ?? 0}</b></div>`;
+
+  renderRecapCards();
   $("recap").hidden = false;
+}
+
+// Every card the session covered, in the order it was seen. Misses are red so
+// the set to re-drill is readable at a glance rather than needing the dashboard.
+function renderRecapCards() {
+  const host = $("recap-cards");
+  if (!host) return;
+  host.innerHTML = "";
+
+  const seen = [...state.outcomes.keys()].sort((a, b) => a - b);
+  if (!seen.length) {
+    $("recap-cards-note").textContent = "";
+    return;
+  }
+
+  seen.forEach((index) => {
+    const o = state.outcomes.get(index);
+    const tile = el("div", "recap-card-tile" + (o.correct ? "" : " is-wrong"));
+    tile.innerHTML =
+      `<span class="rc-glyph jp">${o.glyph}</span>` +
+      `<span class="rc-reading">${o.answer ?? ""}</span>`;
+    tile.title = o.skipped
+      ? `${o.glyph} — skipped`
+      : `${o.glyph} — ${o.correct ? "correct" : "wrong"}`;
+    host.appendChild(tile);
+  });
+
+  const missed = seen.filter((i) => !state.outcomes.get(i).correct).length;
+  $("recap-cards-note").textContent = missed
+    ? `${missed} of ${seen.length} to revisit`
+    : `all ${seen.length} correct`;
 }
 
 function skipCard() {

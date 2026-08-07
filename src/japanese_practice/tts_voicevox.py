@@ -17,7 +17,7 @@ assumed (see ``docs/VOICEVOX-EVALUATION.md``):
 Configuration, all optional::
 
     JP_VOICEVOX_URL     default http://127.0.0.1:50021
-    JP_VOICEVOX_FEMALE  default 16  (九州そら ノーマル)
+    JP_VOICEVOX_FEMALE  default 30  (No.7 アナウンス)
     JP_VOICEVOX_MALE    default 13  (青山龍星 ノーマル)
     JP_VOICEVOX_SPEED   default 0.85
 
@@ -26,7 +26,7 @@ running must see no error — the caller has bundled clips, ElevenLabs and local
 espeak beneath this, and finally a silent stub. Nothing here ever raises.
 
 Attribution: VOICEVOX requires visible credit for generated audio, naming the
-speaker — e.g. ``VOICEVOX:九州そら``. See :data:`ATTRIBUTION`.
+speaker — e.g. ``VOICEVOX:No.7（アナウンス）``. See :data:`ATTRIBUTION`.
 """
 
 from __future__ import annotations
@@ -65,18 +65,25 @@ class Speaker:
     gender: Gender
 
 
-#: Chosen from 43 speakers as the two suited to instruction rather than
-#: character performance. Most VOICEVOX voices have an energetic anime delivery;
-#: these two do not.
+#: Chosen from 43 speakers by audition (2026-08-07), on measured per-character
+#: consistency — the spread of clip durations across single glyphs. Tight spread
+#: means the learner keys on the glyph rather than on how long the audio ran.
 #:
-#: 九州そら 「気品のある大人な声」 — dignified adult female.
-#: 青山龍星 「重厚で低音な声」 — deep, weighty male.
+#:   青山龍星        0.06 s spread   <- 2.5x tighter than anything else
+#:   No.7 アナウンス  0.15 s
+#:   No.7 ノーマル    0.16 s
+#:   九州そら        0.19 s
+#:   No.7 読み聞かせ  0.21 s   (storytelling varies pace for expression)
 #:
-#: Worth auditioning before settling: No.7 has アナウンス (id 30) and 読み聞かせ
-#: (id 31) styles, the only two voices across either provider explicitly built
-#: for announcement and read-aloud delivery.
+#: Female confirmed acceptable by listening; male retained on the measurement.
 DEFAULT_SPEAKERS: dict[Gender, Speaker] = {
-    "female": Speaker(16, "九州そら", "female"),
+    # No.7 アナウンス — an announcer style, purpose-built for clear delivery.
+    # Chosen over 九州そら on measured per-character consistency (0.15 s spread
+    # against 0.19 s) and a brisker read.
+    "female": Speaker(30, "No.7（アナウンス）", "female"),
+    # 青山龍星 — 0.06 s spread across single characters, 2.5x tighter than any
+    # other candidate. Every card takes the same time, so the learner keys on
+    # the glyph rather than on how long the audio ran.
     "male": Speaker(13, "青山龍星", "male"),
 }
 

@@ -119,9 +119,31 @@ unsuitable for instruction. These are the exceptions:
 | もち子さん | ノーマル | 20 | 「明瞭で穏やかな声」 — clear and calm |
 | 冥鳴ひまり | ノーマル | 14 | Neutral female |
 
-**No.7's アナウンス and 読み聞かせ styles deserve a listen before anything else.**
-They are the only two voices in either provider explicitly designed for the job
-this application needs.
+### Audition result — 2026-08-07
+
+All five candidates read the same test phrase and six single characters at
+`speedScale 0.85`. **Spread** is max−min clip duration across the singles: tight
+spread means the learner keys on the glyph rather than on how long the audio ran.
+
+| Voice | ID | Median | **Spread** | Phrase |
+|---|---:|---:|---:|---:|
+| **青山龍星** | 13 | 0.52 s | **0.06 s** | 6.21 s |
+| **No.7 アナウンス** | 30 | 0.49 s | 0.15 s | 5.13 s |
+| No.7 ノーマル | 29 | 0.51 s | 0.16 s | 5.25 s |
+| 九州そら | 16 | 0.52 s | 0.19 s | 9.15 s |
+| No.7 読み聞かせ | 31 | 0.59 s | 0.21 s | 7.62 s |
+
+**Selected: No.7 アナウンス (female, 30) and 青山龍星 (male, 13).**
+
+- 青山龍星 at 0.06 s spread is 2.5× tighter than anything else in the set.
+- No.7 アナウンス beat the initially-chosen 九州そら on consistency (0.15 vs
+  0.19) while reading noticeably brisker.
+- 読み聞かせ was the *least* consistent, which makes sense in hindsight:
+  storytelling delivery varies pace for expression, the opposite of what
+  per-character card audio wants.
+
+The female voice was confirmed acceptable by listening. The male was retained on
+the measurement.
 
 ---
 
