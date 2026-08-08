@@ -187,3 +187,23 @@
   was true when written and wrong after six characters were added to N5. Now
   1,459 / 1,251, and asserted by `test_documented_totals_match_the_seed_set` so
   the drift cannot recur silently.
+
+## 2026-08-08T02:40:00Z — Licence: attribution for derived language-learning apps
+- **LICENSE §5 (new)**: anyone who builds a flash-card, spaced-repetition,
+  character-drill, vocabulary or other language-learning application derived
+  from this project must display an attribution notice naming Mensura Media,
+  reasonably discoverable by an ordinary user — not buried in a source comment.
+  Explicitly covers ports, transpilation and model-assisted rewrites into other
+  languages or frameworks, and covers use of the Curated Data on its own.
+- §5.4 states plainly that attribution grants no rights: a derivative still needs
+  consent under §4.
+- §5.5 states the limits honestly — the obligation binds licensees, not
+  independent creators; no claim is made over ideas, methods, the Japanese
+  language, or the JLPT levels; and nothing restricts discussing or reviewing the
+  project.
+- §7 termination gains a 30-day cure window for a first attribution-only breach.
+- New "Curated Data" and "Derivative Application" definitions in §1.
+- Sections renumbered: old 5–10 are now 6–11. Third-party materials moved from
+  §7 to §8; README updated accordingly.
+- **New `NOTICE` file** with the verbatim attribution text, where it must appear,
+  and the third-party credits this project itself owes.

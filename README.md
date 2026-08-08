@@ -10,6 +10,8 @@ collection.
 
 > **Licence: personal use only.** Commercial use, modification and
 > redistribution require prior written consent — see [LICENSE](LICENSE).
+> **If you build a flash-card or language-learning app from this, attribution to
+> Mensura Media is required** — see [NOTICE](NOTICE) for the exact text.
 
 ---
 
@@ -165,7 +167,27 @@ All rights reserved.
 You may download, run and study this software for your own private learning.
 **Commercial use, modification, redistribution and derivative works require
 prior express written consent.** See [LICENSE](LICENSE) for the full terms,
-including Section 7 on third-party materials that carry their own conditions.
+including Section 8 on third-party materials that carry their own conditions.
+
+### Attribution
+
+If you build a flash-card, spaced-repetition, character-drill, vocabulary or
+other language-learning application derived from this project — **in any
+language, framework or runtime** — or if you use its curated character data,
+groupings, confusion pairs or frequency ordering, **Section 5 requires you to
+credit Mensura Media** somewhere an ordinary user of your app can find it.
+
+[NOTICE](NOTICE) has the exact text to copy and where it goes.
+
+Rewriting the code in another language does not remove the obligation.
+Attribution alone does not grant permission — a derivative application still
+needs consent under Section 4.
+
+This does **not** apply to something you built independently. No claim is made
+over spaced repetition, over multiple-choice drilling, over the kana or kanji
+themselves, or over the JLPT levels — only over this expression of them and this
+compilation of that data. Nothing here restricts discussing, reviewing,
+benchmarking or teaching about the project.
 
 This is a source-available, non-commercial licence. It is **not** an OSI
 open-source licence.

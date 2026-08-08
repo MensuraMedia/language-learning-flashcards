@@ -1,0 +1,62 @@
+Japanese Practice
+Copyright © 2026 Mensura Media (メンスラ・メディア). All rights reserved.
+
+https://github.com/MensuraMedia/language-learning-flashcards
+
+--------------------------------------------------------------------------------
+ATTRIBUTION
+--------------------------------------------------------------------------------
+
+If you build a flash-card, spaced-repetition, character-drill, vocabulary or
+other language-learning application derived from this project — in any
+programming language, framework or runtime — or if you use its curated character
+data, Section 5 of the LICENSE requires you to display the notice below.
+
+Copy this text verbatim:
+
+    Based on Japanese Practice by Mensura Media (メンスラ・メディア).
+    https://github.com/MensuraMedia/language-learning-flashcards
+    Used under the Japanese Practice Personal Use Licence.
+
+If you are using only the character data, groupings, confusion pairs or
+frequency ordering, replace "Based on" with:
+
+    Character data and groupings derived from
+
+WHERE IT GOES
+    - An About / Credits screen reachable from your application's ordinary
+      interface, in legible text
+    - Your README or equivalent front page
+    - A NOTICE, CREDITS or LICENSE file in your repository
+    - The header of any source file containing copied or adapted material
+    - The description or credits of any store or download page
+
+Attribution alone does not grant permission. Building a derivative application
+still requires prior written consent — see Sections 4 and 5.4 of the LICENSE.
+
+Attribution is NOT required for a work you created independently, without
+reference to this project. No claim is made over spaced repetition, over
+multiple-choice drilling, over the kana or kanji themselves, or over the JLPT
+levels — only over this expression of them and this compilation of that data.
+
+--------------------------------------------------------------------------------
+THIRD-PARTY ATTRIBUTION REQUIRED OF THIS PROJECT
+--------------------------------------------------------------------------------
+
+VOICEVOX
+    Pronunciation audio generated at runtime is produced by a locally supplied
+    VOICEVOX engine. VOICEVOX and its voice libraries require attribution
+    naming the speaker. The application displays this credit on the dashboard
+    and it must not be removed.
+
+ElevenLabs
+    The bundled pronunciation clips in src/japanese_practice/static/audio/ were
+    synthesised with ElevenLabs and remain subject to the ElevenLabs terms of
+    service in force at the time of generation.
+
+MensuraMedia/language-learning
+    Character data, readings, meanings, thematic categories and the kanji
+    teaching-frequency ordering derive from the reference charts and flash-card
+    decks in that project.
+
+See Section 8 of the LICENSE for the full third-party table.

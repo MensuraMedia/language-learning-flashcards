@@ -12,7 +12,7 @@ Free Software licence.
 
 - **"Software"** — the source code, documentation, configuration, stylesheets,
   scripts, icons and other materials in this repository, excluding the
-  Third-Party Materials described in Section 7.
+  Third-Party Materials described in Section 8.
 - **"Licensor"** — Mensura Media, the copyright holder.
 - **"You"** — the individual exercising the permissions in this Licence.
 - **"Personal Use"** — use by a natural person for their own private study,
@@ -23,6 +23,18 @@ Free Software licence.
   service; bundling with a product offered for sale; use in paid tuition,
   training or coursework delivery; and internal use by any entity in the course
   of its operations.
+- **"Curated Data"** — the character sets, readings, meanings, thematic
+  categories, visual-confusion pair list, frequency ordering and other compiled
+  data in `src/japanese_practice/content/`, together with the selection,
+  arrangement and correction of that data. Individual Japanese characters are
+  not owned by anyone; the compilation is.
+- **"Derivative Application"** — any software that is a flash-card,
+  spaced-repetition, character-drill, vocabulary or other language-learning
+  application, and that is created wholly or partly by copying, adapting,
+  translating, porting, reimplementing or otherwise deriving from the Software
+  or the Curated Data. Rewriting the Software in another programming language,
+  framework or runtime does not stop the result being a Derivative Application.
+- **"Attribution Notice"** — the notice specified in Section 5.2.
 
 ## 2. Grant of Personal-Use Rights
 
@@ -34,22 +46,27 @@ worldwide, royalty-free, non-exclusive, non-transferable, revocable licence to:
 2. **Read and study** the source code for Personal Use;
 3. **Make a personal backup copy** of the Software.
 
-No other rights are granted, by implication, estoppel or otherwise.
+No other rights are granted, by implication, estoppel or otherwise. **These
+permissions are conditional on Your compliance with Section 5.**
 
 ## 3. Restrictions
 
 Without the **prior express written consent** of the Licensor, You may **not**:
 
 1. **Use the Software for any Commercial Use.**
-2. **Modify, adapt, translate or create derivative works** of the Software.
+2. **Modify, adapt, translate or create derivative works** of the Software,
+   including any Derivative Application.
 3. **Distribute, publish, sublicense, sell, rent, lease or lend** the Software
    or any part of it, in original or modified form.
 4. **Host or make the Software available** to third parties, including as a
    hosted, networked or software-as-a-service offering.
-5. **Incorporate** the Software, or any portion of it, into another work.
+5. **Incorporate** the Software, the Curated Data, or any portion of either,
+   into another work.
 6. **Remove, obscure or alter** any copyright, attribution or licence notice,
-   including the third-party attributions required by Section 7.
-7. **Use any name, logo or trademark** of the Licensor.
+   including the Attribution Notice required by Section 5 and the third-party
+   attributions required by Section 8.
+7. **Use any name, logo or trademark** of the Licensor, except as Section 5
+   requires for attribution.
 8. **Reverse engineer** the Software except to the limited extent that such
    restriction is expressly prohibited by applicable law.
 
@@ -68,7 +85,98 @@ Consent is valid only if given in writing and signed or otherwise
 unambiguously issued by the Licensor. Silence, inaction or continued
 availability of the Software is **not** consent.
 
-## 5. Contributions
+**Attribution under Section 5 is a standing condition of any consent granted.**
+Consent to build, publish or commercialise a Derivative Application never
+removes the attribution obligation unless the Licensor waives it expressly and
+in writing.
+
+## 5. Attribution
+
+### 5.1 When attribution is required
+
+You must display the Attribution Notice, in the manner set out in Section 5.3,
+whenever You do any of the following:
+
+1. Distribute, publish or make available the Software or any part of it, under
+   consent granted per Section 4;
+2. Publish, distribute, host or make available **any Derivative Application**;
+3. Use the **Curated Data**, or any substantial part of it, in any other
+   software, dataset, publication or product — including its selection,
+   arrangement, corrections and groupings, whether or not You reformat it;
+4. Reproduce any protected expression of the Software elsewhere. This includes
+   its structure, sequence and organisation; its module and schema design; its
+   algorithms as expressed here; its comments, identifiers and documentation;
+   and its user-interface text.
+
+For the avoidance of doubt, Sections 5.1(2)–(4) apply **whether or not** the
+result is written in the same programming language, uses the same framework, or
+looks the same. Porting, transpiling, machine-translating or having a model
+rewrite the Software or the Curated Data produces a Derivative Application and
+carries the same obligation.
+
+### 5.2 The Attribution Notice
+
+The Attribution Notice is the following text, reproduced without alteration
+except that You may translate it, provided the name, the URL and the sense are
+preserved:
+
+```
+Based on Japanese Practice by Mensura Media (メンスラ・メディア).
+https://github.com/MensuraMedia/language-learning-flashcards
+Used under the Japanese Practice Personal Use Licence.
+```
+
+Where only the Curated Data is used, "Based on" may be replaced with
+"Character data and groupings derived from".
+
+### 5.3 Where the notice must appear
+
+The Attribution Notice must be **reasonably discoverable by an ordinary user of
+Your work**, not buried where only a developer would find it. Specifically, it
+must appear in **all** of the following that exist for Your work:
+
+| Surface | Requirement |
+|---|---|
+| **The running application** | In an "About", "Credits", "Acknowledgements" or equivalent screen reachable from the ordinary interface, in legible text of a size and contrast comparable to surrounding body text |
+| **Source repository** | In the `README` (or equivalent front page) and in a `NOTICE`, `CREDITS` or `LICENSE` file |
+| **Source files** | In the header of any file that contains copied or adapted material |
+| **Distribution listing** | In the description or credits of any store, package index or download page from which Your work is obtained |
+| **Documentation** | Wherever third-party components or sources are credited |
+
+The notice must not be styled, positioned, coloured or animated so as to make
+it effectively invisible, and it must not be presented in a way that implies the
+Licensor endorses, sponsors or is affiliated with Your work.
+
+### 5.4 Attribution is not a substitute for permission
+
+Displaying the Attribution Notice **does not grant You any rights**. It is a
+condition attached to rights, not a source of them. Building a Derivative
+Application still requires prior express written consent under Section 4;
+attributing the Licensor while doing so without consent is a breach of both
+Section 3 and this Section.
+
+### 5.5 Scope and limits of this Section
+
+Stated plainly, so that this Section is not read to claim more than it does:
+
+1. This Section binds a person who has accepted this Licence in order to obtain,
+   run or study the Software. It is a condition of the permission granted in
+   Section 2.
+2. It does **not** apply to a work created **independently**, without access to
+   or reference to the Software or the Curated Data. Two people can arrive at a
+   flash-card application honestly, and this Licence makes no claim over that.
+3. Copyright does not protect ideas, concepts, methods of operation, facts, or
+   the Japanese language. The Licensor claims **no ownership** of spaced
+   repetition, of multiple-choice drilling, of the kana or kanji themselves, or
+   of the JLPT levels. What is claimed is this expression of them, and this
+   compilation of that data.
+4. Nothing in this Section restricts discussing, describing, reviewing,
+   teaching about, criticising, benchmarking or reporting on the Software, and
+   no attribution obligation arises from doing so.
+5. If any part of this Section is unenforceable in Your jurisdiction, the
+   remainder continues to apply, per Section 11.
+
+## 6. Contributions
 
 Any contribution You submit to the Licensor for inclusion in the Software is
 provided under this Licence, and You grant the Licensor a perpetual,
@@ -76,13 +184,19 @@ irrevocable, worldwide, royalty-free right to use, reproduce, modify,
 sublicense and distribute that contribution without restriction or obligation
 to You.
 
-## 6. Termination
+## 7. Termination
 
 This Licence terminates automatically and immediately if You breach any of its
-terms. On termination You must cease all use and destroy all copies in Your
-possession or control. Sections 5, 7, 8, 9 and 10 survive termination.
+terms, **including the attribution obligations in Section 5**. On termination
+You must cease all use and destroy all copies in Your possession or control.
+Sections 5, 6, 8, 9, 10 and 11 survive termination.
 
-## 7. Third-Party Materials
+Where a breach consists only of a failure to attribute, and You cure it in full
+within 30 days of becoming aware of it — whether or not the Licensor gave
+notice — Your rights are reinstated as of the cure. This applies to a first
+breach only.
+
+## 8. Third-Party Materials
 
 The Software incorporates or interoperates with third-party materials that
 carry **their own separate terms**. This Licence does not grant You any rights
@@ -100,7 +214,7 @@ in them, and nothing here overrides them.
 a Third-Party Material conflict with this Licence, that material's terms govern
 that material.
 
-## 8. No Warranty
+## 9. No Warranty
 
 THE SOFTWARE IS PROVIDED **"AS IS"**, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -110,13 +224,13 @@ FITNESS FOR A PARTICULAR PURPOSE, ACCURACY AND NON-INFRINGEMENT.
 character, reading, meaning or audio pronunciation.** This Software is a study
 aid and must not be relied upon as an authoritative reference.
 
-## 9. Limitation of Liability
+## 10. Limitation of Liability
 
 IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR ITS USE OR OTHER DEALINGS.
 
-## 10. General
+## 11. General
 
 This Licence is the entire agreement between You and the Licensor concerning
 the Software. If any provision is held unenforceable, the remainder continues

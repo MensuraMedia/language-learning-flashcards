@@ -296,7 +296,8 @@ Full register with QA criteria: [ROADMAP.md](ROADMAP.md).
 | `docs/AUDIO.md` | Audio resolution chain, ElevenLabs setup, voice-selection criteria |
 | `docs/FEATURES.md` | Complete feature and function reference |
 | `docs/STACK-VERIFICATION.md` | Stack, modularity and universality audit |
-| `LICENSE` | **Personal use only** — commercial use, modification and redistribution need written consent |
+| `LICENSE` | **Personal use only** — commercial use, modification and redistribution need written consent; §5 requires attribution for any derived language-learning app |
+| `NOTICE` | The exact attribution text a derivative work must display, and where |
 | `docs/ROADMAP.md` | **Every outstanding item with QA acceptance criteria** — start here for what is left |
 | `docs/VOICE-LAB.md` | MECE toolset: credential → selection → derivation → synthesis → validation → storage → consumption |
 | `docs/TESTING.md` | Test suite structure, what each layer proves, coverage gaps |

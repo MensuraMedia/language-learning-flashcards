@@ -3183,3 +3183,19 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
 .set-status { padding: 0 16px 14px; min-height: 16px; }
 .set-status.good { color: var(--amber); }
 .set-status.bad { color: #e0796a; }
+
+/* `.btn` carries `flex: 1` for the study foot's three-across row, which makes
+   it stretch in any other flex container it lands in. These rows want a button
+   its own width. */
+.weak-foot .btn,
+.set-actions .btn,
+.prof-row .btn,
+.prof-new .btn { flex: 0 0 auto; }
+
+/* The empty state is prose, not a tile — let it span the grid rather than being
+   squeezed into an 88px column. */
+.weak-grid > .muted { grid-column: 1 / -1; margin: 0; }
+
+/* project attribution, always present */
+.credits a { color: var(--ink-3); }
+.credits a:hover { color: var(--amber); }

@@ -43,6 +43,9 @@ japanese-practice = "japanese_practice.__main__:main"
 
 [tool.setuptools]
 include-package-data = false
+# NOTICE carries the attribution text a derivative work must display, so it has
+# to travel with the distribution rather than living only in the repository.
+license-files = ["LICENSE", "NOTICE"]
 
 [tool.setuptools.dynamic]
 version = { attr = "japanese_practice.__version__" }
