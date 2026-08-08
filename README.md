@@ -33,6 +33,108 @@ Printed flash cards do not know what you keep getting wrong. This does.
 
 ---
 
+## Screenshots
+
+Real captures from the running desktop window at 1280×860. The study history in
+them is **generated demo data**, not a recording of anyone studying — regenerate
+it with `python tools/demo_data.py --db /tmp/demo.db` and every number below
+reproduces.
+
+### Dashboard
+
+Your landing page and your diagnostic surface. Six headline figures, then one
+shelf per script — each followed immediately by its own memory-training games,
+so the drill and the game for what you are working on sit together.
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+Kanji gets its own accent. Kana is a closed set of 104 sounds you finish; kanji
+is 1,251 characters you chip at for years, and with the two stacked one above
+the other the colour is what tells you which you are looking at.
+
+![Kanji shelf](docs/screenshots/shelf-kanji.png)
+
+### Flash cards
+
+A card shows **one character and nothing else**. Three options sit beside it.
+Choosing scores automatically and flips the card, so a wrong answer still
+teaches.
+
+| Front — the glyph alone | Flipped — reading and audio |
+|---|---|
+| ![Kana card](docs/screenshots/study-kana.png) | ![Kana card, flipped](docs/screenshots/study-kana-flipped.png) |
+
+Kanji cards are graded on the **meaning**, so their options are English — which
+would tell you nothing about how any of them sound. Each option therefore
+carries the reading of the character it stands for, and the tiles are double
+height to fit it.
+
+| Kanji card — readings on every option | Flipped — on'yomi, kun'yomi, romaji |
+|---|---|
+| ![Kanji card](docs/screenshots/study-kanji.png) | ![Kanji card, flipped](docs/screenshots/study-kanji-flipped.png) |
+
+The pace slider under the options scales how long a verdict holds, from
+*relaxed* to *relentless*. A learner who knows the deck should not be held at
+beginner timing for twenty cards.
+
+At the end, every character you saw — misses in red with the romaji beneath.
+This run was answered at random to show the highlighting.
+
+![Session recap](docs/screenshots/session-recap.png)
+
+### Memory games
+
+Nine unscored boards: Match Up, Pelmanism and Confusion Drill, each dealt in
+each of the three scripts. Boards are built from **your weakest characters**.
+
+The Confusion Drill below is stacked with kanji look-alikes, and both halves of
+each pair are always dealt together — 白/百, 太/大, 績/積. A look-alike without
+its partner is just an ordinary memory tile.
+
+![Kanji confusion drill](docs/screenshots/games-confusion.png)
+
+### Measurement
+
+Printed flash cards do not know what you keep getting wrong. Every panel here is
+derived at query time from an append-only attempts table, so a new metric
+applies retroactively to all your history.
+
+**Per-character miss rate.** A map of a *set*, not of your attempt log —
+characters you have never seen appear dashed and empty, because that is the most
+actionable thing the panel can tell you. The colour ramp tops out at 30%: above
+that a character is simply failing, and below it is where the differences you can
+act on live. Click any cell to drill it.
+
+![Per-character miss rate](docs/screenshots/heatmap.png)
+
+**Streak.** Consecutive days, a 28-day activity strip, and the last four weeks by
+sessions, reps and mean accuracy. Streaks count distinct dates rather than
+sessions — two sessions in one evening is one day of the habit.
+
+![Streak](docs/screenshots/streak.png)
+
+**Weak characters.** Recency-weighted, so a miss yesterday outranks one from
+three months ago, and skips weigh more than wrong guesses — guessing wrong still
+shows a partial trace, whereas passing means no recall at all.
+
+![Weak characters](docs/screenshots/weak-characters.png)
+
+**Performance.** Accuracy per session, accuracy by deck, the retention curve
+bucketed by days since a character was last seen, and leeches — the characters
+you relearn and re-forget.
+
+![Performance](docs/screenshots/performance.png)
+
+### Settings
+
+Multiple learners on one machine, each with a **separate database file**. Save
+your progress to a portable file keyed by character, load it back, or reset to
+zero. A reset states exactly what it will remove and cannot fire unconfirmed.
+
+![Settings](docs/screenshots/settings.png)
+
+---
+
 ## Features
 
 Full reference: **[docs/FEATURES.md](docs/FEATURES.md)**

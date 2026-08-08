@@ -126,9 +126,13 @@ function renderBoard(faceDown) {
     const node = el("button", "tile" + (faceDown ? " is-hidden" : ""));
     node.type = "button";
     node.dataset.index = String(index);
+    // Kanji boards pair a glyph with a meaning, and meanings are phrases —
+    // "interval, between" does not fit at the size "kya" is set in.
+    const long = tile.text.length > 9 ? " is-verylong" : tile.text.length > 5 ? " is-long" : "";
+    const faceClass = tile.kind === "glyph" ? "tile-glyph jp" : `tile-reading${long}`;
     node.innerHTML =
       `<span class="tile-face">` +
-      `<span class="${tile.kind === "glyph" ? "tile-glyph jp" : "tile-reading"}">${tile.text}</span>` +
+      `<span class="${faceClass}">${tile.text}</span>` +
       `</span><span class="tile-back"></span>`;
     node.setAttribute(
       "aria-label",
@@ -268,13 +272,15 @@ $("mode-picker").addEventListener("click", (event) => {
   if (!btn) return;
   state.mode = btn.dataset.mode;
   [...$("mode-picker").children].forEach((b) => b.classList.toggle("is-on", b === btn));
-  // Reflect a deep-linked mode in the picker before the first deal.
+  deal();
+});
+
+// Reflect a deep-linked mode in the picker before the first deal. This sat
+// inside the click handler above, so arriving from a dashboard game card dealt
+// the right board while the picker still highlighted Match Up.
 [...$("mode-picker").children].forEach((b) =>
   b.classList.toggle("is-on", b.dataset.mode === state.mode)
 );
-
-deal();
-});
 
 $("pair-picker").addEventListener("click", (event) => {
   const btn = event.target.closest("[data-pairs]");

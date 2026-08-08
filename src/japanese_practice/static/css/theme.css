@@ -2697,7 +2697,22 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
   padding: 6px;
 }
 .tile-glyph { font-family: var(--jp); font-size: 40px; line-height: 1; color: var(--ink); }
-.tile-reading { font-size: 20px; font-weight: 600; color: var(--ink); }
+
+/* A kana tile reads "kya"; a kanji tile reads "interval, between". The reading
+   face has to wrap and shrink rather than run off the edge, which is what it
+   did once kanji boards existed. */
+.tile-reading {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: center;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+.tile-reading.is-long { font-size: 14px; }
+.tile-reading.is-verylong { font-size: 11.5px; }
 
 /* face-down cover, used by Pelmanism */
 .tile-back {

@@ -574,6 +574,23 @@ No bundler, no framework, no build step.
 
 ---
 
+### Regenerating the screenshots
+
+`tools/demo_data.py` writes a fabricated study history — repeats, a stable set
+of problem characters, skips, slow-corrects and a run of consecutive days — so
+every analytics panel has something to render. It is deterministic, so
+regenerating the README screenshots does not silently change every number in
+them.
+
+```bash
+python tools/demo_data.py --db /tmp/demo.db
+JP_DB_PATH=/tmp/demo.db python -m japanese_practice
+```
+
+Point it at a throwaway database, never at your own.
+
+---
+
 ## 9. Command line
 
 ```bash

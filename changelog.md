@@ -207,3 +207,24 @@
   §7 to §8; README updated accordingly.
 - **New `NOTICE` file** with the verbatim attribution text, where it must appear,
   and the third-party credits this project itself owes.
+
+## 2026-08-08T03:20:00Z — Screenshots
+- **New** `tools/demo_data.py`: deterministic generator for a plausible study
+  history (46 sessions, ~1,000 attempts, 31 study days, repeats, stubborn
+  characters, skips), so the analytics panels can be photographed and eyeballed
+  instead of rendering correct-but-empty states.
+- **13 screenshots** captured from the running pywebview window at 1280×860 and
+  committed under `docs/screenshots/`, with a README section covering the
+  dashboard, both card types front and back, the session recap, a memory board,
+  all four measurement panels and the settings dialog.
+- **Two defects found while capturing, both fixed:**
+  - A deep-linked game mode was never reflected in the mode picker. The
+    reflection statement sat *inside* the picker's click handler, so arriving
+    from a dashboard game card dealt the right board while the picker still
+    highlighted Match Up.
+  - Kanji meanings overflowed their board tiles — "interval, between" ran off
+    the edge at the size "kya" is set in. Tile readings now wrap and step down
+    through two smaller sizes.
+- Also fixed: `Drill weak set` stretched full width (`.btn` carries `flex: 1`
+  for the study foot's three-across row), and the weak-characters empty state
+  was squeezed into an 88px grid column.
