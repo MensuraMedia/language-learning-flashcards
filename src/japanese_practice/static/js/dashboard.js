@@ -1,6 +1,8 @@
 // Dashboard: renders the full analytics surface from /api/summary.
 // Charts are inline SVG built here — no library, no external request.
 
+import { playCorrect, setSoundEnabled, soundEnabled } from "./sound.js";
+
 const $ = (id) => document.getElementById(id);
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 const el = (tag, cls, html) => {
@@ -634,13 +636,36 @@ async function loadDataSummary() {
   }
 }
 
+// Painted whenever the dialog opens; wired exactly once. Attaching the listener
+// on open would stack a fresh one every time the dialog is shown.
+function paintSoundToggle() {
+  const toggle = $("snd-toggle");
+  if (toggle) toggle.setAttribute("aria-checked", String(soundEnabled()));
+}
+
+function initSoundToggle() {
+  const toggle = $("snd-toggle");
+  if (!toggle) return;
+  paintSoundToggle();
+  toggle.addEventListener("click", () => {
+    const on = !soundEnabled();
+    setSoundEnabled(on);
+    paintSoundToggle();
+    // Turning it on plays the cue once. A silent switch gives no evidence it
+    // worked, and this is the exact sound the setting governs.
+    if (on) playCorrect();
+  });
+}
+
 function initSettings() {
   const dialog = $("settings");
   if (!dialog) return;
+  initSoundToggle();
 
   const open = () => {
     dialog.hidden = false;
     setStatus("");
+    paintSoundToggle();
     loadProfiles();
     loadDataSummary();
   };

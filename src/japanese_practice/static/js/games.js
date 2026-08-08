@@ -4,6 +4,8 @@
 // weakest characters — a generic memory game with kana on it trains spatial
 // memory; a board built from what you keep missing trains the failure.
 
+import { playCorrect, primeCue } from "./sound.js";
+
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, html) => {
   const n = document.createElement(tag);
@@ -173,6 +175,9 @@ function pick(index) {
   const isPair = ta.pair_id === tb.pair_id && ta.kind !== tb.kind;
 
   if (isPair) {
+    // A correct pairing is a correct choice, so it gets the same cue the study
+    // card does — the feedback should not depend on which view you are in.
+    playCorrect();
     state.matched.add(ta.pair_id);
     [a, b].forEach((i) => tileNode(i).classList.add("is-matched"));
     state.selected = [];
@@ -266,6 +271,7 @@ $("script-picker").addEventListener("click", (event) => {
   b.classList.toggle("is-on", b.dataset.script === state.script)
 );
 applyScriptCopy();
+primeCue();
 
 $("mode-picker").addEventListener("click", (event) => {
   const btn = event.target.closest("[data-mode]");

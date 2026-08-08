@@ -284,3 +284,26 @@
 - `.recap-act` gains `margin-top: 22px`. The Back to dashboard action sat tight
   under the card grid, reading as another row of it rather than as the control
   that closes the summary.
+
+## 2026-08-08T05:50:00Z — Correct-answer sound cue and an audio toggle
+- New `static/js/sound.js`: one shared cue, imported by the study, games and
+  dashboard modules. Plays on a correct answer in the study view and on a
+  matched pair in the games — the feedback should not depend on which view you
+  are in.
+- Fired **before** the attempt is posted, not after: the cue is feedback on the
+  click, and waiting on the round trip put it noticeably late.
+- **Settings → Audio → Sound** master switch (`jp.sound`). Off silences the cue
+  and pronunciation everywhere. It composes with the study view's `M` mute and
+  volume: a cue is heard only when the master is on and nothing is muted.
+  Turning it on plays the cue once, so the switch proves itself.
+- **Cue trimmed and converted to WAV.** The supplied MP3 had 64 ms of leading
+  silence — pure click-to-sound latency — and ran 1.056 s, still ringing when
+  the next card appeared at the fastest pace. Now 0.320 s with a 2 ms onset.
+  WAV rather than MP3 because MP3's encoder delay left 14 ms of lag even after
+  trimming. Source kept beside it, with the ffmpeg recipe in a README.
+- Tests: the cue must be served, must be audible (decoded and measured, not
+  judged by file size), must start within 20 ms and must be shorter than the
+  fastest verdict hold.
+- `install-desktop.sh` now clears `build/` first. setuptools reuses it, so a
+  file deleted from the tree survived into the wheel — which shipped the removed
+  MP3 once.

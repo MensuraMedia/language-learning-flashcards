@@ -3218,3 +3218,36 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
 /* project attribution, always present */
 .credits a { color: var(--ink-3); }
 .credits a:hover { color: var(--amber); }
+
+/* ── settings: a labelled switch ─────────────────────────────────────────── */
+.set-row { display: flex; align-items: center; gap: 14px; }
+.set-label { display: flex; flex-direction: column; gap: 3px; cursor: pointer; }
+.set-label-t { font-size: 12px; color: var(--ink); }
+.set-label-d { font-size: 10.5px; color: var(--ink-4); line-height: 1.45; max-width: 42ch; }
+
+.switch {
+  flex: 0 0 auto;
+  margin-left: auto;
+  width: 42px;
+  height: 24px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--line-2);
+  background: var(--panel-3);
+  position: relative;
+  cursor: pointer;
+  transition: background .16s var(--ease), border-color .16s var(--ease);
+}
+.switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  transition: transform .16s var(--ease), background .16s var(--ease);
+}
+.switch[aria-checked="true"] { background: var(--amber-soft); border-color: var(--amber-line); }
+.switch[aria-checked="true"] .switch-knob { transform: translateX(18px); background: var(--amber); }
+.switch:focus-visible { outline: 2px solid var(--amber-line); outline-offset: 2px; }

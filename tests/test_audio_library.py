@@ -222,3 +222,47 @@ def test_is_validated_is_safe_for_unsafe_glyphs(tmp_path, monkeypatch):
 def test_scan_of_an_empty_library_is_empty(tmp_path, monkeypatch):
     monkeypatch.setattr(lib, "LIBRARY_ROOT", tmp_path)
     assert lib.scan_library() == []
+
+
+def test_correct_answer_cue_contains_audible_sound():
+    """Guards this project's own rule: never infer audio validity from file size.
+
+    A silent stub of the right length once passed for working synthesis here.
+    The cue is checked by decoding it and measuring amplitude.
+    """
+    import shutil
+    import struct
+    import subprocess
+    from pathlib import Path
+
+    cue = (
+        Path(__file__).resolve().parent.parent
+        / "src/japanese_practice/static/audio/sounds/ding-correct.wav"
+    )
+    assert cue.exists(), "the correct-answer cue is missing"
+
+    if shutil.which("ffmpeg") is None:
+        pytest.skip("ffmpeg unavailable; cannot decode to verify amplitude")
+
+    raw = subprocess.run(
+        ["ffmpeg", "-v", "quiet", "-i", str(cue), "-f", "s16le", "-ac", "1", "-ar", "22050", "-"],
+        capture_output=True,
+        check=True,
+    ).stdout
+    count = len(raw) // 2
+    assert count > 0, "cue decoded to nothing"
+    samples = struct.unpack(f"<{count}h", raw[: count * 2])
+    peak = max(abs(s) for s in samples) / 32768
+    assert peak > 0.05, f"cue is effectively silent (peak {peak:.4f})"
+
+    duration = count / 22050
+    # The fastest pace advances the card 380 ms after a correct answer, so a
+    # longer cue would still be ringing over the next one.
+    assert duration < 0.38, f"cue runs {duration:.3f}s — longer than the fastest verdict hold"
+
+    # Leading silence is latency between the click and the sound, which is the
+    # whole quality bar for a UI cue. The source had 64 ms of it.
+    onset = next(
+        (i / 22050 for i, v in enumerate(samples) if abs(v) > peak * 32768 * 0.02), duration
+    )
+    assert onset < 0.02, f"cue starts {onset * 1000:.0f}ms in — it will feel late"

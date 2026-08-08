@@ -646,3 +646,16 @@ async def test_kana_options_carry_no_readings(client):
         await client.post("/api/session", json={"difficulty": "hiragana:gojuon", "limit": 3})
     ).get_json()
     assert all(card["choice_readings"] == {} for card in created["cards"])
+
+
+# -- UI sound --------------------------------------------------------------
+
+
+async def test_correct_answer_cue_is_served(client):
+    """The cue is a static asset; if it 404s the study view silently loses it."""
+    response = await client.get("/static/audio/sounds/ding-correct.wav")
+    assert response.status_code == 200
+    body = await response.get_data()
+    assert len(body) > 1024
+    # A real RIFF/WAVE header, not an HTML error page returned with a 200.
+    assert body[:4] == b"RIFF" and body[8:12] == b"WAVE"

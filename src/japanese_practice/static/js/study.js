@@ -19,6 +19,8 @@ const el = (tag, cls, html) => {
 // How long the verdict stays on screen before the next card. A correct answer
 // needs a beat to register; a wrong one needs longer, because that is the moment
 // the learner actually studies the option they should have picked.
+import { playCorrect, primeCue, soundEnabled } from "./sound.js";
+
 const REVEAL_CORRECT_MS = 1900;
 const REVEAL_WRONG_MS = 2900;
 const REVEAL_SKIP_MS = 250;
@@ -289,6 +291,10 @@ async function grade(correct, { given = null, skipped = false } = {}) {
   }
   state.graded.add(state.index);
 
+  // Sounded before the network call, not after: this is feedback on the click,
+  // and waiting for the attempt to be recorded would put it noticeably late.
+  if (correct && !skipped) playCorrect();
+
   const latency = Math.round(performance.now() - state.shownAt);
   try {
     const res = await post(`/api/session/${state.sessionId}/attempt`, {
@@ -415,6 +421,7 @@ function skipCard() {
 // ── audio ────────────────────────────────────────────────────────────────────
 
 function effectiveVolume() {
+  if (!soundEnabled()) return 0;   // Settings master switch wins over M
   return state.muted ? 0 : state.volume;
 }
 
@@ -589,5 +596,6 @@ on("help-open", "click", toggleHelp);
 on("help-close", "click", toggleHelp);
 
 applyPace(state.pace, { announce: false });
+primeCue();
 
 start();

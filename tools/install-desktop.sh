@@ -44,6 +44,11 @@ say "prefix : $PREFIX"
 BUILD_TMP="$(mktemp -d)"
 trap 'rm -rf "$BUILD_TMP"' EXIT
 
+# setuptools reuses build/ across runs, so a file deleted from the source tree
+# survives in the wheel until it is cleared. That shipped a removed audio cue
+# once. Start every build from nothing.
+rm -rf "$SRC/build" "$SRC"/src/*.egg-info
+
 PY="${PYTHON:-python3}"
 say "building wheel with $PY"
 "$PY" -m pip install --quiet --upgrade build >/dev/null 2>&1 || true
