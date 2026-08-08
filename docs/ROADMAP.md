@@ -191,6 +191,7 @@ Shipped 2026-08-08; these are the follow-ups it created.
 | ID | Item | Effort | QA — done when |
 |---|---|---|---|
 | **X1** | **Merge on import.** `import_progress` already takes `replace=False` and is tested, but nothing in the UI offers it. Merging a second device's history is the reason the flag exists | S | The load dialog offers Replace or Merge, and merging does not duplicate sessions |
+| **X6** | **Preferences do not survive a restart in the desktop window.** The webview accepts `localStorage` writes and drops them, so `prefs.js` keeps them in memory for the session. Persisting them means storing preferences server-side, per profile — which is also how X2 gets solved | M | Pace, voice, volume and cue survive relaunching the app |
 | **X2** | **Per-profile preferences.** Pace, voice, volume and mute live in `localStorage`, so they are per-browser rather than per-profile. Two learners on one machine share them | M | Switching profiles switches preferences with it |
 | **X3** | **Automatic backup before destructive actions.** Reset and replace-on-import both destroy history behind a `confirm()`. A silent snapshot first would make either recoverable | S | A timestamped copy is written before either action, and is documented |
 | **X4** | **Profile rename.** Create and delete exist; rename does not, so a typo means recreating and re-importing | S | Renaming preserves the database and its history |

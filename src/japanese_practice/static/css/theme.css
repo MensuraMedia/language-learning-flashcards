@@ -3251,3 +3251,43 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
 .switch[aria-checked="true"] { background: var(--amber-soft); border-color: var(--amber-line); }
 .switch[aria-checked="true"] .switch-knob { transform: translateX(18px); background: var(--amber); }
 .switch:focus-visible { outline: 2px solid var(--amber-line); outline-offset: 2px; }
+
+/* ── correct-answer cue picker ───────────────────────────────────────────── */
+.cue-pick {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 6px;
+  margin-top: 12px;
+}
+/* Uniform tiles. Grid items stretch to their row, so a hint that wraps to two
+   lines made its whole row taller than the others and the last row — holding a
+   single tile — different again. A fixed height makes every option identical
+   regardless of how long its description runs. */
+.cue-opt {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 2px;
+  height: 52px;
+  padding: 8px 10px;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--panel-2);
+  transition: .14s var(--ease);
+  overflow: hidden;
+}
+.cue-opt:hover { border-color: var(--line-3); background: var(--panel-3); }
+.cue-opt.is-on { border-color: var(--amber-line); background: var(--amber-soft); }
+.cue-name { font-size: 11.5px; color: var(--ink); }
+.cue-opt.is-on .cue-name { color: var(--amber); }
+.cue-hint {
+  font-size: 10px;
+  color: var(--ink-4);
+  line-height: 1.3;
+  /* One line, ellipsised. The full text is on the title attribute. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cue-opt:focus-visible { outline: 2px solid var(--amber-line); outline-offset: 2px; }

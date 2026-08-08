@@ -651,9 +651,12 @@ async def test_kana_options_carry_no_readings(client):
 # -- UI sound --------------------------------------------------------------
 
 
-async def test_correct_answer_cue_is_served(client):
-    """The cue is a static asset; if it 404s the study view silently loses it."""
-    response = await client.get("/static/audio/sounds/ding-correct.wav")
+@pytest.mark.parametrize(
+    "cue_id", ["ding", "chime", "bell", "marimba", "arpeggio", "sparkle", "blip"]
+)
+async def test_every_cue_is_served(client, cue_id):
+    """Cues are static assets; a 404 loses the sound with no visible error."""
+    response = await client.get(f"/static/audio/sounds/cue-{cue_id}.wav")
     assert response.status_code == 200
     body = await response.get_data()
     assert len(body) > 1024

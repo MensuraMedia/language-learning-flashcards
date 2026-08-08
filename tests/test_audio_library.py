@@ -224,11 +224,25 @@ def test_scan_of_an_empty_library_is_empty(tmp_path, monkeypatch):
     assert lib.scan_library() == []
 
 
-def test_correct_answer_cue_contains_audible_sound():
-    """Guards this project's own rule: never infer audio validity from file size.
+CUE_IDS = ("ding", "chime", "bell", "marimba", "arpeggio", "sparkle", "blip")
 
-    A silent stub of the right length once passed for working synthesis here.
-    The cue is checked by decoding it and measuring amplitude.
+#: The study view advances 380 ms after a correct answer at its fastest pace, so
+#: a longer cue would still be ringing over the next card.
+MAX_CUE_SECONDS = 0.38
+
+
+@pytest.mark.parametrize("cue_id", CUE_IDS)
+def test_every_cue_is_audible_prompt_and_short(cue_id):
+    """Guards this project's own rule: never infer audio validity from size.
+
+    A silent stub of exactly the right length once passed for working synthesis
+    here, so each cue is decoded and measured. Three properties matter:
+
+    * **audible** — the first cue shipped at -8 dBFS and, once multiplied by an
+      app gain and system volume, reached the speakers around -19 dBFS. Loud in
+      the file, attenuated in code.
+    * **prompt** — leading silence is latency between the click and the sound.
+    * **short** — see ``MAX_CUE_SECONDS``.
     """
     import shutil
     import struct
@@ -237,15 +251,15 @@ def test_correct_answer_cue_contains_audible_sound():
 
     cue = (
         Path(__file__).resolve().parent.parent
-        / "src/japanese_practice/static/audio/sounds/ding-correct.wav"
+        / f"src/japanese_practice/static/audio/sounds/cue-{cue_id}.wav"
     )
-    assert cue.exists(), "the correct-answer cue is missing"
+    assert cue.exists(), f"cue-{cue_id}.wav is missing"
 
     if shutil.which("ffmpeg") is None:
         pytest.skip("ffmpeg unavailable; cannot decode to verify amplitude")
 
     raw = subprocess.run(
-        ["ffmpeg", "-v", "quiet", "-i", str(cue), "-f", "s16le", "-ac", "1", "-ar", "22050", "-"],
+        ["ffmpeg", "-v", "quiet", "-i", str(cue), "-f", "s16le", "-ac", "1", "-ar", "44100", "-"],
         capture_output=True,
         check=True,
     ).stdout
@@ -253,20 +267,34 @@ def test_correct_answer_cue_contains_audible_sound():
     assert count > 0, "cue decoded to nothing"
     samples = struct.unpack(f"<{count}h", raw[: count * 2])
     peak = max(abs(s) for s in samples) / 32768
-    # Loud in the file, attenuated in code. A quiet asset multiplied by an app
-    # gain and then by system volume reached the speakers at about -19 dBFS,
-    # which is why the cue could not be heard at all.
-    assert peak > 0.80, f"cue is too quiet to hear over system volume (peak {peak:.3f})"
-    assert peak <= 0.99, f"cue is clipping (peak {peak:.3f})"
 
-    duration = count / 22050
-    # The fastest pace advances the card 380 ms after a correct answer, so a
-    # longer cue would still be ringing over the next one.
-    assert duration < 0.38, f"cue runs {duration:.3f}s — longer than the fastest verdict hold"
+    assert peak > 0.80, f"cue-{cue_id} is too quiet to hear (peak {peak:.3f})"
+    assert peak <= 0.99, f"cue-{cue_id} is clipping (peak {peak:.3f})"
 
-    # Leading silence is latency between the click and the sound, which is the
-    # whole quality bar for a UI cue. The source had 64 ms of it.
+    duration = count / 44100
+    assert duration <= MAX_CUE_SECONDS, f"cue-{cue_id} runs {duration:.3f}s"
+
     onset = next(
-        (i / 22050 for i, v in enumerate(samples) if abs(v) > peak * 32768 * 0.02), duration
+        (i / 44100 for i, s in enumerate(samples) if abs(s) > peak * 32768 * 0.02), duration
     )
-    assert onset < 0.02, f"cue starts {onset * 1000:.0f}ms in — it will feel late"
+    assert onset < 0.02, f"cue-{cue_id} starts {onset * 1000:.0f}ms in — it will feel late"
+
+
+def test_the_cue_set_offers_real_variety():
+    """Seven near-identical sounds would not be a choice worth presenting."""
+    import struct
+    import wave
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parent.parent / "src/japanese_practice/static/audio/sounds"
+    signatures = set()
+    for cue_id in CUE_IDS:
+        with wave.open(str(root / f"cue-{cue_id}.wav")) as handle:
+            frames = handle.getnframes()
+            data = struct.unpack(f"<{frames}h", handle.readframes(frames))
+        # Duration and energy distribution together separate a marimba from a
+        # sparkle without needing a spectral analysis in the test suite.
+        early = sum(abs(v) for v in data[: frames // 4]) or 1
+        late = sum(abs(v) for v in data[frames // 2 :])
+        signatures.add((round(frames / 44100, 2), round(late / early, 1)))
+    assert len(signatures) >= 5, f"cues are too alike: {signatures}"

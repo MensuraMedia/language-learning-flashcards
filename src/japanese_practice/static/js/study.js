@@ -19,7 +19,13 @@ const el = (tag, cls, html) => {
 // How long the verdict stays on screen before the next card. A correct answer
 // needs a beat to register; a wrong one needs longer, because that is the moment
 // the learner actually studies the option they should have picked.
+import { readPref, writePref } from "./prefs.js";
 import { playCorrect, primeCue, soundEnabled } from "./sound.js";
+
+// Preferences go through prefs.js, which keeps the authority in memory so a
+// webview without working localStorage still honours what you set.
+const storageGet = (key) => readPref(key);
+const storageSet = (key, value) => writePref(key, value);
 
 const REVEAL_CORRECT_MS = 1900;
 const REVEAL_WRONG_MS = 2900;
@@ -70,21 +76,7 @@ const state = {
 // and this runs at module scope — an unguarded read takes the whole view down
 // before the session ever starts. Preferences are a convenience; losing them
 // must never cost the learner their study session.
-function storageGet(key) {
-  try {
-    return window.localStorage?.getItem(key) ?? null;
-  } catch {
-    return null;
-  }
-}
 
-function storageSet(key, value) {
-  try {
-    window.localStorage?.setItem(key, value);
-  } catch {
-    /* preferences simply do not persist in this context */
-  }
-}
 
 function readVolume() {
   const raw = parseFloat(storageGet(VOLUME_KEY) ?? "1");

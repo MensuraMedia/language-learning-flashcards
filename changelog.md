@@ -335,3 +335,31 @@ suspends it when the window loses focus.
   off, unsupported, blocked, still loading, or played — so an unheard cue can
   say why instead of leaving the user to guess.
 - Test asserts the asset peaks above 0.80 and does not clip.
+
+## 2026-08-08T07:10:00Z — Seven selectable cues, and a toggle that actually works
+- **Cue set**: `ding` (the supplied sound, trimmed and normalised) plus six
+  synthesised by the new `tools/make_cues.py` — chime, bell, marimba, arpeggio,
+  sparkle, blip. Each is a different *character* of positive rather than a
+  different pitch of one sound, because this fires several times a minute.
+  All meet one contract: mono 44.1 kHz WAV, onset < 20 ms, ≤ 380 ms, peak
+  ≈ −0.4 dBFS. Asserted per cue by the suite, which decodes and measures them.
+- **Settings → Audio** gains a picker. Choosing a cue plays it, so nobody
+  chooses blind.
+- **Fixed: the Sound toggle did nothing.** `localStorage` in this webview
+  accepts writes and drops them, so `setSoundEnabled(false)` wrote nothing and
+  the next read returned the old value — the switch repainted itself back on and
+  audio kept playing. This is the third time storage has bitten this project.
+  New `static/js/prefs.js` keeps preferences in memory as the authority for the
+  session and mirrors to `localStorage` best-effort, so a control always
+  reflects what you just did. `study.js` now uses it too, which means pace,
+  volume and voice were silently failing to persist as well.
+  Verified by recording the speakers across six steps: on → sound, off →
+  silence for both the picker and Test sound, back on → sound. Six for six.
+- **Fixed: a preview click was silent if its cue had not finished decoding.**
+  `playCorrect` returned early rather than waiting. It now decodes and plays,
+  bounded at 400 ms so a slow decode is dropped rather than arriving over the
+  next card. This is why five of seven cues made no sound on first use.
+- **Fixed: cue tiles were uneven.** Grid items stretch to their row, so a hint
+  wrapping to two lines made that row taller, and the last row — one tile —
+  different again. Fixed height, single-line hints, full text on the title.
+- Diagnostics report storage availability alongside audio state.

@@ -574,6 +574,38 @@ No bundler, no framework, no build step.
 
 ---
 
+### Correct-answer cues
+
+A short sound plays when a study card is answered correctly and when a memory
+board pairs a match — the same event to a learner, so the same feedback.
+
+| Aspect | Detail |
+|---|---|
+| **Choice of seven** | Ding · Chime · Bell · Marimba · Arpeggio · Sparkle · Blip, picked in Settings → Audio. Choosing one plays it |
+| **API** | Web Audio, not `HTMLAudioElement`. Decoded once into an `AudioBuffer`; each cue is a fresh `BufferSourceNode` through a `GainNode` — sub-millisecond, overlapping safely, with an explicit level |
+| **Autoplay** | The `AudioContext` is unlocked on the first pointer/key/touch event and re-resumed per cue, since the engine suspends it when the window loses focus |
+| **Timing** | Fired *before* the attempt is posted. The cue is feedback on the click; waiting on the round trip put it audibly late |
+| **Level** | Assets peak-normalised to ≈ −0.4 dBFS and attenuated in code. Measured at the speakers: −1.4 dBFS |
+| **Master switch** | Settings → Audio → Sound. Off silences cues *and* pronunciation everywhere. Composes with the study view's `M` mute and volume |
+| **Diagnostics** | `window.jpSound.soundStatus` reports support, context state, decode state, play count, last error and storage availability. **Test sound** in Settings reports which of those is the problem |
+
+Full contract and rationale for the assets:
+[`static/audio/sounds/README.md`](../src/japanese_practice/static/audio/sounds/README.md).
+
+### Preferences and storage
+
+`static/js/prefs.js` holds every `jp.*` preference **in memory as the authority
+for the session**, mirroring to `localStorage` only as a best-effort attempt at
+persisting across restarts.
+
+This is not belt-and-braces. The desktop webview here accepts `localStorage`
+writes and drops them, which made the Settings audio toggle appear inert — the
+write vanished, the next read returned the old value, and the switch repainted
+itself back on. A toggle that does not toggle is worse than an absent one. With
+memory as the authority a control always reflects what you just did, and a
+storage failure degrades to "settings reset when you relaunch" rather than
+"settings do nothing". Settings says which you are getting.
+
 ### Regenerating the screenshots
 
 `tools/demo_data.py` writes a fabricated study history — repeats, a stable set

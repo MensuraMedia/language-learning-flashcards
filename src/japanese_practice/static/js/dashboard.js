@@ -1,8 +1,17 @@
 // Dashboard: renders the full analytics surface from /api/summary.
 // Charts are inline SVG built here — no library, no external request.
 
-import { playCorrect, primeCue, setSoundEnabled, soundEnabled, soundStatus, unlock }
-  from "./sound.js";
+import {
+  CUES,
+  currentCue,
+  playCorrect,
+  primeCue,
+  setCue,
+  setSoundEnabled,
+  soundEnabled,
+  soundStatus,
+  unlock,
+} from "./sound.js";
 
 const $ = (id) => document.getElementById(id);
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
@@ -644,6 +653,52 @@ function paintSoundToggle() {
   if (toggle) toggle.setAttribute("aria-checked", String(soundEnabled()));
 }
 
+// Choosing a cue plays it. Picking a sound you cannot hear first would be
+// choosing blind, and the whole point of offering a set is that one of them
+// suits you better than the others.
+function initCuePicker() {
+  const host = $("cue-pick");
+  if (!host || host.dataset.ready) return;
+  host.dataset.ready = "1";
+
+  const selected = currentCue();
+  CUES.forEach((cue) => {
+    const button = el("button", `cue-opt${cue.id === selected ? " is-on" : ""}`);
+    button.type = "button";
+    button.setAttribute("role", "radio");
+    button.setAttribute("aria-checked", String(cue.id === selected));
+    button.dataset.cue = cue.id;
+    button.title = `${cue.label} — ${cue.hint}`;
+    button.innerHTML =
+      `<span class="cue-name">${cue.label}</span>` +
+      `<span class="cue-hint">${cue.hint}</span>`;
+    host.appendChild(button);
+    // Decode every option up front — 7 files at ~25 KB, and it means the
+    // preview is instant rather than silent on first click.
+    primeCue(cue.id);
+  });
+
+  host.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-cue]");
+    if (!button) return;
+    const id = button.dataset.cue;
+    setCue(id);
+    [...host.children].forEach((b) => {
+      const on = b === button;
+      b.classList.toggle("is-on", on);
+      b.setAttribute("aria-checked", String(on));
+    });
+    unlock();
+    playCorrect(id);
+    const note = $("snd-status");
+    if (note) {
+      note.textContent = soundEnabled()
+        ? ""
+        : "Sound is off — turn it on above to hear this.";
+    }
+  });
+}
+
 function initSoundToggle() {
   const toggle = $("snd-toggle");
   if (!toggle) return;
@@ -659,6 +714,8 @@ function initSoundToggle() {
     if (on) playCorrect();
   });
 
+  initCuePicker();
+
   // A cue that cannot be heard should be able to say why, rather than leaving
   // the user to guess between "off", "blocked" and "broken".
   const test = $("snd-test");
@@ -673,7 +730,9 @@ function initSoundToggle() {
       if (!soundEnabled()) note.textContent = "Sound is off — turn it on above.";
       else if (!soundStatus.supported) note.textContent = "This browser has no Web Audio support.";
       else if (soundStatus.lastError) note.textContent = `Failed: ${soundStatus.lastError}`;
-      else if (soundStatus.plays > before) note.textContent = "Played. Check your system volume if you heard nothing.";
+      else if (soundStatus.plays > before)
+        note.textContent = `Played. ${soundStatus.storage ? "" : soundStatus.storageNote}`.trim() ||
+          "Played. Check your system volume if you heard nothing.";
       else if (!soundStatus.decoded) note.textContent = "Still loading the cue — try again.";
       else note.textContent = `Audio context is ${soundStatus.contextState}.`;
     }, 120);
