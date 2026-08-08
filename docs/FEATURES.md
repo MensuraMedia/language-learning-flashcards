@@ -589,8 +589,9 @@ board pairs a match — the same event to a learner, so the same feedback.
 | **Master switch** | Settings → Audio → Sound. Off silences cues *and* pronunciation everywhere. Composes with the study view's `M` mute and volume |
 | **Diagnostics** | `window.jpSound.soundStatus` reports support, context state, decode state, play count, last error and storage availability. **Test sound** in Settings reports which of those is the problem |
 
-Full contract and rationale for the assets:
-[`static/audio/sounds/README.md`](../src/japanese_practice/static/audio/sounds/README.md).
+Full reference — the cue set, the Web Audio graph, autoplay unlocking, levels,
+how it was verified and how to add a cue: **[INTERFACE-SOUND.md](INTERFACE-SOUND.md)**.
+Asset contract: [`static/audio/sounds/README.md`](../src/japanese_practice/static/audio/sounds/README.md).
 
 ### Preferences
 

@@ -53,6 +53,8 @@ works on this project **must**:
 | Frontend JS tests | ❌ 1,679 lines untested; no runner, `node` not installed (roadmap Q2) |
 | Licence & attribution | ✅ Personal-use licence with §5 attribution for derived language-learning apps; `NOTICE` ships in the distribution |
 | Screenshots | ✅ 13 in `docs/screenshots/`, regenerable via `tools/demo_data.py` |
+| Correct-answer cues | ✅ Seven selectable sounds on Web Audio; master switch; verified by recording the speaker output |
+| Preferences | ✅ Server-side, per profile — survives navigation and restart |
 | Local desktop install | ✅ **Installed on this machine 2026-08-08.** `tools/install-desktop.sh` — own venv at `~/.local/opt`, launcher on PATH, icon + menu entry. Verified from PATH and from the menu |
 | Packaging / distribution | ❌ Not started |
 
@@ -297,6 +299,9 @@ hook (black + ruff).
 | **`pkill -f japanese_practice` kills the calling shell** | The pattern matches the shell's own command line. Use a narrower pattern |
 | **Never `git checkout <file>` to undo a temporary patch** | That file may also hold uncommitted work. It cost the `/games` route: the route was added, temp-patched for a screenshot, then `git checkout`-ed to undo the patch — which silently deleted the route too. Copy the file aside first, or edit the patch back out |
 | **Firefox headless screenshots are unreliable here** | It restores previous session tabs, times out, and renders app pages BLANK even when the app is correct. It cost significant debugging time chasing a non-bug. **Always verify UI in the real pywebview window** + ImageMagick `import -window <id>` |
+| **`localStorage` in this webview accepts writes and DROPS them** | No exception, no error — the write simply does not persist, and the next read returns the old value. It cost three attempts on one feature. **Never store anything you need back in `localStorage` here.** Preferences go through `/api/preferences`; see INTERFACE-SOUND.md §5 |
+| **`/study` and `/games` are full page navigations** | Not a SPA. Any in-memory state on the dashboard is gone by the time the study view loads. Anything that must cross a view goes to the server |
+| **Audio faults are invisible from the source** | A swallowed `play()` rejection, a dropped storage write and a −19 dBFS level all looked identical to working code. Verify by recording the sink monitor: `parecord --device="$(pactl get-default-sink).monitor" …`, then measure onset, duration, peak and spectral centroid |
 | **The webview caches CSS hard** | `ctrl+r` is not enough — a stylesheet edit can appear not to apply. Restart the process. The `asset_version` stamp handles this for users, not for a running dev window |
 | **Quotes inside `git commit -m "…"`** | A message containing `"` breaks the shell parse and git reports a bogus `pathspec` error. Write the message to a file and use `-F` |
 | **`xdotool` IS installed** | An earlier note here said it was not. `wmctrl`, `import` (ImageMagick) and `xdotool` are all available |
@@ -391,7 +396,8 @@ Full register with QA criteria: [ROADMAP.md](ROADMAP.md).
 | `docs/HANDOFF.md` | **This file** — session-to-session continuity |
 | `docs/ARCHITECTURE.md` | How the system works; stack rationale; supportability, applicability, universality |
 | `docs/BUILD-SPEC.md` | Binding implementation contract — paths, signatures, schema |
-| `docs/AUDIO.md` | Audio resolution chain, ElevenLabs setup, voice-selection criteria |
+| `docs/AUDIO.md` | **Pronunciation**: resolution chain, ElevenLabs setup, voice-selection criteria |
+| `docs/INTERFACE-SOUND.md` | **Interface sound**: the correct-answer cue set, Web Audio graph, and server-side preferences |
 | `docs/FEATURES.md` | Complete feature and function reference |
 | `docs/STACK-VERIFICATION.md` | Stack, modularity and universality audit |
 | `LICENSE` | **Personal use only** — commercial use, modification and redistribution need written consent; §5 requires attribution for any derived language-learning app |

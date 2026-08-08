@@ -387,3 +387,22 @@ suspends it when the window loses focus.
   marimba (0.26 s / 1116 Hz) and not ding (0.32 s / 625 Hz).
 - Six new tests: round trip, merge, unknown-key rejection, oversize rejection,
   `POST` for beacons, and per-profile isolation.
+
+## 2026-08-08T08:20:00Z — Interface sound documented
+- **New** `docs/INTERFACE-SOUND.md`: the cue set with measured characteristics,
+  the asset contract and why each constraint exists, the Web Audio graph and
+  what `HTMLAudioElement` got wrong, autoplay unlocking, the level arithmetic
+  that made the first version inaudible, the three-attempt path to server-side
+  preferences, diagnostics, how to add a cue, and the recording method used to
+  verify all of it.
+- `docs/AUDIO.md` scoped explicitly to **pronunciation**, with a pointer across;
+  the two subsystems share only the master switch.
+- `README.md`, `docs/FEATURES.md` and `docs/HANDOFF.md` cross-linked.
+- **Three environment gotchas recorded in HANDOFF §6**, each of which cost real
+  time on this feature: `localStorage` here accepts writes and drops them;
+  `/study` and `/games` are full page navigations, so nothing in memory crosses
+  a view; and audio faults are invisible from the source, so verification means
+  recording the sink monitor and measuring onset, duration, peak and centroid.
+- Every figure in the new document was checked against the code and the assets
+  rather than written from memory — 7 cues declared and 7 on disk, all mono
+  44.1 kHz, ≤0.38 s, peak 0.95.

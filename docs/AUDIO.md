@@ -1,5 +1,11 @@
 # Audio & Voice — Japanese Practice
 
+> **Scope: pronunciation** — the Japanese being taught, synthesised or
+> played from the bundled clip library. Interface sound (the chime on a
+> correct answer, and the preference system behind it) is a separate
+> subsystem: see [INTERFACE-SOUND.md](INTERFACE-SOUND.md). The two share
+> only the master audio switch.
+
 How pronunciation audio is produced, how the ElevenLabs integration is
 configured, and what makes a voice suitable for language learning.
 

@@ -144,6 +144,7 @@ Full reference: **[docs/FEATURES.md](docs/FEATURES.md)**
 | **Study** | 3-option multiple choice, true 3D flip, skip, back/next navigation, adjustable pace, full keyboard control |
 | **Memory games** | Match Up, Pelmanism, Confusion Drill — in all three scripts, unscored boards dealt from your weakest characters |
 | **Audio** | 630 bundled clips in two voices, plus local Japanese-native VOICEVOX synthesis with editable pitch accent |
+| **Sound cues** | A chime on every correct answer — seven to choose from, or off entirely |
 | **Analytics** | Per-character miss-rate heatmap, weakest-character drill queue, retention curve, mastery by group, leeches, streak calendar, session history |
 | **Content** | Hiragana 104 · Katakana 104 · Kanji 1,251 across JLPT N5–N1 plus Top 200/500 by frequency — extracted from the reference workbooks |
 | **Scoring** | Four schemes: accuracy, speed, streak, SM-2 spaced repetition |
@@ -268,6 +269,7 @@ frontend.
 | Document | Contents |
 |---|---|
 | [FEATURES.md](docs/FEATURES.md) | Complete feature and function reference |
+| [INTERFACE-SOUND.md](docs/INTERFACE-SOUND.md) | The correct-answer cue system, and the preference layer behind it |
 | [RELEASE-NOTES.md](docs/RELEASE-NOTES.md) | What changed each cycle, why, and what it cost |
 | [STACK-VERIFICATION.md](docs/STACK-VERIFICATION.md) | Stack, modularity and universality audit |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the system works; supportability |
