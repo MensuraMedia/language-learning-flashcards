@@ -136,15 +136,28 @@ function render() {
   if (card.script === "kanji") {
     $("back-sound").textContent = "";
     $("back-meaning").textContent = card.meaning || "";
+    // Readings carry their romaji: the options on a kanji card are English, so
+    // the kana are reference material, and reference you cannot read is not.
+    const krow = (label, kana, romaji) =>
+      `<div class="krow"><em>${label}</em>` +
+      `<span class="kread"><span class="jp">${kana}</span>` +
+      (romaji ? `<span class="kroma">${romaji}</span>` : "") +
+      `</span></div>`;
     const rows = [];
-    if (card.onyomi) rows.push(`<div class="krow"><em>on</em><span class="jp">${card.onyomi}</span></div>`);
-    if (card.kunyomi) rows.push(`<div class="krow"><em>kun</em><span class="jp">${card.kunyomi}</span></div>`);
+    if (card.onyomi) rows.push(krow("on", card.onyomi, card.onyomi_romaji));
+    if (card.kunyomi) rows.push(krow("kun", card.kunyomi, card.kunyomi_romaji));
     $("back-readings").innerHTML = rows.join("");
   } else {
     $("back-sound").textContent = card.romaji || "";
     $("back-meaning").textContent = "";
     $("back-readings").innerHTML = "";
   }
+
+  // English meanings need far more room than a two-letter romaji reading, and
+  // kanji carry their own accent so the script you are in is never in doubt.
+  const isKanji = card.script === "kanji";
+  $("choices").classList.toggle("wide", isKanji);
+  document.body.classList.toggle("theme-kanji", isKanji);
 
   state.furthest = Math.max(state.furthest, state.index);
   renderChoices(card);
@@ -162,11 +175,20 @@ function renderChoices(card) {
   host.innerHTML = "";
   state.locked = state.graded.has(state.index);
 
+  const readings = card.choice_readings || {};
   (card.choices || []).forEach((option, i) => {
     const button = el("button", "choice");
     button.type = "button";
-    button.innerHTML = `<span class="key">${i + 1}</span><span class="txt">${option}</span>`;
-    button.setAttribute("aria-label", `Option ${i + 1}: ${option}`);
+    // The reading is reference, not the answer — a kanji option is English and
+    // says nothing about how the character sounds without it.
+    const reading = readings[option];
+    button.innerHTML =
+      `<span class="key">${i + 1}</span><span class="txt">${option}</span>` +
+      (reading ? `<span class="opt-read">${reading}</span>` : "");
+    button.setAttribute(
+      "aria-label",
+      reading ? `Option ${i + 1}: ${option}, read ${reading}` : `Option ${i + 1}: ${option}`
+    );
     if (state.locked) button.disabled = true;
     button.addEventListener("click", () => choose(i));
     host.appendChild(button);

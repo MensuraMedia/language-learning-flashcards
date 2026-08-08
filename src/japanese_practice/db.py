@@ -158,6 +158,15 @@ class Database:
                 )
                 await self.connection.commit()
 
+        async with self.connection.execute("PRAGMA table_info(characters)") as cursor:
+            columns = {row[1] for row in await cursor.fetchall()}
+        if "frequency_rank" not in columns:
+            async with self._write_lock:
+                await self.connection.execute(
+                    "ALTER TABLE characters ADD COLUMN frequency_rank INTEGER"
+                )
+                await self.connection.commit()
+
     async def close(self) -> None:
         """Close the connection if it is open."""
         if self._conn is not None:
@@ -273,7 +282,13 @@ def _difficulty_clause(difficulty: str) -> tuple[str, list[Any], int | None]:
         return "script = ?", [script], None
     if script == "kanji":
         if group in KANJI_VOLUME_TIERS:
-            return "script = ?", [script], KANJI_VOLUME_TIERS[group]
+            # Ranked by teaching order, which is not the id order — the levels
+            # seed N5 first, whereas a volume tier crosses every level.
+            return (
+                "script = ? AND frequency_rank IS NOT NULL AND frequency_rank <= ?",
+                [script, KANJI_VOLUME_TIERS[group]],
+                None,
+            )
         return "script = ? AND jlpt_level = ?", [script, group], None
     return "script = ? AND kana_group = ?", [script, group], None
 
@@ -282,11 +297,14 @@ async def characters_for_difficulty(db: Database, difficulty: str) -> list[Chara
     """Every character belonging to a difficulty key, in seed (frequency) order.
 
     ``hiragana:all`` and ``katakana:all`` return the whole script. The kanji
-    volume tiers (``kanji:top200`` / ``kanji:top500``) take the first N kanji in
-    seed order, which the content modules keep in frequency order.
+    volume tiers (``kanji:top200`` / ``kanji:top500``) take the first N by
+    ``frequency_rank``, the teaching order in
+    :mod:`~japanese_practice.content.kanji_frequency`.
     """
     where, params, limit = _difficulty_clause(difficulty)
-    sql = f"{_SELECT_CHARACTER} WHERE {where} ORDER BY id"
+    _, group = parse_difficulty(difficulty)
+    order = "frequency_rank" if group in KANJI_VOLUME_TIERS else "id"
+    sql = f"{_SELECT_CHARACTER} WHERE {where} ORDER BY {order}"
     if limit is not None:
         sql += " LIMIT ?"
         params = [*params, limit]

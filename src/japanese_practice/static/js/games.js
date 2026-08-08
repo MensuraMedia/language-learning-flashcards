@@ -14,11 +14,14 @@ const el = (tag, cls, html) => {
 
 const MISMATCH_HOLD_MS = 900;   // long enough to read the wrong pair
 
-// Deep-linked from the dashboard game cards: /games?mode=pelmanism
-const requestedMode = new URLSearchParams(location.search).get("mode");
+// Deep-linked from the dashboard game cards: /games?mode=pelmanism&script=kanji
+const params = new URLSearchParams(location.search);
+const requestedMode = params.get("mode");
+const requestedScript = params.get("script");
 
 const state = {
   mode: ["matchup", "pelmanism", "confusion"].includes(requestedMode) ? requestedMode : "matchup",
+  script: ["hiragana", "katakana", "kanji"].includes(requestedScript) ? requestedScript : "hiragana",
   pairs: 6,
   tiles: [],
   selected: [],      // indices awaiting resolution
@@ -72,7 +75,11 @@ async function deal() {
   $("g-time").textContent = "0:00";
 
   try {
-    const board = await post("/api/game/board", { mode: state.mode, pairs: state.pairs });
+    const board = await post("/api/game/board", {
+      mode: state.mode,
+      pairs: state.pairs,
+      script: state.script,
+    });
     state.tiles = board.tiles;
     $("g-pairs").textContent = board.pairs;
     $("g-source").textContent =
@@ -223,6 +230,38 @@ function rate(r) {
 }
 
 // ── controls ─────────────────────────────────────────────────────────────────
+
+// What a board pairs and which look-alikes it stacks both depend on the script,
+// so the mode descriptions are rewritten whenever the script changes.
+const SCRIPT_COPY = {
+  hiragana: { cue: "reading", confusables: "あ/お, ぬ/め, る/ろ" },
+  katakana: { cue: "reading", confusables: "シ/ツ, ソ/ン, ク/ワ" },
+  kanji: { cue: "meaning", confusables: "人/入, 大/犬, 問/門" },
+};
+
+function applyScriptCopy() {
+  const c = SCRIPT_COPY[state.script];
+  document.body.classList.toggle("theme-kanji", state.script === "kanji");
+  const matchup = $("desc-matchup");
+  const confusion = $("desc-confusion");
+  if (matchup) matchup.textContent = `All face up — pair each character with its ${c.cue}`;
+  if (confusion) confusion.textContent = `Deliberately full of look-alikes — ${c.confusables}`;
+}
+
+$("script-picker").addEventListener("click", (event) => {
+  const btn = event.target.closest("[data-script]");
+  if (!btn) return;
+  state.script = btn.dataset.script;
+  [...$("script-picker").children].forEach((b) => b.classList.toggle("is-on", b === btn));
+  applyScriptCopy();
+  deal();
+});
+
+// Reflect a deep-linked script in the picker before the first deal.
+[...$("script-picker").children].forEach((b) =>
+  b.classList.toggle("is-on", b.dataset.script === state.script)
+);
+applyScriptCopy();
 
 $("mode-picker").addEventListener("click", (event) => {
   const btn = event.target.closest("[data-mode]");

@@ -74,7 +74,7 @@ function deckNode(deck) {
 }
 
 function renderShelves(decks) {
-  for (const shelf of ["kana", "jlpt", "vol"]) {
+  for (const shelf of ["hiragana", "katakana", "jlpt", "vol"]) {
     const host = $(`shelf-${shelf}`);
     if (!host) continue;
     host.innerHTML = "";
@@ -148,7 +148,9 @@ function renderStats(totals, fve, trend, decks) {
 
 function gameCard(game) {
   const node = el("a", `game-card motif-${game.motif}`);
-  node.href = `/games?mode=${encodeURIComponent(game.mode)}`;
+  node.href =
+    `/games?mode=${encodeURIComponent(game.mode)}` +
+    `&script=${encodeURIComponent(game.script)}`;
   node.setAttribute("aria-label", `${game.name} — ${game.detail}`);
 
   // A miniature of the board. Real characters, so the card previews what it
@@ -177,14 +179,23 @@ function gameCard(game) {
 }
 
 async function renderGames() {
-  const host = $("game-shelf");
-  if (!host) return;
+  // Each script's boards sit directly under that script's decks, so a learner
+  // sees the drill and the game for what they are working on in one place.
+  const rails = ["hiragana", "katakana", "kanji"]
+    .map((script) => [script, $(`games-${script}`)])
+    .filter(([, host]) => host);
+  if (!rails.length) return;
   try {
     const payload = await fetch("/api/games").then((r) => r.json());
-    host.innerHTML = "";
-    (payload.games || []).forEach((g) => host.appendChild(gameCard(g)));
+    const games = payload.games || [];
+    for (const [script, host] of rails) {
+      host.innerHTML = "";
+      const mine = games.filter((g) => g.script === script);
+      mine.forEach((g) => host.appendChild(gameCard(g)));
+      host.hidden = !mine.length;
+    }
   } catch {
-    host.innerHTML = `<p class="muted">Games unavailable.</p>`;
+    for (const [, host] of rails) host.innerHTML = `<p class="muted">Games unavailable.</p>`;
   }
 }
 
@@ -246,30 +257,140 @@ function renderBySet(decks) {
 }
 
 // ── per-character miss-rate heatmap (the headline panel) ─────────────────────
-function renderHeatmap(rows) {
-  const hm = $("heatmap");
-  hm.innerHTML = "";
-  if (!rows.length) {
-    hm.appendChild(el("p", "muted", "No attempts yet."));
+//
+// A map of a *set*, not of your attempt log: every character in the chosen set
+// is on it, including ones never seen. An untouched cell is the most actionable
+// thing the panel can show, and a grid drawn from attempts alone hides them.
+
+// Sets worth mapping. The kanji levels run to several hundred characters, which
+// the grid scrolls rather than truncates — a truncated map lies about coverage.
+const HM_SETS = [
+  { key: "hiragana:all", label: "Hiragana" },
+  { key: "katakana:all", label: "Katakana" },
+  { key: "kanji:N5", label: "Kanji N5" },
+  { key: "kanji:N4", label: "N4" },
+  { key: "kanji:N3", label: "N3" },
+  { key: "kanji:N2", label: "N2" },
+  { key: "kanji:N1", label: "N1" },
+  { key: "kanji:top200", label: "Top 200" },
+];
+
+// Miss rate is clamped at 30% for colour. Above that a character is simply
+// failing; below it is where the differences a learner can act on live, and a
+// 0–100% ramp flattens all of them into the same dim amber.
+const HM_CEILING = 0.3;
+
+const hmState = { key: "hiragana:all", table: false, data: null };
+
+const hmTint = (rate) => {
+  if (rate == null) return "transparent";
+  const t = Math.min(rate / HM_CEILING, 1);
+  return `rgba(var(--amber-rgb),${(t * 0.92 + 0.08).toFixed(3)})`;
+};
+
+function hmCell(r) {
+  const cell = el("button", `hm-cell${r.seen ? "" : " is-unseen"}`);
+  cell.type = "button";
+  cell.textContent = r.glyph;
+  cell.style.background = hmTint(r.miss_rate);
+  if (r.miss_rate != null && r.miss_rate / HM_CEILING > 0.55) cell.style.color = "#0d0d0f";
+  cell.title = r.seen
+    ? `${r.glyph} — seen ${r.seen}, missed ${r.missed} (${pct(r.miss_rate)})`
+    : `${r.glyph} — not yet seen`;
+  cell.setAttribute("aria-label", cell.title);
+  cell.addEventListener("click", () => {
+    location.href = `/study?characters=${r.character_id}`;
+  });
+  return cell;
+}
+
+function hmTable(rows) {
+  const body = rows
+    .slice()
+    // Worst first, then most-seen: the table is a work list, not a census.
+    .sort((a, b) => (b.miss_rate ?? -1) - (a.miss_rate ?? -1) || b.seen - a.seen)
+    .map(
+      (r) => `<tr>
+        <td class="jp hm-t-glyph">${r.glyph}</td>
+        <td class="muted">${r.romaji || r.meaning || ""}</td>
+        <td class="num">${r.seen || "—"}</td>
+        <td class="num">${r.seen ? r.missed : "—"}</td>
+        <td class="num">${r.miss_rate == null ? "—" : pct(r.miss_rate)}</td>
+      </tr>`
+    )
+    .join("");
+  return `<table class="hm-table">
+      <thead><tr><th>Character</th><th>Reading</th><th class="num">Seen</th>
+      <th class="num">Missed</th><th class="num">Miss rate</th></tr></thead>
+      <tbody>${body}</tbody></table>`;
+}
+
+function renderHeatmapView() {
+  const data = hmState.data;
+  const grid = $("heatmap");
+  const wrap = $("hm-table-wrap");
+  if (!data) return;
+
+  grid.hidden = hmState.table;
+  wrap.hidden = !hmState.table;
+
+  if (hmState.table) {
+    wrap.innerHTML = hmTable(data.characters);
+  } else {
+    grid.innerHTML = "";
+    data.characters.forEach((r) => grid.appendChild(hmCell(r)));
+  }
+
+  const parts = [`${data.count} characters`];
+  if (data.set_accuracy != null) parts.push(`set mean ${pct(data.set_accuracy)}`);
+  if (data.weakest) parts.push(`weakest ${data.weakest}`);
+  if (!data.attempted) parts.push("no attempts yet");
+  $("hm-stats").textContent = parts.join(" · ");
+}
+
+async function loadHeatmap(key) {
+  hmState.key = key;
+  document.querySelector(".hm-panel")?.classList.toggle("theme-kanji", key.startsWith("kanji:"));
+  [...$("hm-sets").children].forEach((b) => b.classList.toggle("is-on", b.dataset.key === key));
+  try {
+    hmState.data = await fetch(
+      `/api/heatmap?difficulty=${encodeURIComponent(key)}`
+    ).then((r) => r.json());
+  } catch {
+    $("heatmap").innerHTML = `<p class="muted">Heatmap unavailable.</p>`;
     return;
   }
-  rows.forEach((r) => {
-    const cell = el("button", "hm-cell");
-    cell.type = "button";
-    cell.textContent = r.glyph;
-    // Amber alpha encodes miss rate: transparent = mastered, solid = failing.
-    cell.style.background = `rgba(240,180,41,${(r.miss_rate * 0.85 + 0.05).toFixed(3)})`;
-    cell.style.color = r.miss_rate > 0.5 ? "#0d0d0f" : "var(--ink)";
-    cell.title = `${r.glyph} — seen ${r.seen}, missed ${r.missed} (${pct(r.miss_rate)})`;
-    cell.setAttribute("aria-label", cell.title);
-    cell.addEventListener("click", () => {
-      location.href = `/study?characters=${r.character_id}`;
-    });
-    hm.appendChild(cell);
+  renderHeatmapView();
+}
+
+function initHeatmap() {
+  const sets = $("hm-sets");
+  if (!sets) return;
+  sets.innerHTML = "";
+  HM_SETS.forEach((s) => {
+    const btn = el("button", "seg-btn", s.label);
+    btn.type = "button";
+    btn.dataset.key = s.key;
+    sets.appendChild(btn);
   });
+  sets.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-key]");
+    if (btn) loadHeatmap(btn.dataset.key);
+  });
+
+  const toggle = $("hm-table");
+  toggle.addEventListener("click", () => {
+    hmState.table = !hmState.table;
+    toggle.classList.toggle("is-on", hmState.table);
+    toggle.setAttribute("aria-pressed", String(hmState.table));
+    renderHeatmapView();
+  });
+
   $("hm-scale").innerHTML = [0, 0.25, 0.5, 0.75, 1]
-    .map((v) => `<i style="background:rgba(240,180,41,${(v * 0.85 + 0.05).toFixed(2)})"></i>`)
+    .map((v) => `<i style="background:${hmTint(v * HM_CEILING)}"></i>`)
     .join("");
+
+  loadHeatmap(hmState.key);
 }
 
 // ── accuracy trend ───────────────────────────────────────────────────────────
@@ -318,36 +439,6 @@ function renderRetention(rows) {
 }
 
 
-// ── time of day ──────────────────────────────────────────────────────────────
-function renderTod(rows) {
-  const wrap = $("tod");
-  wrap.innerHTML = "";
-  const active = rows.filter((r) => r.attempts > 0);
-  if (!active.length) return wrap.appendChild(el("p", "muted", "No attempts yet."));
-  const W = 420, H = 170, P = 26;
-  const s = svg(W, H);
-  const x = (h) => P + (h * (W - 2 * P)) / 23;
-  const y = (v) => H - P - v * (H - 2 * P);
-  // Dots, not bars — a bar under a clipped axis would overstate a single attempt.
-  active.forEach((r) => {
-    const c = node("circle", {
-      cx: x(r.hour),
-      cy: y(r.accuracy),
-      r: Math.min(3 + Math.sqrt(r.attempts), 9),
-      class: "dp",
-    });
-    c.appendChild(node("title", {})).textContent = `${String(r.hour).padStart(2, "0")}:00 — ${pct(r.accuracy)} (${r.attempts})`;
-    s.appendChild(c);
-  });
-  [0, 6, 12, 18, 23].forEach((h) => {
-    const t = node("text", { x: x(h), y: H - 8, class: "axis-t", "text-anchor": "middle" });
-    t.textContent = String(h).padStart(2, "0");
-    s.appendChild(t);
-  });
-  wrap.appendChild(s);
-}
-
-// ── weakest characters (drill queue) ─────────────────────────────────────────
 function renderWeak(rows) {
   const box = $("weak");
   box.innerHTML = "";
@@ -355,15 +446,21 @@ function renderWeak(rows) {
   rows.forEach((r) => {
     const card = el("button", "wcard");
     card.type = "button";
-    card.innerHTML = `<span class="jp">${r.glyph}</span>
-      <span class="lbl-sm">${r.romaji || r.meaning || ""}</span>
-      <b class="num">${pct(r.miss_rate)}</b>
-      <span class="lbl-sm">${r.missed}/${r.seen}</span>`;
+    // The bar is the error rate itself, so the cards read as a ranked column
+    // even before you take in the numbers.
+    card.innerHTML = `<span class="jp wc-glyph">${r.glyph}</span>
+      <span class="lbl-sm wc-read">${r.romaji || r.meaning || ""}</span>
+      <b class="num wc-rate">${pct(r.miss_rate)}</b>
+      <span class="wc-bar"><i style="width:${Math.max(6, Math.round(r.miss_rate * 100))}%"></i></span>`;
+    card.title = `${r.glyph} — missed ${r.missed} of ${r.seen}`;
     card.addEventListener("click", () => {
       location.href = `/study?characters=${r.character_id}`;
     });
     box.appendChild(card);
   });
+  const sessions = new Set(rows.map((r) => r.last_seen)).size;
+  $("weak-note").textContent =
+    `${rows.length} flagged · ${sessions ? "rolling 30 sessions" : "all time"}`;
   $("drill-weak").onclick = () => {
     location.href = `/study?characters=${rows.map((r) => r.character_id).join(",")}`;
   };
@@ -387,42 +484,59 @@ function renderLeeches(rows) {
   });
 }
 
-// ── mastery by group ─────────────────────────────────────────────────────────
-function renderMastery(rows) {
-  const box = $("mastery");
-  box.innerHTML = "";
-  rows.forEach((r) => {
-    const share = r.total ? r.mastered / r.total : 0;
-    box.appendChild(
-      el(
-        "div",
-        "bar-row",
-        `<span class="bar-name">${r.script} <em>${r.group}</em></span>
-         <span class="bar-t"><i class="bar-f" style="width:${share * 100}%"></i></span>
-         <b class="bar-val">${r.mastered}/${r.total}</b>`
-      )
-    );
-  });
-}
+// ── streak ───────────────────────────────────────────────────────────────────
+// Four load steps, not a continuous ramp: the question a learner asks of this
+// strip is "did I study, and roughly how hard", which four bands answer and a
+// 256-step gradient does not.
+const LOAD_STEPS = 4;
+const loadTint = (step) =>
+  step === 0 ? "var(--panel-3)" : `rgba(var(--amber-rgb),${(0.22 + step * 0.26).toFixed(2)})`;
 
-// ── streak calendar ──────────────────────────────────────────────────────────
-function renderCalendar(rows) {
-  const box = $("calendar");
-  box.innerHTML = "";
-  const byDate = new Map(rows.map((r) => [r.date, r]));
-  const max = Math.max(...rows.map((r) => r.attempts), 1);
+function renderStreak(days, weeks, streak) {
+  const byDate = new Map(days.map((r) => [r.date, r]));
+  const max = Math.max(...days.map((r) => r.attempts), 1);
+
+  $("streak-days").textContent = streak.longest ?? 0;
+  $("streak-note").textContent =
+    streak.current === streak.longest && streak.longest
+      ? "longest on record · running now"
+      : `longest on record · ${streak.current ?? 0} current`;
+
+  const strip = $("act-strip");
+  strip.innerHTML = "";
   const today = new Date();
-  for (let i = 89; i >= 0; i--) {
+  for (let i = 27; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const key = d.toISOString().slice(0, 10);
     const hit = byDate.get(key);
-    const cell = el("i", "hit");
-    const intensity = hit ? 0.15 + (hit.attempts / max) * 0.85 : 0;
-    cell.style.background = hit ? `rgba(240,180,41,${intensity.toFixed(2)})` : "var(--panel-3)";
+    const step = hit ? Math.max(1, Math.ceil((hit.attempts / max) * LOAD_STEPS)) : 0;
+    const cell = el("i", "act-cell");
+    cell.style.background = loadTint(step);
     cell.title = hit ? `${key} — ${hit.attempts} cards, ${pct(hit.accuracy)}` : `${key} — no study`;
-    box.appendChild(cell);
+    strip.appendChild(cell);
   }
+
+  $("act-scale").innerHTML = [0, 1, 2, 3, 4]
+    .map((v) => `<i style="background:${loadTint(v)}"></i>`)
+    .join("");
+
+  const table = $("wk-table");
+  if (!weeks.length) {
+    table.innerHTML = `<tbody><tr><td class="muted">No activity recorded yet.</td></tr></tbody>`;
+    return;
+  }
+  table.innerHTML =
+    `<thead><tr><th>Week</th><th class="num">Sessions · Reps · Mean acc</th></tr></thead><tbody>` +
+    weeks
+      .map(
+        (w) => `<tr>
+          <td class="wk-label">${w.label} · ${w.week_start.slice(5)}</td>
+          <td class="num">${w.sessions} · ${w.reps} · ${pct(w.accuracy)}</td>
+        </tr>`
+      )
+      .join("") +
+    `</tbody>`;
 }
 
 // ── boot ─────────────────────────────────────────────────────────────────────
@@ -434,17 +548,19 @@ async function main() {
 
   renderShelves(decks);
   renderStats(totals, summary.first_vs_eventual || {}, trend, decks);
-  renderHeatmap(summary.per_character_miss_rate || []);
   renderTrend(trend);
   renderBySet(decks);
   renderRetention(summary.retention_curve || []);
-  renderTod(summary.time_of_day || []);
   renderWeak(summary.weakest_characters || []);
   renderLeeches(summary.leeches || []);
-  renderMastery(summary.mastery_by_group || []);
-  renderCalendar(summary.streak_calendar || []);
+  renderStreak(
+    summary.streak_calendar || [],
+    summary.weekly_activity || [],
+    summary.daily_streak || {}
+  );
   renderHistory(summary.session_history || []);
   renderGames();
+  initHeatmap();
 
   $("tb-streak").textContent = totals.best_streak ?? 0;
   $("tb-sessions").textContent = totals.sessions ?? 0;

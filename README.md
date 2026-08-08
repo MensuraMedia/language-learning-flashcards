@@ -37,18 +37,18 @@ Full reference: **[docs/FEATURES.md](docs/FEATURES.md)**
 
 | Area | Summary |
 |---|---|
-| **Study** | 3-option multiple choice, true 3D flip, skip, back/next navigation, full keyboard control |
-| **Memory games** | Match Up, Pelmanism, Confusion Drill — unscored boards dealt from your weakest characters |
+| **Study** | 3-option multiple choice, true 3D flip, skip, back/next navigation, adjustable pace, full keyboard control |
+| **Memory games** | Match Up, Pelmanism, Confusion Drill — in all three scripts, unscored boards dealt from your weakest characters |
 | **Audio** | 630 bundled clips in two voices, plus local Japanese-native VOICEVOX synthesis with editable pitch accent |
 | **Analytics** | Per-character miss-rate heatmap, weakest-character drill queue, retention curve, mastery by group, leeches, streak calendar, session history |
-| **Content** | Hiragana 104 · Katakana 104 · Kanji JLPT N5 107 — verified against the reference workbooks |
+| **Content** | Hiragana 104 · Katakana 104 · Kanji 1,245 across JLPT N5–N1 plus Top 200/500 by frequency — extracted from the reference workbooks |
 | **Scoring** | Four schemes: accuracy, speed, streak, SM-2 spaced repetition |
 
 ---
 
 ## Status
 
-Working and in daily use. **239 tests passing.**
+Working and in daily use. **248 tests passing.**
 
 | Component | State |
 |---|---|
@@ -56,7 +56,7 @@ Working and in daily use. **239 tests passing.**
 | Memory games | ✅ Complete |
 | Audio — bundled + VOICEVOX | ✅ Complete |
 | Desktop window + browser mode | ✅ Complete |
-| Kanji beyond N5 | ❌ Not seeded — decks exist, characters do not |
+| Kanji N4–N1 + frequency tiers | ✅ Complete — 1,245 characters, 17 decks |
 | Typed-recall mode | ❌ Planned |
 | Packaging (`.deb`, AppImage) | ❌ Planned |
 

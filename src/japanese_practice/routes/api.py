@@ -14,6 +14,7 @@ from quart import Blueprint, Response, current_app, jsonify, request
 from .. import analytics, audio, games, tts_voicevox
 from .. import session as session_engine
 from ..db import Database, available_segments, get_character
+from ..kana import to_romaji
 
 log = logging.getLogger(__name__)
 
@@ -37,10 +38,17 @@ def _error(code: str, message: str, status: int) -> tuple[Response, int]:
     return jsonify({"code": code, "message": message}), status
 
 
-def _card(character: Any, choices: list[str] | None = None) -> dict[str, Any]:
+def _card(
+    character: Any,
+    choices: list[str] | None = None,
+    choice_readings: dict[str, str] | None = None,
+) -> dict[str, Any]:
     """A character as the study view needs it — front and back separated."""
     return {
         "choices": choices or [],
+        # Display-only: how each option's character sounds. Grading still
+        # compares the option text against `answer`.
+        "choice_readings": choice_readings or {},
         "answer": session_engine.answer_text(character),
         "id": character.id,
         "glyph": character.glyph,
@@ -49,6 +57,11 @@ def _card(character: Any, choices: list[str] | None = None) -> dict[str, Any]:
         "meaning": character.meaning,
         "onyomi": character.onyomi,
         "kunyomi": character.kunyomi,
+        # A kanji card is graded on its meaning, so its options are English and
+        # the kana readings are pure reference — useless to a learner who cannot
+        # read them yet. Send the transliteration with them.
+        "onyomi_romaji": to_romaji(character.onyomi),
+        "kunyomi_romaji": to_romaji(character.kunyomi),
         "kana_group": character.kana_group,
         "jlpt_level": character.jlpt_level,
     }
@@ -118,7 +131,9 @@ async def create_session() -> Any:
 
     payload = []
     for card in cards:
-        payload.append(_card(card, await session_engine.build_choices(db, card)))
+        choices = await session_engine.build_choices(db, card)
+        readings = await session_engine.choice_readings(db, card.script, choices)
+        payload.append(_card(card, choices, readings))
 
     return jsonify(
         {
@@ -163,22 +178,33 @@ async def end_session(session_id: int) -> Any:
     return jsonify(asdict(record))
 
 
+@api_bp.get("/heatmap")
+async def heatmap() -> Any:
+    """One difficulty key's characters with their miss rates, seen or not."""
+    key = request.args.get("difficulty", "hiragana:gojuon")
+    try:
+        return jsonify(await analytics.character_grid(get_db(), key))
+    except ValueError as exc:
+        return _error("invalid_request", str(exc), 400)
+
+
 @api_bp.get("/games")
 async def game_catalogue() -> Response:
     """The games the dashboard offers, with a live preview of each board."""
     db = get_db()
     cards = []
-    for card in games.GAME_CARDS:
-        board = await games.build_board(db, mode=card["mode"], pairs=3)
-        cards.append(
-            {
-                **card,
-                # A couple of real characters, so the card previews the board it
-                # will actually deal rather than showing decoration.
-                "preview": [t.text for t in board.tiles if t.kind == "glyph"][:3],
-                "source": board.source,
-            }
-        )
+    for script in games.SCRIPTS:
+        for card in games.game_cards(script):
+            board = await games.build_board(db, mode=card["mode"], pairs=3, script=script)
+            cards.append(
+                {
+                    **card,
+                    # A couple of real characters, so the card previews the board
+                    # it will actually deal rather than showing decoration.
+                    "preview": [t.text for t in board.tiles if t.kind == "glyph"][:3],
+                    "source": board.source,
+                }
+            )
     return jsonify({"games": cards})
 
 
@@ -191,8 +217,9 @@ async def game_board() -> Any:
             get_db(),
             mode=body.get("mode", "matchup"),
             pairs=int(body.get("pairs", games.DEFAULT_PAIRS)),
-            difficulty=body.get("difficulty", "hiragana:gojuon"),
+            difficulty=body.get("difficulty"),
             character_ids=body.get("character_ids") or None,
+            script=body.get("script") or None,
         )
     except ValueError as exc:
         return _error("invalid_request", str(exc), 400)

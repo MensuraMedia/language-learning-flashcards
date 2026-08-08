@@ -14,36 +14,50 @@
   <section class="stats" id="stats"></section>
 
   <!-- ── shelves: every difficulty key as a physical deck ─────────────── -->
-  <section class="sec"><span class="lbl">Kana Shelf</span>
+  <section class="sec"><span class="lbl">Hiragana Shelf</span>
     <span class="lbl-sm">gojuon → dakuon → han-dakuon → yoon → 104 mixed</span></section>
-  <div class="shelf-scroll" id="shelf-kana"></div>
+  <div class="shelf-scroll" id="shelf-hiragana"></div>
+  <div class="game-shelf" id="games-hiragana"></div>
+
+  <section class="sec"><span class="lbl">Katakana Shelf</span>
+    <span class="lbl-sm">the same five rungs, in the script used for loanwords</span></section>
+  <div class="shelf-scroll" id="shelf-katakana"></div>
+  <div class="game-shelf" id="games-katakana"></div>
 
   <section class="sec"><span class="lbl">Kanji Shelf — Proficiency</span>
-    <span class="lbl-sm">JLPT N5 → N1</span></section>
-  <div class="shelf-scroll" id="shelf-jlpt"></div>
+    <span class="lbl-sm">JLPT N5 → N1 · 1,245 characters</span></section>
+  <div class="shelf-scroll theme-kanji" id="shelf-jlpt"></div>
+  <div class="game-shelf theme-kanji" id="games-kanji"></div>
 
   <section class="sec" id="sec-vol"><span class="lbl">Kanji Shelf — Volume</span>
     <span class="lbl-sm">Top 200 → Top 500</span></section>
-  <div class="shelf-scroll" id="shelf-vol"></div>
+  <div class="shelf-scroll theme-kanji" id="shelf-vol"></div>
 
   <!-- ── the diagnostic surface ───────────────────────────────────────── -->
-  <section class="sec"><span class="lbl">Per-character miss rate</span>
-    <span class="lbl-sm">click a character to drill it</span></section>
-  <section class="panel" style="padding:14px">
+  <section class="panel hm-panel">
+    <div class="hm-head">
+      <span class="lbl">Per-character miss rate</span>
+      <span class="lbl-sm">brighter = weaker · click a character to drill it</span>
+      <span class="hm-sets">
+        <span class="lbl-sm">set</span>
+        <span class="seg" id="hm-sets"></span>
+        <button class="seg-btn" id="hm-table" type="button" aria-pressed="false">table</button>
+      </span>
+    </div>
+
     <div class="heatmap" id="heatmap"></div>
-    <div class="hm-legend">
-      <span class="lbl-sm">mastered</span>
-      <span class="hm-scale" id="hm-scale"></span>
-      <span class="lbl-sm">failing</span>
+    <div class="hm-table-wrap" id="hm-table-wrap" hidden></div>
+
+    <div class="hm-foot">
+      <span class="hm-legend">
+        <span class="lbl-sm">miss rate</span>
+        <span class="lbl-sm dim">0%</span>
+        <span class="hm-scale" id="hm-scale"></span>
+        <span class="lbl-sm dim">30%+</span>
+      </span>
+      <span class="lbl-sm" id="hm-stats"></span>
     </div>
   </section>
-
-  <!-- ── memory training: boards, not decks ──────────────────────────── -->
-  <div class="sec" style="margin-top:26px">
-    <span class="lbl">Memory training</span>
-    <span class="lbl-sm">unscored boards, dealt from your weakest characters</span>
-  </div>
-  <div class="game-shelf" id="game-shelf"></div>
 
   <section class="sec" style="margin-top:22px"><span class="lbl">Performance</span></section>
 
@@ -65,23 +79,29 @@
     </section>
 
     <section class="panel">
-      <div class="panel-h"><span class="lbl">Time of day</span></div>
-      <div class="chart-wrap" id="tod" style="padding:12px"></div>
-    </section>
-
-    <section class="panel">
       <div class="panel-h"><span class="lbl">Leeches</span><span class="lbl-sm">re-forgotten</span></div>
       <div class="log-list" id="leeches" style="padding:6px 12px"></div>
     </section>
 
-    <section class="panel span-2">
-      <div class="panel-h"><span class="lbl">Mastery by group</span></div>
-      <div class="bars" id="mastery" style="padding:14px"></div>
-    </section>
-
-    <section class="panel span-all">
-      <div class="panel-h"><span class="lbl">Study calendar</span><span class="lbl-sm">last 90 days</span></div>
-      <div class="cal" id="calendar" style="padding:14px"></div>
+    <section class="panel span-all mod-panel">
+      <div class="panel-h">
+        <span class="mod-dot"></span>
+        <span class="lbl">Streak</span><span class="lbl-sm">28-day activity</span>
+        <span class="mod-id">MOD/STRK-04</span>
+      </div>
+      <div class="streak-body">
+        <div class="streak-hero">
+          <b class="streak-num" id="streak-days">0</b>
+          <span class="streak-cap"><span class="lbl-sm">consecutive days</span>
+            <span class="lbl-sm dim" id="streak-note">longest on record</span></span>
+        </div>
+        <div class="act-strip" id="act-strip" aria-label="Activity over the last 28 days"></div>
+        <div class="act-legend">
+          <span class="lbl-sm dim">load</span>
+          <span class="act-scale" id="act-scale"></span>
+        </div>
+        <table class="wk-table" id="wk-table"></table>
+      </div>
     </section>
   </div>
 
@@ -95,13 +115,17 @@
   </section>
 
   <!-- ── the drill queue ──────────────────────────────────────────────── -->
-  <section class="sec" style="margin-top:22px">
-    <span class="lbl">Cards falling out of the deck</span>
-    <span class="lbl-sm">lowest retention — click to drill</span>
-    <button class="btn go" id="drill-weak" type="button">Drill all →</button>
-  </section>
-  <section class="panel" style="padding:14px">
+  <section class="panel mod-panel" style="margin-top:26px">
+    <div class="panel-h">
+      <span class="mod-dot"></span>
+      <span class="lbl">Weak characters</span><span class="lbl-sm">error rate</span>
+      <span class="mod-id">MOD/WEAK-05</span>
+    </div>
     <div class="weak-grid" id="weak"></div>
+    <div class="weak-foot">
+      <span class="lbl-sm" id="weak-note"></span>
+      <button class="btn go" id="drill-weak" type="button">Drill weak set</button>
+    </div>
   </section>
 
   <!-- attribution: VOICEVOX requires visible credit naming the speaker -->

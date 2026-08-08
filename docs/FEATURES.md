@@ -64,15 +64,27 @@ Every action is reachable without the mouse.
 
 ## 2. Memory games
 
-Three unscored boards on one engine, at `/games`. **Dealt from your weakest
-characters by default** — a generic memory game with kana on it trains spatial
-memory; a board built from what you keep missing trains the failure.
+Three unscored boards on one engine, at `/games`, **each dealt in one of the
+three scripts** — nine games in all. **Seeded from your weakest characters by
+default**: a generic memory game with kana on it trains spatial memory; a board
+built from what you keep missing trains the failure.
 
 | Mode | Loop | Trains |
 |---|---|---|
-| **Match Up** 対応 | All tiles face up; pair each glyph with its reading | Reading → character, the reverse direction no card tests |
+| **Match Up** 対応 | All tiles face up; pair each glyph with what it means or sounds like | Reading → character for kana, Meaning → character for kanji — the direction no card tests |
 | **Pelmanism** 神経衰弱 | The same board face down | Holding a glyph's shape in mind between turns |
-| **Confusion Drill** 紛らわしい | Board stacked with curated look-alikes | Telling シ/ツ, る/ろ, ぬ/め apart |
+| **Confusion Drill** 紛らわしい | Board stacked with curated look-alikes | Telling あ/お, シ/ツ, 像/象 apart |
+
+**Why the script matters.** The same engine trains different things per script.
+A kana board pairs a glyph with its sound; a kanji board pairs it with its
+meaning, because that is what a kanji card is graded on. And the look-alikes a
+learner confuses are disjoint sets — シ/ツ is a katakana problem, る/ろ a
+hiragana one, 問/門 a kanji one. Each script's boards sit directly under that
+script's decks on the dashboard.
+
+Both halves of a confusion pair are always dealt onto the board together. A
+look-alike without its partner is an ordinary memory tile; the discrimination
+only happens when both shapes are in front of you.
 
 - **Board shape**: columns in groups of three, count chosen to minimise the
   row/column difference. 6 pairs is a centred 3×4 block, never a long strip —
@@ -185,8 +197,29 @@ than 0.35 s — it caught a truncated へ at 0.24 s that passed the absolute flo
 |---|---:|---|
 | Hiragana | **104** | 46 gojuon · 20 dakuon · 5 han-dakuon · 33 yoon |
 | Katakana | **104** | same split |
-| Kanji JLPT N5 | **107** | meaning, on'yomi (katakana), kun'yomi (hiragana), stroke count |
-| Confusion pairs | **45** | curated visual look-alikes |
+| Kanji JLPT N5 | **113** | meaning, on'yomi (katakana), kun'yomi (hiragana), stroke count |
+| Kanji JLPT N4 | **169** | meaning, on'yomi, kun'yomi, thematic category |
+| Kanji JLPT N3 | **396** | same |
+| Kanji JLPT N2 | **236** | same |
+| Kanji JLPT N1 | **337** | same |
+| Kanji by frequency | **500** | teaching order, ranked 1–500, slicing the Top 200 and Top 500 tiers |
+| Confusion pairs | **84** | 21 hiragana · 24 katakana · 39 kanji |
+
+**1,453 characters in total**, of which **1,245 are kanji**.
+
+N4–N1 were extracted from the reference charts in the companion
+[language-learning](https://github.com/MensuraMedia/language-learning)
+repository — the project's authority for character data — rather than written
+from memory. The charts give readings in wapuro romaji; conversion to kana is
+mechanical and every one of the 789 distinct readings was verified by
+converting back and comparing. Where a chart states a single reading it does
+not say whether it is on' or kun', so the field is picked by a lexicon built
+from the 664 explicit on/kun pairs; held out against the N1 pairs that rule
+scored **94.6%**. Kanji cards are graded on the *meaning*, so a mislabelled
+reading affects the reference rows on the card back and nothing scored.
+
+One known source defect: the N1 chart gives 沌 the kun'yomi `yodmu`, which is
+not a reading. It is dropped rather than guessed at.
 
 Counts match the reference workbooks exactly. **58 tests** guard the data:
 Hepburn traps (し=shi, ち=chi, つ=tsu, ふ=fu, じ=ji, を=wo, ん=n), forbidden
@@ -309,8 +342,8 @@ Stated so the absences read as decisions, not oversights.
 
 | Absent | Why |
 |---|---|
-| Kanji N4–N1, Joyo | Decks and metadata exist; the characters are not seeded. Shelves stay hidden rather than showing empty cards |
-| Kanji Top 200 / 500 | Frequency rank is not stored, so those keys resolved to "all kanji" and would have advertised the 107-character N5 set as the Top 200 |
+| Joyo grades | The JLPT levels and the frequency tiers are both seeded; the Joyo school-grade axis is not, and no deck advertises it |
+| Stroke counts beyond N5 | The reference charts do not carry them, so N4–N1 leave the field unset rather than filling it with guesses |
 | Typed-recall mode | Planned. Until it exists, "mastery" means recognition at a 33% chance floor, not free recall |
 | `recall`, `timed`, `listening`, `mixed` challenges | Stored and displayed but **not yet branched on** — they currently render as recognition |
 | Accounts, sync, telemetry | Local-first by design |

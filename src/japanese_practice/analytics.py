@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .db import Database
+from .db import KANJI_VOLUME_TIERS, Database, difficulty_label
 
 # Buckets used by the retention curve, in days since the character was last seen.
 RETENTION_BUCKETS = (0, 1, 2, 3, 7, 14, 30)
@@ -66,6 +66,50 @@ async def per_character_miss_rate(db: Database, script: str | None = None) -> li
         where = "WHERE c.script = ?"
         params = (script,)
     return await db.fetch_all(sql.format(where=where), params)
+
+
+async def character_grid(db: Database, key: str) -> dict[str, Any]:
+    """Every character in one difficulty key, whether or not it has been seen.
+
+    The headline heatmap is a map of a *set*, so a character you have never
+    attempted has to appear on it — an empty cell is the most actionable thing
+    the panel can show, and a grid built only from the attempts table silently
+    hides everything untouched.
+    """
+    from .db import DIFFICULTY_KEYS
+
+    if key not in DIFFICULTY_KEYS:
+        raise ValueError(f"unknown difficulty key: {key!r}")
+
+    order = "frequency_rank" if key.split(":", 1)[1] in KANJI_VOLUME_TIERS else "c.id"
+    rows = await db.fetch_all(f"""
+        SELECT c.id AS character_id, c.glyph, c.script, c.romaji, c.meaning,
+               COUNT(a.id) AS seen,
+               COALESCE(SUM(1 - a.correct), 0) AS missed,
+               CASE WHEN COUNT(a.id) > 0
+                    THEN ROUND(CAST(SUM(1 - a.correct) AS REAL) / COUNT(a.id), 4)
+                    ELSE NULL END AS miss_rate
+        FROM characters c
+        LEFT JOIN attempts a ON a.character_id = c.id
+        WHERE c.id IN (SELECT id FROM characters WHERE {_segment_clause(key)})
+        GROUP BY c.id
+        ORDER BY {order}
+        """)
+    attempted = [r for r in rows if r["seen"]]
+    total_seen = sum(r["seen"] for r in attempted)
+    total_missed = sum(r["missed"] for r in attempted)
+    weakest = max(attempted, key=lambda r: (r["miss_rate"], r["seen"]), default=None)
+    return {
+        "key": key,
+        "label": difficulty_label(key),
+        "characters": rows,
+        "count": len(rows),
+        "attempted": len(attempted),
+        # Accuracy over attempts, not the mean of per-character rates: ten tries
+        # at one character should not weigh the same as one try at ten.
+        "set_accuracy": round(1 - total_missed / total_seen, 4) if total_seen else None,
+        "weakest": weakest["glyph"] if weakest else None,
+    }
 
 
 async def confusion_pairs(db: Database, limit: int = 20) -> list[dict[str, Any]]:
@@ -129,19 +173,6 @@ async def retention_curve(db: Database) -> list[dict[str, Any]]:
             }
         )
     return out
-
-
-async def time_of_day_performance(db: Database) -> list[dict[str, Any]]:
-    """Accuracy by hour of day, 0..23, with every hour present."""
-    rows = await db.fetch_all("""
-        SELECT CAST(strftime('%H', answered_at) AS INTEGER) AS hour,
-               COUNT(*) AS attempts,
-               ROUND(AVG(CAST(correct AS REAL)), 4) AS accuracy
-        FROM attempts
-        GROUP BY hour
-        """)
-    by_hour = {r["hour"]: r for r in rows}
-    return [by_hour.get(h, {"hour": h, "attempts": 0, "accuracy": 0.0}) for h in range(24)]
 
 
 async def weakest_characters(db: Database, limit: int = 12) -> list[dict[str, Any]]:
@@ -222,31 +253,68 @@ async def streak_calendar(db: Database, days: int = 90) -> list[dict[str, Any]]:
     )
 
 
-async def mastery_by_group(db: Database) -> list[dict[str, Any]]:
-    """Progress against the real structure of the writing system."""
-    return await db.fetch_all(
+async def weekly_activity(db: Database, weeks: int = 4) -> list[dict[str, Any]]:
+    """Sessions, reps and mean accuracy per week, oldest first.
+
+    Weeks start on Monday. Reported per *week* rather than per day because a
+    single day is too noisy to read a trend from and a month too coarse to act
+    on — a week is the unit a study habit actually has.
+    """
+    rows = await db.fetch_all(
         """
-        WITH stats AS (
-            SELECT c.id, c.script,
-                   COALESCE(c.kana_group, c.jlpt_level, 'ungrouped') AS grp,
-                   COUNT(a.id) AS seen,
-                   CASE WHEN COUNT(a.id) > 0
-                        THEN CAST(SUM(1 - a.correct) AS REAL) / COUNT(a.id)
-                        ELSE 1.0 END AS miss_rate
-            FROM characters c
-            LEFT JOIN attempts a ON a.character_id = c.id
-            GROUP BY c.id
-        )
-        SELECT script, grp AS "group",
-               COUNT(*) AS total,
-               SUM(CASE WHEN seen >= ? AND miss_rate <= ? THEN 1 ELSE 0 END) AS mastered,
-               ROUND(1.0 - AVG(CASE WHEN seen > 0 THEN miss_rate ELSE 1.0 END), 4) AS accuracy
-        FROM stats
-        GROUP BY script, grp
-        ORDER BY script, grp
+        SELECT date(answered_at, 'weekday 0', '-6 days') AS week_start,
+               COUNT(DISTINCT session_id) AS sessions,
+               COUNT(*) AS reps,
+               ROUND(AVG(CAST(correct AS REAL)), 4) AS accuracy
+        FROM attempts
+        GROUP BY week_start
+        ORDER BY week_start DESC
+        LIMIT ?
         """,
-        (MASTERY_MIN_SEEN, MASTERY_MAX_MISS_RATE),
+        (weeks,),
     )
+    # Label relative to the current week: W-0 is this week, W-1 the one before.
+    out = list(reversed(rows))
+    for offset, row in enumerate(reversed(out)):
+        row["label"] = f"W-{offset}"
+    return out
+
+
+async def daily_streak(db: Database) -> dict[str, Any]:
+    """Consecutive days studied, current and longest.
+
+    Counted over distinct dates rather than sessions: two sessions in one
+    evening is one day of the habit, which is what a streak measures.
+    """
+    rows = await db.fetch_all(
+        "SELECT DISTINCT date(answered_at) AS date FROM attempts ORDER BY date"
+    )
+    dates = [r["date"] for r in rows]
+    if not dates:
+        return {"current": 0, "longest": 0, "days_studied": 0}
+
+    from datetime import date as _date
+    from datetime import timedelta
+
+    parsed = [_date.fromisoformat(d) for d in dates]
+    longest = run = 1
+    for previous, current in zip(parsed, parsed[1:], strict=False):
+        run = run + 1 if current - previous == timedelta(days=1) else 1
+        longest = max(longest, run)
+
+    # The current streak survives today being empty — a run only breaks once a
+    # whole day has been missed, otherwise it would read zero every morning.
+    today = _date.today()
+    if (today - parsed[-1]).days > 1:
+        current = 0
+    else:
+        current = 1
+        for previous, nxt in zip(reversed(parsed[:-1]), reversed(parsed[1:]), strict=False):
+            if nxt - previous == timedelta(days=1):
+                current += 1
+            else:
+                break
+    return {"current": current, "longest": longest, "days_studied": len(parsed)}
 
 
 async def leeches(db: Database, limit: int = 10) -> list[dict[str, Any]]:
@@ -346,10 +414,10 @@ async def dashboard_summary(db: Database) -> dict[str, Any]:
         "accuracy_by_session": await accuracy_by_session(db),
         "per_character_miss_rate": await per_character_miss_rate(db),
         "retention_curve": await retention_curve(db),
-        "time_of_day": await time_of_day_performance(db),
         "weakest_characters": await weakest_characters(db),
         "streak_calendar": await streak_calendar(db),
-        "mastery_by_group": await mastery_by_group(db),
+        "weekly_activity": await weekly_activity(db),
+        "daily_streak": await daily_streak(db),
         "leeches": await leeches(db),
         "first_vs_eventual": await first_vs_eventual(db),
         "progress_velocity": await progress_velocity(db),
@@ -371,70 +439,70 @@ async def dashboard_summary(db: Database) -> dict[str, Any]:
 #: shown under the deck title, and the challenge/scoring pairing it opens with.
 DECK_META: dict[str, dict[str, str]] = {
     "hiragana:gojuon": {
-        "shelf": "kana",
+        "shelf": "hiragana",
         "rung": "LV 1 · GOJUON",
         "jp": "ひらがな 五十音",
         "challenge": "recognition",
         "scoring": "accuracy",
     },
     "hiragana:dakuon": {
-        "shelf": "kana",
+        "shelf": "hiragana",
         "rung": "LV 2 · DAKUON",
         "jp": "濁音",
         "challenge": "recall",
         "scoring": "streak",
     },
     "hiragana:handakuon": {
-        "shelf": "kana",
+        "shelf": "hiragana",
         "rung": "LV 3 · HAN-DAKUON",
         "jp": "半濁音",
         "challenge": "recognition",
         "scoring": "accuracy",
     },
     "hiragana:yoon": {
-        "shelf": "kana",
+        "shelf": "hiragana",
         "rung": "LV 4 · YOON",
         "jp": "拗音",
         "challenge": "recall",
         "scoring": "speed",
     },
     "hiragana:all": {
-        "shelf": "kana",
+        "shelf": "hiragana",
         "rung": "LV 5 · MIXED 104",
         "jp": "ひらがな 全104",
         "challenge": "mixed",
         "scoring": "srs",
     },
     "katakana:gojuon": {
-        "shelf": "kana",
+        "shelf": "katakana",
         "rung": "LV 1 · GOJUON",
         "jp": "カタカナ 五十音",
         "challenge": "recognition",
         "scoring": "accuracy",
     },
     "katakana:dakuon": {
-        "shelf": "kana",
+        "shelf": "katakana",
         "rung": "LV 2 · DAKUON",
         "jp": "濁音",
         "challenge": "recall",
         "scoring": "streak",
     },
     "katakana:handakuon": {
-        "shelf": "kana",
+        "shelf": "katakana",
         "rung": "LV 3 · HAN-DAKUON",
         "jp": "半濁音",
         "challenge": "recognition",
         "scoring": "accuracy",
     },
     "katakana:yoon": {
-        "shelf": "kana",
+        "shelf": "katakana",
         "rung": "LV 4 · YOON",
         "jp": "拗音",
         "challenge": "recall",
         "scoring": "speed",
     },
     "katakana:all": {
-        "shelf": "kana",
+        "shelf": "katakana",
         "rung": "LV 5 · MIXED 104",
         "jp": "カタカナ 全104",
         "challenge": "mixed",
@@ -473,6 +541,20 @@ DECK_META: dict[str, dict[str, str]] = {
         "rung": "N1 · LITERARY",
         "jp": "漢字 N1",
         "challenge": "recall",
+        "scoring": "srs",
+    },
+    "kanji:top200": {
+        "shelf": "vol",
+        "rung": "TOP 200",
+        "jp": "頻出漢字 200",
+        "challenge": "recognition",
+        "scoring": "accuracy",
+    },
+    "kanji:top500": {
+        "shelf": "vol",
+        "rung": "TOP 500",
+        "jp": "頻出漢字 500",
+        "challenge": "mixed",
         "scoring": "srs",
     },
     # kanji:top200 / kanji:top500 are deliberately absent. Frequency rank is not
@@ -553,7 +635,13 @@ def _segment_clause(key: str) -> str:
     if script == "kanji" and group.startswith("N"):
         return f"script = 'kanji' AND jlpt_level = '{group}'"
     if script == "kanji":
-        return "script = 'kanji'"
+        # A volume tier is the first N of the teaching order, not every kanji —
+        # without the rank bound the Top 200 deck would report progress across
+        # all 1,245 seeded characters.
+        limit = KANJI_VOLUME_TIERS.get(group)
+        if limit is None:
+            return "script = 'kanji'"
+        return f"script = 'kanji' AND frequency_rank IS NOT NULL AND frequency_rank <= {limit}"
     return f"script = '{script}' AND kana_group = '{group}'"
 
 

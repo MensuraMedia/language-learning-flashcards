@@ -10,6 +10,8 @@ from __future__ import annotations
 import pytest
 import pytest_asyncio
 
+from japanese_practice.db import DIFFICULTY_KEYS
+
 pytestmark = pytest.mark.asyncio
 
 
@@ -59,7 +61,10 @@ async def test_segments_lists_difficulties_with_live_counts(client):
     assert segments["hiragana:gojuon"]["count"] == 46
     assert segments["hiragana:all"]["count"] == 104
     assert segments["katakana:all"]["count"] == 104
-    assert segments["kanji:N5"]["count"] == 107
+    assert segments["kanji:N5"]["count"] == 113
+    assert segments["kanji:N4"]["count"] == 169
+    assert segments["kanji:top200"]["count"] == 200
+    assert segments["kanji:top500"]["count"] == 500
 
 
 async def test_segments_expose_all_three_axes(client):
@@ -75,12 +80,28 @@ async def test_segments_expose_all_three_axes(client):
     assert payload["segments"], "difficulty axis is empty"
 
 
-async def test_empty_segments_are_omitted(client):
-    """Difficulty keys with no seeded characters must not be offered."""
+async def test_every_declared_difficulty_key_is_offered(client):
+    """Every key in the closed set now resolves to characters."""
     payload = await (await client.get("/api/segments")).get_json()
     keys = {s["key"] for s in payload["segments"]}
-    assert "kanji:N1" not in keys, "N1 is unseeded and should not be listed"
+    assert keys == set(DIFFICULTY_KEYS)
     assert all(s["count"] > 0 for s in payload["segments"])
+
+
+async def test_empty_segments_are_omitted(db):
+    """A key with no seeded characters must not be offered.
+
+    Everything bundled is seeded, so the behaviour is exercised against a
+    database holding one script — otherwise this guard would pass vacuously.
+    """
+    from japanese_practice.content.hiragana import HIRAGANA
+    from japanese_practice.content.loader import seed_content
+    from japanese_practice.db import available_segments
+
+    await seed_content(db, HIRAGANA)
+    keys = {s["key"] for s in await available_segments(db)}
+    assert "hiragana:gojuon" in keys
+    assert not any(k.startswith(("katakana:", "kanji:")) for k in keys)
 
 
 # -- summary ---------------------------------------------------------------
@@ -90,7 +111,6 @@ async def test_summary_returns_every_panel_on_a_fresh_install(client):
     payload = await (await client.get("/api/summary")).get_json()
     assert payload["totals"]["attempts"] == 0
     assert payload["per_character_miss_rate"] == []
-    assert len(payload["time_of_day"]) == 24
 
 
 # -- session lifecycle -----------------------------------------------------
@@ -504,3 +524,125 @@ async def test_games_view_links_back_to_the_dashboard(client):
     """Every sub-view must offer a way home."""
     body = await (await client.get("/games")).get_data(as_text=True)
     assert 'href="/"' in body, "no route back to the dashboard"
+
+
+# -- per-script games ------------------------------------------------------
+
+
+async def test_game_catalogue_offers_every_script(client):
+    """Each script gets its own three boards, worded for that script."""
+    payload = await (await client.get("/api/games")).get_json()
+    games = payload["games"]
+    assert len(games) == 9
+    by_script: dict[str, set[str]] = {}
+    for game in games:
+        by_script.setdefault(game["script"], set()).add(game["mode"])
+    assert by_script == {
+        "hiragana": {"matchup", "pelmanism", "confusion"},
+        "katakana": {"matchup", "pelmanism", "confusion"},
+        "kanji": {"matchup", "pelmanism", "confusion"},
+    }
+    kanji = next(g for g in games if g["script"] == "kanji" and g["mode"] == "matchup")
+    kana = next(g for g in games if g["script"] == "hiragana" and g["mode"] == "matchup")
+    assert "Meaning" in kanji["trains"], "a kanji board pairs on meaning"
+    assert "Reading" in kana["trains"], "a kana board pairs on reading"
+
+
+@pytest.mark.parametrize("script", ["hiragana", "katakana", "kanji"])
+async def test_board_is_dealt_from_one_script_only(client, script):
+    board = await (
+        await client.post("/api/game/board", json={"pairs": 5, "script": script})
+    ).get_json()
+    assert board["script"] == script
+    glyphs = [t["text"] for t in board["tiles"] if t["kind"] == "glyph"]
+    assert glyphs
+    ranges = {
+        "hiragana": lambda c: "ぁ" <= c <= "ゟ",
+        "katakana": lambda c: "゠" <= c <= "ヿ",
+        "kanji": lambda c: "一" <= c <= "鿿",
+    }
+    assert all(ranges[script](g[0]) for g in glyphs), f"{script} board leaked another script"
+
+
+async def test_confusion_board_is_script_specific(client):
+    """The look-alikes a learner mixes up differ entirely by script."""
+    board = await (
+        await client.post("/api/game/board", json={"mode": "confusion", "script": "kanji"})
+    ).get_json()
+    glyphs = [t["text"] for t in board["tiles"] if t["kind"] == "glyph"]
+    assert board["source"] == "confusion-pairs"
+    assert all("一" <= g <= "鿿" for g in glyphs)
+
+
+async def test_unknown_script_is_rejected(client):
+    response = await client.post("/api/game/board", json={"script": "hangul"})
+    assert response.status_code == 400
+    assert (await response.get_json())["code"] == "invalid_request"
+
+
+# -- kanji volume tiers ----------------------------------------------------
+
+
+async def test_volume_tiers_slice_the_teaching_order(client):
+    """Top 200 must be the first 200 of Top 500, not the first 200 rows by id."""
+    from japanese_practice.content.kanji_frequency import KANJI_BY_FREQUENCY
+
+    top200 = await (
+        await client.post("/api/session", json={"difficulty": "kanji:top200", "limit": 200})
+    ).get_json()
+    glyphs = [card["glyph"] for card in top200["cards"]]
+    assert len(glyphs) == 200
+    assert set(glyphs) == set(KANJI_BY_FREQUENCY[:200])
+    assert set(KANJI_BY_FREQUENCY[:200]) <= set(KANJI_BY_FREQUENCY[:500])
+
+    # Seeding runs N5 → N1, so the lowest 200 ids are nearly all N5. If the tier
+    # were still the naive id slice these two sets would coincide; they must not.
+    n5_first = await (
+        await client.post("/api/session", json={"difficulty": "kanji:N5", "limit": 200})
+    ).get_json()
+    assert set(glyphs) != {card["glyph"] for card in n5_first["cards"]}
+    assert any(g not in KANJI_BY_FREQUENCY[:113] for g in glyphs)
+
+
+async def test_confusion_board_puts_both_halves_of_a_pair_on_the_board(client):
+    """A look-alike without its partner is just an ordinary memory tile."""
+    from japanese_practice.content.confusions import CONFUSION_PAIRS
+
+    partners: dict[str, set[str]] = {}
+    for a, b in CONFUSION_PAIRS:
+        partners.setdefault(a, set()).add(b)
+        partners.setdefault(b, set()).add(a)
+
+    for script in ("hiragana", "katakana", "kanji"):
+        board = await (
+            await client.post(
+                "/api/game/board", json={"mode": "confusion", "script": script, "pairs": 6}
+            )
+        ).get_json()
+        glyphs = [t["text"] for t in board["tiles"] if t["kind"] == "glyph"]
+        assert board["source"] == "confusion-pairs", script
+        paired = [g for g in glyphs if partners.get(g, set()) & set(glyphs)]
+        assert len(paired) == len(
+            glyphs
+        ), f"{script}: {set(glyphs) - set(paired)} appeared without a partner"
+
+
+async def test_kanji_options_carry_their_readings(client):
+    """A kanji option is English; without the reading it says nothing about sound."""
+    created = await (
+        await client.post("/api/session", json={"difficulty": "kanji:N5", "limit": 5})
+    ).get_json()
+    for card in created["cards"]:
+        readings = card["choice_readings"]
+        assert readings, f"{card['glyph']} offered no readings for its options"
+        # Display only — every reading must be romaji, never raw kana.
+        assert not any("ぁ" <= c <= "ヿ" for r in readings.values() for c in r)
+        assert set(readings) <= set(card["choices"])
+
+
+async def test_kana_options_carry_no_readings(client):
+    """A kana option is already the reading; repeating it would be noise."""
+    created = await (
+        await client.post("/api/session", json={"difficulty": "hiragana:gojuon", "limit": 3})
+    ).get_json()
+    assert all(card["choice_readings"] == {} for card in created["cards"])

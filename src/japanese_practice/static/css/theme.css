@@ -2926,3 +2926,214 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
   color: var(--amber);
   letter-spacing: .04em;
 }
+
+/* ── dashboard shelf headings ───────────────────────────────────────────────
+   With five shelves stacked, each followed by its own games rail, the headings
+   were doing all the work of separating one section from the next while having
+   almost no room to do it in. Give them air above, a gap below, and a little
+   inset so the label is not flush with the card edges beneath it. */
+#dashboard > .sec {
+  margin: 34px 0 6px;
+  padding: 0 6px;
+  gap: 14px;
+}
+/* the first heading follows the instrument row, which already has its own gap */
+#dashboard > .stats + .sec { margin-top: 26px; }
+
+/* a games rail belongs to the shelf above it, so it sits closer to that shelf
+   than the next heading does to the rail */
+#dashboard > .game-shelf { margin: 6px 6px 4px; }
+
+/* ── kanji readings: kana above, romaji below ───────────────────────────── */
+.kread { display: flex; flex-direction: column; gap: 1px; line-height: 1.15; }
+.kroma {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: .05em;
+  color: var(--ink-2);
+}
+
+/* ── kanji options ──────────────────────────────────────────────────────────
+   A kana option is "kya"; a kanji option is "pass through" or
+   "world/generation". The square that suits the first crushes the second, so
+   the column widens and the tiles stop being square when the deck is kanji. */
+.choices.wide { width: clamp(150px, 15vw, 196px); }
+/* Double height: the meaning needs its own line or two, and the reading sits
+   under it as a second register rather than competing for the same row. */
+.choices.wide .choice {
+  aspect-ratio: auto;
+  min-height: 116px;
+  padding: 10px;
+  gap: 6px;
+}
+.opt-read {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: .06em;
+  color: var(--amber);
+  opacity: .85;
+}
+.choices.wide .choice .txt {
+  font-size: 15.5px;
+  line-height: 1.3;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+/* ── per-character miss rate: the headline diagnostic ────────────────────── */
+.hm-panel { padding: 0; margin-top: 34px; }
+
+.hm-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.hm-sets { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.hm-sets .seg-btn { font-size: 9.5px; padding: 4px 8px; }
+
+.heatmap { padding: 16px; max-height: 340px; overflow-y: auto; }
+.hm-cell.is-unseen {
+  border-style: dashed;
+  border-color: var(--line-2);
+  color: var(--ink-4);
+}
+
+.hm-foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+}
+.hm-legend { display: flex; align-items: center; gap: 8px; }
+.hm-foot .lbl-sm.dim { color: var(--ink-4); }
+.hm-foot #hm-stats { margin-left: auto; text-transform: uppercase; letter-spacing: .08em; }
+
+/* table view — the same data as a work list */
+.hm-table-wrap { max-height: 340px; overflow-y: auto; padding: 4px 0; }
+.hm-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.hm-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  text-align: left;
+  padding: 8px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  font-size: 9.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.hm-table td { padding: 6px 16px; border-bottom: 1px solid var(--line-3); }
+.hm-table tr:last-child td { border-bottom: 0; }
+.hm-table .num { text-align: right; font-family: var(--mono); }
+.hm-table .hm-t-glyph { font-size: 17px; width: 1%; white-space: nowrap; }
+
+/* ── instrument-panel chrome: dot, module id ────────────────────────────── */
+.mod-panel .panel-h { align-items: center; gap: 9px; }
+.mod-dot {
+  width: 7px; height: 7px;
+  border-radius: 2px;
+  background: var(--amber);
+  box-shadow: 0 0 8px -1px rgba(240, 180, 41, .9);
+  flex: 0 0 auto;
+}
+.mod-id {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .12em;
+  color: var(--ink-4);
+}
+
+/* ── streak ─────────────────────────────────────────────────────────────── */
+.streak-body { padding: 16px; display: flex; flex-direction: column; gap: 13px; }
+.streak-hero { display: flex; align-items: baseline; gap: 12px; }
+.streak-num {
+  font-size: 40px;
+  line-height: .9;
+  font-weight: 700;
+  color: var(--amber);
+  font-variant-numeric: tabular-nums;
+}
+.streak-cap { display: flex; flex-direction: column; gap: 2px; }
+.streak-cap .dim { color: var(--ink-4); }
+
+.act-strip { display: flex; gap: 4px; flex-wrap: wrap; }
+.act-cell {
+  flex: 1 1 16px;
+  min-width: 14px;
+  height: 20px;
+  border-radius: 2px;
+  border: 1px solid var(--line-2);
+}
+.act-legend { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.act-scale { display: flex; gap: 3px; }
+.act-scale i { width: 12px; height: 12px; border-radius: 2px; border: 1px solid var(--line-2); }
+
+.wk-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 4px; }
+.wk-table th {
+  text-align: left;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 9.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.wk-table td { padding: 7px 0; border-bottom: 1px solid var(--line-3); }
+.wk-table tr:last-child td { border-bottom: 0; }
+.wk-table .num { text-align: right; font-family: var(--mono); color: var(--ink-2); }
+.wk-table .wk-label { font-family: var(--mono); color: var(--ink-3); letter-spacing: .06em; }
+
+/* ── weak characters ────────────────────────────────────────────────────── */
+.weak-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 10px;
+  padding: 16px;
+}
+.wcard { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.wc-glyph { font-size: 26px; line-height: 1.1; }
+.wc-read { color: var(--ink-4); }
+.wc-rate { color: var(--amber); font-size: 12px; }
+.wc-bar {
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--panel-3);
+  overflow: hidden;
+}
+.wc-bar i { display: block; height: 100%; background: var(--amber); }
+
+.weak-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+}
+.weak-foot .lbl-sm { text-transform: uppercase; letter-spacing: .08em; }
+.weak-foot .btn { margin-left: auto; }
+
+/* ── kanji accent ───────────────────────────────────────────────────────────
+   Kana and kanji are different undertakings — one is a closed set of 104 sounds
+   you finish, the other is 1,245 characters you chip at for years. Giving kanji
+   its own accent means the script you are looking at is never in question, on a
+   dashboard where the two now sit one above the other.
+
+   The green is the accent from mockups/03-arcade-ladder.html. Only the accent
+   tokens are overridden: the surfaces, ink and card stock stay put, so this is
+   a change of signal colour rather than a second theme to maintain. Everything
+   that tints at run time reads --amber-rgb, so it follows the scope too. */
+.theme-kanji {
+  --amber: #4ade80;
+  --amber-soft: rgba(74, 222, 128, .12);
+  --amber-line: rgba(74, 222, 128, .32);
+  --amber-rgb: 74, 222, 128;
+}

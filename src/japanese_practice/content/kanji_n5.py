@@ -160,4 +160,13 @@ KANJI_N5: list[CharacterSeed] = [
     _k("道", "road, way", "ドウ", "みち", _PLACES, 12),
     _k("社", "company, shrine", "シャ", "やしろ", _PLACES, 7),
     _k("車", "car, vehicle", "シャ", "くるま", _PLACES, 7),
+    # Present in the reference chart's N5 set but absent from the original
+    # transcription of it. All six are inside the Top 200 by frequency, so
+    # without them the volume tiers cannot be complete.
+    _k("夕", "evening", "セキ", "ゆう", _TIME, 3),
+    _k("田", "rice field", "デン", "た", _NATURE, 5),
+    _k("外", "outside", "ガイ/ゲ", "そと/ほか/はず(れる)", _PLACES, 5),
+    _k("青", "blue", "セイ", "あお/あお(い)", _DESC, 8),
+    _k("赤", "red", "セキ", "あか/あか(い)", _DESC, 7),
+    _k("言", "say, word", "ゲン/ゴン", "い(う)/こと", _ACTIONS, 7),
 ]

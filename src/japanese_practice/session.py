@@ -13,6 +13,7 @@ from typing import Any
 
 from .content.confusions import CONFUSION_PAIRS
 from .db import Database, characters_for_difficulty, get_character
+from .kana import to_romaji
 from .models import Character, Session
 from .scoring import next_review, score_attempt, validate_scheme
 
@@ -204,6 +205,43 @@ def answer_text(character: Character) -> str:
     if character.script == "kanji":
         return character.meaning or character.glyph
     return character.romaji or character.glyph
+
+
+async def choice_readings(db: Database, script: str, options: list[str]) -> dict[str, str]:
+    """Map each kanji option to the reading of the character it stands for.
+
+    A kanji card asks for a meaning, so its options are English — which tells a
+    learner nothing about how any of them sound. Carrying the reading on the
+    option turns three English phrases into three characters you could actually
+    say, at no cost to what is graded: this is display only, and the answer is
+    still matched on the meaning text.
+
+    Where several characters share a meaning the first by id wins. That is
+    arbitrary, but the alternative is showing two readings for one option, which
+    would imply a distinction the card is not making.
+    """
+    if script != "kanji" or not options:
+        return {}
+
+    rows = await db.fetch_all(
+        f"""
+        SELECT meaning, onyomi, kunyomi FROM characters
+        WHERE script = 'kanji' AND meaning IN ({",".join("?" * len(options))})
+        ORDER BY id
+        """,
+        tuple(options),
+    )
+    out: dict[str, str] = {}
+    for row in rows:
+        if row["meaning"] in out:
+            continue
+        # On'yomi first: it is the reading a kanji is named by, and the one that
+        # appears in the compounds a learner meets next.
+        primary = (row["onyomi"] or row["kunyomi"] or "").split("/")[0]
+        reading = to_romaji(primary)
+        if reading:
+            out[row["meaning"]] = reading
+    return out
 
 
 async def build_choices(db: Database, character: Character, count: int = CHOICE_COUNT) -> list[str]:

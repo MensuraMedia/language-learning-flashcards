@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS characters (
   kana_group    TEXT,               -- 'gojuon'|'dakuon'|'handakuon'|'yoon'
   jlpt_level    TEXT,               -- 'N5'..'N1'
   category      TEXT,               -- thematic grouping
-  stroke_count  INTEGER
+  stroke_count  INTEGER,
+  frequency_rank INTEGER   -- 1..500 teaching order; NULL outside the Top 500
 );
 
 CREATE TABLE IF NOT EXISTS sessions (

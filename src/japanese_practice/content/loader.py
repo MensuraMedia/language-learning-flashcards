@@ -13,14 +13,27 @@ from typing import Any
 from ..db import Database
 from ..models import CharacterSeed
 from .hiragana import HIRAGANA
+from .kanji_frequency import KANJI_BY_FREQUENCY
+from .kanji_n1 import KANJI_N1
+from .kanji_n2 import KANJI_N2
+from .kanji_n3 import KANJI_N3
+from .kanji_n4 import KANJI_N4
 from .kanji_n5 import KANJI_N5
 from .katakana import KATAKANA
 
-__all__ = ["ALL_SEEDS", "seed_content"]
+__all__ = ["ALL_SEEDS", "apply_frequency_ranks", "seed_content"]
 
 #: Every bundled seed, in the order rows are created. Kanji stay in frequency
 #: order so that the ``kanji:top200`` / ``kanji:top500`` tiers slice correctly.
-ALL_SEEDS: tuple[CharacterSeed, ...] = (*HIRAGANA, *KATAKANA, *KANJI_N5)
+ALL_SEEDS: tuple[CharacterSeed, ...] = (
+    *HIRAGANA,
+    *KATAKANA,
+    *KANJI_N5,
+    *KANJI_N4,
+    *KANJI_N3,
+    *KANJI_N2,
+    *KANJI_N1,
+)
 
 _UPSERT = """
 INSERT INTO characters (
@@ -69,6 +82,23 @@ def _deduplicate(seeds: Sequence[CharacterSeed]) -> list[CharacterSeed]:
     return unique
 
 
+_RANK = "UPDATE characters SET frequency_rank = ? WHERE glyph = ?"
+
+
+async def apply_frequency_ranks(db: Database) -> int:
+    """Stamp the teaching-order rank onto every glyph in the Top 500.
+
+    Kept separate from the seed upsert because the ranking is a property of the
+    curriculum, not of a character: the same glyph is seeded once, by level, and
+    then ranked. Rows outside the Top 500 keep ``NULL``, which is what excludes
+    them from the volume tiers.
+    """
+    await db.execute_many(
+        _RANK, [(rank, glyph) for rank, glyph in enumerate(KANJI_BY_FREQUENCY, start=1)]
+    )
+    return len(KANJI_BY_FREQUENCY)
+
+
 async def seed_content(db: Database, seeds: Sequence[CharacterSeed] | None = None) -> int:
     """Upsert every bundled character seed. Returns the number of seeds applied.
 
@@ -79,4 +109,5 @@ async def seed_content(db: Database, seeds: Sequence[CharacterSeed] | None = Non
     if not batch:
         return 0
     await db.execute_many(_UPSERT, [_params(seed) for seed in batch])
+    await apply_frequency_ranks(db)
     return len(batch)

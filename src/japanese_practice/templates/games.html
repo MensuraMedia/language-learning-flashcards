@@ -16,11 +16,21 @@
     <span class="lbl-sm" id="g-source">built from your weakest characters</span>
   </div>
 
+  <!-- script picker: the same three boards, dealt from a different alphabet -->
+  <div class="sec" style="margin-top:2px">
+    <span class="lbl-sm">Script</span>
+    <span class="seg" id="script-picker">
+      <button class="seg-btn is-on" data-script="hiragana" type="button">ひらがな</button>
+      <button class="seg-btn" data-script="katakana" type="button">カタカナ</button>
+      <button class="seg-btn" data-script="kanji" type="button">漢字</button>
+    </span>
+  </div>
+
   <!-- mode picker: three boards, one engine -->
   <div class="mode-picker" id="mode-picker">
     <button class="mode-btn is-on" data-mode="matchup" type="button">
       <span class="mode-name">Match Up</span>
-      <span class="mode-desc">All face up — pair each character with its reading</span>
+      <span class="mode-desc" id="desc-matchup">All face up — pair each character with its reading</span>
     </button>
     <button class="mode-btn" data-mode="pelmanism" type="button">
       <span class="mode-name">Pelmanism</span>
@@ -28,7 +38,7 @@
     </button>
     <button class="mode-btn" data-mode="confusion" type="button">
       <span class="mode-name">Confusion Drill</span>
-      <span class="mode-desc">Deliberately full of look-alikes — シ/ツ, る/ろ, ぬ/め</span>
+      <span class="mode-desc" id="desc-confusion">Deliberately full of look-alikes — シ/ツ, る/ろ, ぬ/め</span>
     </button>
   </div>
 

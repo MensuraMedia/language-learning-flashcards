@@ -16,12 +16,13 @@ from japanese_practice.content.confusions import CONFUSION_PAIRS
 from japanese_practice.content.hiragana import HIRAGANA
 from japanese_practice.content.kanji_n5 import KANJI_N5
 from japanese_practice.content.katakana import KATAKANA
+from japanese_practice.content.loader import ALL_SEEDS
 
 # Counts from the authoritative reference. These are not "about right" — they
 # are the exact figures the workbooks publish.
 EXPECTED_HIRAGANA = 104
 EXPECTED_KATAKANA = 104
-EXPECTED_KANJI_N5 = 107
+EXPECTED_KANJI_N5 = 113
 
 # 46 gojuon + 20 dakuon + 5 handakuon + 33 yoon = 104
 EXPECTED_KANA_GROUPS = {"gojuon": 46, "dakuon": 20, "handakuon": 5, "yoon": 33}
@@ -239,7 +240,9 @@ def test_stroke_counts_are_plausible_when_present():
 
 
 def test_confusion_pairs_reference_known_glyphs():
-    known = {s.glyph for s in (*HIRAGANA, *KATAKANA, *KANJI_N5)}
+    # Every bundled set, not just the three original ones — a confusion pair is
+    # useless if either half is missing from the database.
+    known = {s.glyph for s in ALL_SEEDS}
     unknown = {g for pair in CONFUSION_PAIRS for g in pair if g not in known}
     assert not unknown, f"confusion pairs referencing unknown glyphs: {unknown}"
 

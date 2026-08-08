@@ -118,3 +118,35 @@
 - Removed the keymap recital under the control row — the shortcuts panel already
   covers it. The `? shortcuts` link is now centred with a 22 px separation.
 - Files: static/js/study.js, static/css/theme.css, templates/study.html
+
+## 2026-08-08T00:20:00Z — Content expansion, per-script games, dashboard rework
+- **Kanji N4–N1 seeded**: 1,138 new characters extracted from the reference
+  charts in `MensuraMedia/language-learning`. Totals now 1,245 kanji / 1,453
+  characters. Readings converted from wapuro romaji to kana mechanically and
+  verified by round-trip; the on/kun split for single-reading entries is picked
+  by a lexicon built from 664 explicit pairs (94.6% on held-out N1 data).
+- **N5 corrected**: added 夕 田 外 青 赤 言, present in the reference chart but
+  missing from the transcription. N5 is now 113.
+- **Kanji volume tiers made real**: new `frequency_rank` column (additive
+  migration) + `content/kanji_frequency.py`, the 500-glyph teaching order taken
+  from the printed Top 200/500 decks. `kanji:top200` / `kanji:top500` now slice
+  that ranking instead of the id sequence.
+- **Dashboard reorganised**: separate Hiragana, Katakana and Kanji shelves, each
+  followed by its own games rail. 17 decks in total.
+- **Per-script games**: 9 boards (3 modes × 3 scripts). Board dealing, confusion
+  pairs and card copy are all script-scoped; games view gains a script picker.
+- **Confusion pairs**: 45 → 84, adding 39 kanji look-alikes. Both halves of a
+  pair are now dealt together — previously look-alikes arrived without their
+  partner, which made the drill an ordinary memory game.
+- **Per-character miss rate rebuilt**: set selector, table view, 0–30% colour
+  ceiling, and unseen characters shown rather than hidden. New
+  `analytics.character_grid()` + `GET /api/heatmap`.
+- **Streak and Weak characters panels** rebuilt as instrument modules; new
+  `weekly_activity()` and `daily_streak()`. **Removed** Time of day and Mastery
+  by group end to end.
+- **Kanji accent**: kanji surfaces take the green accent from
+  `mockups/03-arcade-ladder.html`; kana keeps amber.
+- **Kanji readings as reference**: new `kana.py` (kana → Hepburn romaji, 24
+  tests). Card backs show romaji under each reading, and kanji options are
+  double height carrying the reading of the character they stand for.
+- Tests 240 → 268.

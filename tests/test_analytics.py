@@ -11,7 +11,6 @@ from __future__ import annotations
 import pytest
 
 from japanese_practice import analytics
-from japanese_practice.analytics import MASTERY_MAX_MISS_RATE, MASTERY_MIN_SEEN
 from japanese_practice.db import Database
 
 pytestmark = pytest.mark.asyncio
@@ -77,7 +76,6 @@ EMPTY_LIST_FUNCS = [
     analytics.confusion_pairs,
     analytics.weakest_characters,
     analytics.streak_calendar,
-    analytics.mastery_by_group,
     analytics.leeches,
     analytics.progress_velocity,
 ]
@@ -94,12 +92,6 @@ async def test_retention_curve_returns_all_buckets_when_empty(db: Database):
     rows = await analytics.retention_curve(db)
     assert len(rows) == len(analytics.RETENTION_BUCKETS)
     assert all(r["samples"] == 0 and r["accuracy"] == 0.0 for r in rows)
-
-
-async def test_time_of_day_always_returns_24_hours(db: Database):
-    rows = await analytics.time_of_day_performance(db)
-    assert [r["hour"] for r in rows] == list(range(24))
-    assert all(r["attempts"] == 0 for r in rows)
 
 
 async def test_latency_distribution_returns_all_buckets_when_empty(db: Database):
@@ -131,10 +123,10 @@ async def test_dashboard_summary_assembles_without_data(db: Database):
         "accuracy_by_session",
         "per_character_miss_rate",
         "retention_curve",
-        "time_of_day",
         "weakest_characters",
         "streak_calendar",
-        "mastery_by_group",
+        "weekly_activity",
+        "daily_streak",
         "leeches",
         "first_vs_eventual",
         "progress_velocity",
@@ -286,23 +278,6 @@ async def test_latency_ignores_untimed_attempts(seeded_db: Database, iso):
 # -- time of day -----------------------------------------------------------
 
 
-async def test_time_of_day_buckets_by_hour(seeded_db: Database, iso):
-    db = seeded_db
-    a = await char_id(db, "あ")
-    sid = await add_session(db, iso(0))
-    await add_attempt(db, sid, a, iso(0, hour=9), correct=True)
-    await add_attempt(db, sid, a, iso(0, hour=9), correct=False)
-    await add_attempt(db, sid, a, iso(0, hour=21), correct=True)
-
-    rows = {r["hour"]: r for r in await analytics.time_of_day_performance(db)}
-    assert rows[9]["attempts"] == 2
-    assert rows[9]["accuracy"] == pytest.approx(0.5)
-    assert rows[21]["accuracy"] == 1.0
-
-
-# -- weakest characters ----------------------------------------------------
-
-
 async def test_weakest_characters_excludes_perfect_characters(seeded_db: Database, iso):
     db = seeded_db
     sid = await add_session(db, iso(0))
@@ -358,41 +333,6 @@ async def test_streak_calendar_respects_the_window(seeded_db: Database, iso):
 
 
 # -- mastery ---------------------------------------------------------------
-
-
-async def test_mastery_requires_both_exposure_and_accuracy(seeded_db: Database, iso):
-    """Mastery is `seen >= 3 AND miss_rate <= 0.15` — both halves matter."""
-    db = seeded_db
-    a = await char_id(db, "あ")  # seen 4, all correct -> mastered
-    shi = await char_id(db, "し")  # seen 1, correct -> too few exposures
-    tsu = await char_id(db, "つ")  # seen 4, half wrong -> too inaccurate
-    sid = await add_session(db, iso(0))
-
-    for _ in range(4):
-        await add_attempt(db, sid, a, iso(0), correct=True)
-    await add_attempt(db, sid, shi, iso(0), correct=True)
-    for correct in (True, True, False, False):
-        await add_attempt(db, sid, tsu, iso(0), correct=correct)
-
-    rows = {(r["script"], r["group"]): r for r in await analytics.mastery_by_group(db)}
-    gojuon = rows[("hiragana", "gojuon")]
-    assert gojuon["total"] == 3
-    assert gojuon["mastered"] == 1
-
-
-async def test_mastery_thresholds_are_the_documented_constants():
-    assert MASTERY_MIN_SEEN == 3
-    assert MASTERY_MAX_MISS_RATE == 0.15
-
-
-async def test_mastery_includes_untouched_groups(seeded_db: Database):
-    """A group with no attempts still reports its total, so progress reads 0/N."""
-    rows = {(r["script"], r["group"]): r for r in await analytics.mastery_by_group(seeded_db)}
-    assert rows[("hiragana", "dakuon")]["total"] == 1
-    assert rows[("hiragana", "dakuon")]["mastered"] == 0
-
-
-# -- leeches ---------------------------------------------------------------
 
 
 async def test_leeches_surface_repeatedly_relearned_characters(seeded_db: Database, iso):
@@ -498,7 +438,7 @@ async def test_deck_shelves_carry_progress_and_preview_glyphs(seeded_db: Databas
     decks = {d["key"]: d for d in await analytics.deck_shelves(db)}
     gojuon = decks["hiragana:gojuon"]
 
-    assert gojuon["shelf"] == "kana"
+    assert gojuon["shelf"] == "hiragana"
     assert gojuon["rung"].startswith("LV 1")
     assert gojuon["mastered"] == 1  # あ: seen 4, zero misses
     assert gojuon["count"] == 3  # あ, し, つ in the fixture
@@ -513,7 +453,7 @@ async def test_deck_shelves_are_empty_without_content(db: Database):
 async def test_every_deck_has_shelf_metadata(seeded_db: Database):
     """A deck without metadata would render as a blank card."""
     for deck in await analytics.deck_shelves(seeded_db):
-        assert deck["shelf"] in {"kana", "jlpt", "vol"}
+        assert deck["shelf"] in {"hiragana", "katakana", "jlpt", "vol"}
         assert deck["rung"] and deck["jp"]
         assert 0.0 <= deck["accuracy"] <= 1.0
 
