@@ -18,11 +18,22 @@ MP3 still started 14 ms late, where the WAV starts at 2 ms. For a 28 KB asset
 that decodes instantly and restarts exactly on `currentTime = 0`, the format
 costs nothing and removes the last of the lag.
 
-| | Duration | Onset | Size |
-|---|---:|---:|---:|
-| Source MP3 | 1.056 s | 66 ms | 33 KB |
-| Trimmed MP3 | 0.341 s | 14 ms | 4.9 KB |
-| **Trimmed WAV (shipped)** | **0.320 s** | **2 ms** | **28 KB** |
+| | Duration | Onset | Peak | Size |
+|---|---:|---:|---:|---:|
+| Source MP3 | 1.056 s | 66 ms | −8.2 dBFS | 33 KB |
+| Trimmed MP3 | 0.341 s | 14 ms | −8.2 dBFS | 4.9 KB |
+| **Trimmed, normalised WAV (shipped)** | **0.320 s** | **2 ms** | **−0.4 dBFS** | **28 KB** |
+
+## Why it is normalised loud
+
+The asset is peak-normalised to −0.4 dBFS and attenuated in code, not the other
+way round. The first version kept the source's −8.2 dBFS peak and multiplied it
+by an 0.55 app gain; at 51% system volume that reached the speakers at about
+**−19 dBFS**, which is inaudible over anything. Loud file, quiet code — never
+the reverse.
+
+Verified by recording the speaker monitor while answering: bursts of 0.320 s at
+−1.4 dBFS, which is what a cue should be.
 
 ## Regenerating
 

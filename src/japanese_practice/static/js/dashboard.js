@@ -1,7 +1,8 @@
 // Dashboard: renders the full analytics surface from /api/summary.
 // Charts are inline SVG built here — no library, no external request.
 
-import { playCorrect, setSoundEnabled, soundEnabled } from "./sound.js";
+import { playCorrect, primeCue, setSoundEnabled, soundEnabled, soundStatus, unlock }
+  from "./sound.js";
 
 const $ = (id) => document.getElementById(id);
 const pct = (v) => `${Math.round((v || 0) * 100)}%`;
@@ -647,6 +648,8 @@ function initSoundToggle() {
   const toggle = $("snd-toggle");
   if (!toggle) return;
   paintSoundToggle();
+  primeCue();
+
   toggle.addEventListener("click", () => {
     const on = !soundEnabled();
     setSoundEnabled(on);
@@ -654,6 +657,26 @@ function initSoundToggle() {
     // Turning it on plays the cue once. A silent switch gives no evidence it
     // worked, and this is the exact sound the setting governs.
     if (on) playCorrect();
+  });
+
+  // A cue that cannot be heard should be able to say why, rather than leaving
+  // the user to guess between "off", "blocked" and "broken".
+  const test = $("snd-test");
+  if (!test) return;
+  test.addEventListener("click", () => {
+    unlock();
+    const before = soundStatus.plays;
+    playCorrect();
+    setTimeout(() => {
+      const note = $("snd-status");
+      if (!note) return;
+      if (!soundEnabled()) note.textContent = "Sound is off — turn it on above.";
+      else if (!soundStatus.supported) note.textContent = "This browser has no Web Audio support.";
+      else if (soundStatus.lastError) note.textContent = `Failed: ${soundStatus.lastError}`;
+      else if (soundStatus.plays > before) note.textContent = "Played. Check your system volume if you heard nothing.";
+      else if (!soundStatus.decoded) note.textContent = "Still loading the cue — try again.";
+      else note.textContent = `Audio context is ${soundStatus.contextState}.`;
+    }, 120);
   });
 }
 

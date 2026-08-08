@@ -253,7 +253,11 @@ def test_correct_answer_cue_contains_audible_sound():
     assert count > 0, "cue decoded to nothing"
     samples = struct.unpack(f"<{count}h", raw[: count * 2])
     peak = max(abs(s) for s in samples) / 32768
-    assert peak > 0.05, f"cue is effectively silent (peak {peak:.4f})"
+    # Loud in the file, attenuated in code. A quiet asset multiplied by an app
+    # gain and then by system volume reached the speakers at about -19 dBFS,
+    # which is why the cue could not be heard at all.
+    assert peak > 0.80, f"cue is too quiet to hear over system volume (peak {peak:.3f})"
+    assert peak <= 0.99, f"cue is clipping (peak {peak:.3f})"
 
     duration = count / 22050
     # The fastest pace advances the card 380 ms after a correct answer, so a

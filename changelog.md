@@ -307,3 +307,31 @@
 - `install-desktop.sh` now clears `build/` first. setuptools reuses it, so a
   file deleted from the tree survived into the wheel — which shipped the removed
   MP3 once.
+
+## 2026-08-08T06:20:00Z — Sound cue rebuilt on Web Audio, and made audible
+Two separate faults, both real, found by measuring rather than guessing.
+
+**It was inaudible.** The cue kept the source's −8.2 dBFS peak and was then
+multiplied by an 0.55 app gain; at 51% system volume that arrived at the
+speakers around **−19 dBFS**. Now peak-normalised to −0.4 dBFS with the app gain
+raised to 0.9. Measured at the speaker monitor: **−1.4 dBFS**, up ~17 dB.
+
+**It was on the wrong API.** `new Audio().play()` is for media playback. For a
+short cue it has three defects: the autoplay policy rejects the returned promise
+until the page has been interacted with, and swallowing that rejection makes a
+blocked cue look identical to a working one; `currentTime = 0` restarts are not
+sample accurate and cancel the cue already sounding; and every play crosses the
+media pipeline, adding variable latency.
+
+Rebuilt on the **Web Audio API** — the file is decoded once into an AudioBuffer
+and each cue is a fresh BufferSourceNode through a GainNode. Sub-millisecond,
+overlapping safely, with an explicit level. The AudioContext is unlocked on the
+first pointer/key/touch event and re-resumed on each cue, since the engine
+suspends it when the window loses focus.
+
+- Failures now surface: `soundStatus` records support, context state, decode
+  state, play count and the last error, exposed as `window.jpSound`.
+- **Settings → Audio → Test sound** plays the cue and reports what happened —
+  off, unsupported, blocked, still loading, or played — so an unheard cue can
+  say why instead of leaving the user to guess.
+- Test asserts the asset peaks above 0.80 and does not clip.
