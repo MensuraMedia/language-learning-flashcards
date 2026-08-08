@@ -23,6 +23,19 @@ const REVEAL_CORRECT_MS = 1900;
 const REVEAL_WRONG_MS = 2900;
 const REVEAL_SKIP_MS = 250;
 
+// Pace. The base holds above suit someone meeting a character for the first
+// time; a learner who knows the deck wants it to move. Each step multiplies the
+// verdict hold, so the fastest setting is roughly five times the pace of the
+// slowest without ever dropping below what can be read.
+const PACE_STEPS = [
+  { name: "relaxed", factor: 1.0 },
+  { name: "steady", factor: 0.7 },
+  { name: "brisk", factor: 0.5 },
+  { name: "fast", factor: 0.35 },
+  { name: "relentless", factor: 0.2 },
+];
+const PACE_KEY = "jp.pace";
+
 const VOLUME_STEP = 0.1;
 const VOLUME_KEY = "jp.volume";
 const MUTED_KEY = "jp.muted";
@@ -45,6 +58,7 @@ const state = {
   volume: readVolume(),
   muted: readMuted(),
   voice: storageGet("jp.voice") === "male" ? "male" : "female",
+  pace: readPace(),
   audio: null,
   finished: false,
 };
@@ -73,6 +87,25 @@ function storageSet(key, value) {
 function readVolume() {
   const raw = parseFloat(storageGet(VOLUME_KEY) ?? "1");
   return Number.isFinite(raw) ? Math.min(1, Math.max(0, raw)) : 1;
+}
+
+function readPace() {
+  const raw = parseInt(storageGet(PACE_KEY) ?? "1", 10);
+  return Number.isFinite(raw) && raw >= 1 && raw <= PACE_STEPS.length ? raw : 1;
+}
+
+function paceFactor() {
+  return PACE_STEPS[state.pace - 1]?.factor ?? 1;
+}
+
+function applyPace(step, { announce = true } = {}) {
+  state.pace = Math.min(PACE_STEPS.length, Math.max(1, step));
+  storageSet(PACE_KEY, String(state.pace));
+  const input = $("pace");
+  if (input) input.value = String(state.pace);
+  const name = $("pace-name");
+  if (name) name.textContent = PACE_STEPS[state.pace - 1].name;
+  if (announce) toast(`Pace: ${PACE_STEPS[state.pace - 1].name}`);
 }
 
 function readMuted() {
@@ -261,7 +294,10 @@ async function grade(correct, { given = null, skipped = false } = {}) {
     skipped: Boolean(skipped),
   });
 
-  const hold = skipped ? REVEAL_SKIP_MS : correct ? REVEAL_CORRECT_MS : REVEAL_WRONG_MS;
+  const base = skipped ? REVEAL_SKIP_MS : correct ? REVEAL_CORRECT_MS : REVEAL_WRONG_MS;
+  // Floor at 260ms: below that the verdict colour is not perceivable, and the
+  // point of the hold is that a wrong answer can be read.
+  const hold = skipped ? base : Math.max(260, Math.round(base * paceFactor()));
   state.advanceTimer = setTimeout(advanceAfterGrade, hold);
 }
 
@@ -452,6 +488,8 @@ const KEYMAP = {
   ArrowDown: () => changeVolume(-VOLUME_STEP),
   KeyM: toggleMute,
   KeyV: toggleVoice,
+  BracketLeft: () => applyPace(state.pace - 1),
+  BracketRight: () => applyPace(state.pace + 1),
   KeyP: playAudio,
   KeyR: playAudio,
   Escape: finish,
@@ -513,6 +551,7 @@ on("skip", "click", skipCard);
 on("back", "click", goPrevious);
 on("next", "click", goNext);
 on("voice-toggle", "click", toggleVoice);
+on("pace", "input", (event) => applyPace(Number(event.target.value), { announce: false }));
 $("speaker").addEventListener("click", (event) => {
   event.stopPropagation();
   playAudio();
@@ -526,5 +565,7 @@ function on(id, event, handler, options) {
 }
 on("help-open", "click", toggleHelp);
 on("help-close", "click", toggleHelp);
+
+applyPace(state.pace, { announce: false });
 
 start();

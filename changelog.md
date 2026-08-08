@@ -107,3 +107,14 @@
 | 2026-08-07T20:00:00 | Verified stack/modularity/universality: 0 import cycles, 0 platform paths, 33-package closure |
 | 2026-08-07T20:05:00 | Added docs/FEATURES.md and docs/STACK-VERIFICATION.md |
 | 2026-08-07T20:08:00 | Added LICENSE — personal use only; corrected pyproject (was MIT) and README (was "free to distribute") |
+
+## 2026-08-07T19:05:00Z — Study pace slider
+- Added a 5-step pace control under the answer options: relaxed → steady → brisk →
+  fast → relentless. Scales the post-answer verdict hold (1900 ms correct / 2900 ms
+  wrong) by 1.0 → 0.2, floored at 260 ms so a verdict stays readable.
+- Persisted as `jp.pace` in localStorage; keyboard `[` and `]` step it.
+- Centred the control in the gap between the last option and the control row
+  (measured: 31 px above, 32 px below at 1280×860).
+- Removed the keymap recital under the control row — the shortcuts panel already
+  covers it. The `? shortcuts` link is now centred with a 22 px separation.
+- Files: static/js/study.js, static/css/theme.css, templates/study.html
