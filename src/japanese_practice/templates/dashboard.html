@@ -5,6 +5,7 @@
   <span class="stat"><span class="lbl-sm">streak</span> <b class="num" id="tb-streak">—</b></span>
   <span class="stat"><span class="lbl-sm">sessions</span> <b class="num" id="tb-sessions">—</b></span>
   <span class="lbl-sm" id="tb-last">—</span>
+  <button class="btn btn-sm" id="settings-open" type="button">Settings</button>
 {% endblock %}
 
 {% block content %}
@@ -130,6 +131,50 @@
 
   <!-- attribution: VOICEVOX requires visible credit naming the speaker -->
   <p class="credits lbl-sm" id="credits" hidden></p>
+
+  <!-- ── settings: profiles and the data that belongs to them ─────────── -->
+  <div class="help" id="settings" hidden role="dialog" aria-label="Settings">
+    <div class="help-card settings-card">
+      <div class="panel-h">
+        <span class="lbl">Settings</span>
+        <span class="lbl-sm">profiles &amp; data</span>
+        <button class="btn btn-ghost" id="settings-close" type="button">Close</button>
+      </div>
+
+      <section class="set-sec">
+        <div class="set-h"><span class="lbl">Profiles</span>
+          <span class="lbl-sm">each keeps its own history</span></div>
+        <div class="prof-list" id="prof-list"></div>
+        <form class="prof-new" id="prof-new">
+          <input class="fld" id="prof-name" type="text" maxlength="40"
+                 placeholder="New profile name" aria-label="New profile name">
+          <button class="btn btn-sm amber" type="submit">Create</button>
+        </form>
+      </section>
+
+      <section class="set-sec">
+        <div class="set-h"><span class="lbl">Save &amp; load</span>
+          <span class="lbl-sm">a portable file, keyed by character</span></div>
+        <p class="set-note" id="data-note">—</p>
+        <div class="set-actions">
+          <button class="btn btn-sm amber" id="data-export" type="button">Save progress</button>
+          <button class="btn btn-sm" id="data-import" type="button">Load a file…</button>
+          <input id="data-file" type="file" accept="application/json,.json" hidden>
+        </div>
+      </section>
+
+      <section class="set-sec danger">
+        <div class="set-h"><span class="lbl">Reset</span>
+          <span class="lbl-sm">clears this profile's progress — the characters stay</span></div>
+        <p class="set-note" id="reset-note">—</p>
+        <div class="set-actions">
+          <button class="btn btn-sm btn-danger" id="data-reset" type="button">Reset this profile</button>
+        </div>
+      </section>
+
+      <p class="set-status lbl-sm" id="set-status" role="status" aria-live="polite"></p>
+    </div>
+  </div>
 
   <div class="empty" id="empty" hidden>
     <p class="lbl">No study history yet</p>

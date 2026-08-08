@@ -3137,3 +3137,49 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
   --amber-line: rgba(74, 222, 128, .32);
   --amber-rgb: 74, 222, 128;
 }
+
+/* ── settings dialog ────────────────────────────────────────────────────── */
+.settings-card { width: min(520px, 94vw); max-height: 88vh; overflow-y: auto; }
+.settings-card .panel-h { position: sticky; top: 0; z-index: 2; background: var(--panel); }
+
+.set-sec { padding: 14px 16px; border-top: 1px solid var(--line); }
+.set-h { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.set-note { margin: 0 0 10px; font-size: 11px; color: var(--ink-3); line-height: 1.5; }
+.set-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.prof-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.prof-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--panel-2);
+}
+.prof-row.is-on { border-color: var(--amber-line); background: var(--amber-soft); }
+.prof-name { font-size: 12px; color: var(--ink); }
+.prof-meta { margin-left: auto; color: var(--ink-4); }
+
+.prof-new { display: flex; gap: 8px; }
+.fld {
+  flex: 1;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--panel-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+}
+.fld:focus-visible { outline: 2px solid var(--amber-line); outline-offset: 1px; }
+
+/* Destructive actions are red, and only these. The accent means progress
+   everywhere else, so reusing it here would make deletion look like a reward. */
+.set-sec.danger { border-top-color: rgba(224, 121, 106, .28); }
+.btn-danger { color: #e0796a; border-color: rgba(224, 121, 106, .34); }
+.btn-danger:hover { background: rgba(224, 121, 106, .12); border-color: #e0796a; }
+
+.set-status { padding: 0 16px 14px; min-height: 16px; }
+.set-status.good { color: var(--amber); }
+.set-status.bad { color: #e0796a; }

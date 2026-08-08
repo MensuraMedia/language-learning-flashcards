@@ -336,6 +336,54 @@ Everything optional; all paths derived, none hard-coded.
 
 ---
 
+## 10a. Profiles and your data
+
+Reached from **Settings** in the dashboard top bar.
+
+### Profiles
+
+Each profile is a **separate database file**, not a column on a shared one.
+Every analytics query in this project reads `attempts` directly; a `profile_id`
+would mean threading a filter through all of them, and one forgotten `WHERE`
+would quietly mix two learners' histories — a failure that looks like bad data
+rather than a bug. A file cannot be half-filtered.
+
+| Action | Effect |
+|---|---|
+| Create | Registers the profile and switches to it. Its database is created on first use |
+| Use | Reopens the connection on that profile, then reloads the page |
+| Delete | Removes the profile and its database, including the WAL sidecars |
+
+The default profile keeps using the existing `db_path`, so an install that
+predates profiles becomes "Default" with its history intact and nothing to
+migrate. The default profile and the active one cannot be deleted.
+
+### Save and load
+
+**Save progress** writes a JSON document containing every session, attempt and
+review state. **Every row is keyed by the character's glyph, never its id** —
+ids are an artefact of seed order, and seed order has already changed once in
+this project's life, so an export taken before the kanji expansion would point
+at different characters after it. A glyph *is* the character.
+
+Loading replaces the active profile's progress. Glyphs this build does not have
+are skipped and counted rather than aborting the restore, so an export from a
+future version still returns everything it can. The file is refused outright if
+its `format` or `version` is not one this build reads.
+
+The `characters` table is content, not progress: it is reseeded from the bundled
+modules on every start and is never exported, which is what keeps the file small.
+
+### Reset
+
+Clears `sessions`, `attempts` and `review_state` for the active profile and
+leaves the seeded characters alone. It requires explicit confirmation at the API
+as well as in the UI — an unconfirmed request changes nothing — and reports what
+it removed, because a destructive action that says nothing is indistinguishable
+from one that failed.
+
+---
+
 ## 11. Deliberately not built
 
 Stated so the absences read as decisions, not oversights.
@@ -346,7 +394,7 @@ Stated so the absences read as decisions, not oversights.
 | Stroke counts beyond N5 | The reference charts do not carry them, so N4–N1 leave the field unset rather than filling it with guesses |
 | Typed-recall mode | Planned. Until it exists, "mastery" means recognition at a 33% chance floor, not free recall |
 | `recall`, `timed`, `listening`, `mixed` challenges | Stored and displayed but **not yet branched on** — they currently render as recognition |
-| Accounts, sync, telemetry | Local-first by design |
+| Accounts, sync, telemetry | Local-first by design. Profiles are local files; sharing progress means sharing a file you exported deliberately |
 | Negative marking | Belongs only in an opt-in exam mode; it depresses low-confidence learners |
 | Character Runners | Evaluated and recommended against — highest build cost, lowest reading-per-minute |
 

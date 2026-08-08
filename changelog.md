@@ -150,3 +150,21 @@
   tests). Card backs show romaji under each reading, and kanji options are
   double height carrying the reading of the character they stand for.
 - Tests 240 → 268.
+
+## 2026-08-08T01:30:00Z — Settings: profiles, save/load and reset
+- **Profiles** (`profiles.py`): one database file per learner rather than a
+  shared table with a filter column, so a forgotten `WHERE` cannot mix two
+  histories. The default profile keeps the existing `db_path`, so existing
+  installs need no migration. Switching reopens the connection.
+- **Save / load** (`userdata.py`): export every session, attempt and review
+  state as JSON keyed by glyph rather than id, so a file survives seed-order
+  changes and moves between installs. Loading replaces the active profile;
+  unknown glyphs are skipped and counted rather than aborting the restore.
+- **Reset**: clears progress for the active profile, keeps the seeded
+  characters, requires explicit confirmation and reports what it removed.
+- New endpoints: `GET/POST /api/profiles`, `POST /api/profiles/activate`,
+  `DELETE /api/profiles/<slug>`, `GET /api/data/summary`, `GET /api/data/export`,
+  `POST /api/data/import`, `POST /api/data/reset`.
+- Settings dialog reached from the dashboard top bar.
+- Kanji option text enlarged to 15.5px with the reading at 13px.
+- Tests 268 → 289.

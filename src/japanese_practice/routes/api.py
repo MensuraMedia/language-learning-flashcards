@@ -11,7 +11,7 @@ from typing import Any
 
 from quart import Blueprint, Response, current_app, jsonify, request
 
-from .. import analytics, audio, games, tts_voicevox
+from .. import analytics, audio, games, profiles, tts_voicevox, userdata
 from .. import session as session_engine
 from ..db import Database, available_segments, get_character
 from ..kana import to_romaji
@@ -176,6 +176,107 @@ async def end_session(session_id: int) -> Any:
     except ValueError as exc:
         return _error("not_found", str(exc), 404)
     return jsonify(asdict(record))
+
+
+# -- profiles and user data -------------------------------------------------
+
+
+def _config() -> Any:
+    return current_app.config["JP_CONFIG"]
+
+
+@api_bp.get("/profiles")
+async def profile_list() -> Response:
+    """Every profile, with the active one flagged."""
+    cfg = _config()
+    return jsonify(
+        {
+            "active": profiles.active_slug(cfg),
+            "profiles": [p.as_dict() for p in profiles.list_profiles(cfg)],
+        }
+    )
+
+
+@api_bp.post("/profiles")
+async def profile_create() -> Any:
+    """Register a profile and switch to it."""
+    body = await request.get_json(silent=True) or {}
+    try:
+        profile = profiles.create(_config(), str(body.get("name", "")))
+        await current_app.config["JP_OPEN_PROFILE"](current_app._get_current_object(), profile.slug)
+        # Re-read after activation: the object from create() predates the switch
+        # and would report active=false for the profile now in use.
+        profile = profiles.resolve(_config(), profile.slug)
+    except ValueError as exc:
+        return _error("invalid_request", str(exc), 400)
+    return jsonify(profile.as_dict())
+
+
+@api_bp.post("/profiles/activate")
+async def profile_activate() -> Any:
+    """Switch profiles, reopening the database on the new one."""
+    body = await request.get_json(silent=True) or {}
+    slug = str(body.get("slug", ""))
+    try:
+        profiles.resolve(_config(), slug)
+        await current_app.config["JP_OPEN_PROFILE"](current_app._get_current_object(), slug)
+    except ValueError as exc:
+        return _error("invalid_request", str(exc), 400)
+    return jsonify({"active": slug})
+
+
+@api_bp.delete("/profiles/<slug>")
+async def profile_delete(slug: str) -> Any:
+    """Forget a profile and delete its database."""
+    try:
+        profiles.delete(_config(), slug)
+    except ValueError as exc:
+        return _error("invalid_request", str(exc), 400)
+    return jsonify({"deleted": slug})
+
+
+@api_bp.get("/data/summary")
+async def data_summary() -> Response:
+    """What a reset would remove, so the confirmation can be specific."""
+    return jsonify(await userdata.summarise(get_db()))
+
+
+@api_bp.get("/data/export")
+async def data_export() -> Response:
+    """The active profile's progress as a portable document."""
+    payload = await userdata.export_progress(get_db())
+    slug = profiles.active_slug(_config())
+    stamp = payload["exported_at"][:10]
+    response = jsonify(payload)
+    response.headers["Content-Disposition"] = (
+        f'attachment; filename="japanese-practice-{slug}-{stamp}.json"'
+    )
+    return response
+
+
+@api_bp.post("/data/import")
+async def data_import() -> Any:
+    """Load an export back into the active profile."""
+    body = await request.get_json(silent=True) or {}
+    payload = body.get("payload")
+    if not isinstance(payload, dict):
+        return _error("invalid_request", "no progress document supplied", 400)
+    try:
+        result = await userdata.import_progress(
+            get_db(), payload, replace=bool(body.get("replace", True))
+        )
+    except ValueError as exc:
+        return _error("invalid_request", str(exc), 400)
+    return jsonify(result)
+
+
+@api_bp.post("/data/reset")
+async def data_reset() -> Any:
+    """Wipe the active profile's progress. Characters are content and stay."""
+    body = await request.get_json(silent=True) or {}
+    if body.get("confirm") is not True:
+        return _error("confirm_required", "a reset must be confirmed explicitly", 400)
+    return jsonify(await userdata.reset_progress(get_db()))
 
 
 @api_bp.get("/heatmap")

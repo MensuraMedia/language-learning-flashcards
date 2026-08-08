@@ -43,12 +43,13 @@ Full reference: **[docs/FEATURES.md](docs/FEATURES.md)**
 | **Analytics** | Per-character miss-rate heatmap, weakest-character drill queue, retention curve, mastery by group, leeches, streak calendar, session history |
 | **Content** | Hiragana 104 · Katakana 104 · Kanji 1,245 across JLPT N5–N1 plus Top 200/500 by frequency — extracted from the reference workbooks |
 | **Scoring** | Four schemes: accuracy, speed, streak, SM-2 spaced repetition |
+| **Profiles & data** | Multiple learners, each in its own database file; save progress to a portable file, load it back, or reset to zero |
 
 ---
 
 ## Status
 
-Working and in daily use. **248 tests passing.**
+Working and in daily use. **289 tests passing.**
 
 | Component | State |
 |---|---|

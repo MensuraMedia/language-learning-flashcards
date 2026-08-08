@@ -539,6 +539,207 @@ function renderStreak(days, weeks, streak) {
     `</tbody>`;
 }
 
+// ── settings: profiles and the data that belongs to them ─────────────────────
+//
+// Switching profiles reopens the database server-side, so every panel on the
+// page is describing the wrong learner the moment it succeeds. Rather than
+// re-render each one and risk missing any, the page reloads.
+
+// "1 attempts" reads as a bug in a confirmation dialog, which is exactly where
+// the user is deciding whether to trust the thing.
+const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+const setStatus = (message, tone = "") => {
+  const node = $("set-status");
+  node.textContent = message;
+  node.className = `set-status lbl-sm ${tone}`;
+};
+
+async function api(url, options) {
+  const res = await fetch(url, options);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.message || res.statusText);
+  return body;
+}
+
+function profileRow(profile) {
+  const row = el("div", `prof-row${profile.active ? " is-on" : ""}`);
+  const size = profile.size_bytes ? `${Math.round(profile.size_bytes / 1024)} KB` : "empty";
+  row.innerHTML = `
+    <span class="prof-name">${profile.name}</span>
+    <span class="lbl-sm prof-meta">${profile.active ? "active" : size}</span>`;
+
+  if (!profile.active) {
+    const use = el("button", "btn btn-sm", "Use");
+    use.type = "button";
+    use.addEventListener("click", async () => {
+      try {
+        await api("/api/profiles/activate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug: profile.slug }),
+        });
+        location.reload();
+      } catch (err) {
+        setStatus(err.message, "bad");
+      }
+    });
+    row.appendChild(use);
+
+    if (profile.slug !== "default") {
+      const remove = el("button", "btn btn-sm btn-danger", "Delete");
+      remove.type = "button";
+      remove.addEventListener("click", async () => {
+        if (!confirm(`Delete the profile "${profile.name}" and all of its history?`)) return;
+        try {
+          await api(`/api/profiles/${encodeURIComponent(profile.slug)}`, { method: "DELETE" });
+          setStatus(`Deleted "${profile.name}".`, "good");
+          loadProfiles();
+        } catch (err) {
+          setStatus(err.message, "bad");
+        }
+      });
+      row.appendChild(remove);
+    }
+  }
+  return row;
+}
+
+async function loadProfiles() {
+  try {
+    const payload = await api("/api/profiles");
+    const host = $("prof-list");
+    host.innerHTML = "";
+    payload.profiles.forEach((p) => host.appendChild(profileRow(p)));
+  } catch (err) {
+    setStatus(err.message, "bad");
+  }
+}
+
+async function loadDataSummary() {
+  try {
+    const d = await api("/api/data/summary");
+    const span =
+      d.first_attempt && d.last_attempt
+        ? ` · ${d.first_attempt.slice(0, 10)} → ${d.last_attempt.slice(0, 10)}`
+        : "";
+    $("data-note").textContent =
+      `${plural(d.sessions, "session")} · ${plural(d.attempts, "card")} reviewed${span}`;
+    $("reset-note").textContent = d.attempts
+      ? `This removes ${plural(d.attempts, "attempt")} across ${plural(d.sessions, "session")}. ` +
+        "It cannot be undone — save first."
+      : "Nothing recorded yet, so there is nothing to clear.";
+  } catch (err) {
+    setStatus(err.message, "bad");
+  }
+}
+
+function initSettings() {
+  const dialog = $("settings");
+  if (!dialog) return;
+
+  const open = () => {
+    dialog.hidden = false;
+    setStatus("");
+    loadProfiles();
+    loadDataSummary();
+  };
+  const close = () => {
+    dialog.hidden = true;
+  };
+
+  $("settings-open").addEventListener("click", open);
+  $("settings-close").addEventListener("click", close);
+  dialog.addEventListener("click", (event) => {
+    if (event.target === dialog) close();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !dialog.hidden) close();
+  });
+
+  $("prof-new").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const name = $("prof-name").value.trim();
+    if (!name) return;
+    try {
+      await api("/api/profiles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      location.reload();
+    } catch (err) {
+      setStatus(err.message, "bad");
+    }
+  });
+
+  // Saved through a blob rather than by navigating to the endpoint: a webview
+  // has no download chrome, so navigation would simply display the JSON.
+  $("data-export").addEventListener("click", async () => {
+    try {
+      const payload = await api("/api/data/export");
+      const stamp = payload.exported_at.slice(0, 10);
+      const url = URL.createObjectURL(
+        new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" })
+      );
+      const link = el("a");
+      link.href = url;
+      link.download = `japanese-practice-${stamp}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setStatus(
+        `Saved ${plural(payload.counts.attempts, "attempt")} across ` +
+          `${plural(payload.counts.sessions, "session")}.`,
+        "good"
+      );
+    } catch (err) {
+      setStatus(err.message, "bad");
+    }
+  });
+
+  $("data-import").addEventListener("click", () => $("data-file").click());
+  $("data-file").addEventListener("change", async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    event.target.value = "";
+    if (!confirm("Loading replaces this profile's current progress. Continue?")) return;
+    try {
+      const payload = JSON.parse(await file.text());
+      const result = await api("/api/data/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payload, replace: true }),
+      });
+      const skipped = result.skipped_unknown_glyphs
+        ? ` ${plural(result.skipped_unknown_glyphs, "unknown character")} skipped.`
+        : "";
+      setStatus(`Loaded ${plural(result.attempts, "attempt")}.${skipped} Reloading…`, "good");
+      setTimeout(() => location.reload(), 900);
+    } catch (err) {
+      setStatus(err.message, "bad");
+    }
+  });
+
+  $("data-reset").addEventListener("click", async () => {
+    if (!confirm("Reset this profile to zero? Saved files are unaffected, but this profile's history is deleted.")) {
+      return;
+    }
+    try {
+      const result = await api("/api/data/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirm: true }),
+      });
+      setStatus(`Cleared ${plural(result.cleared.attempts, "attempt")}. Reloading…`, "good");
+      setTimeout(() => location.reload(), 900);
+    } catch (err) {
+      setStatus(err.message, "bad");
+    }
+  });
+}
+
 // ── boot ─────────────────────────────────────────────────────────────────────
 async function main() {
   const summary = await fetch("/api/summary").then((r) => r.json());
@@ -561,6 +762,7 @@ async function main() {
   renderHistory(summary.session_history || []);
   renderGames();
   initHeatmap();
+  initSettings();
 
   $("tb-streak").textContent = totals.best_streak ?? 0;
   $("tb-sessions").textContent = totals.sessions ?? 0;

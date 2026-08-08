@@ -7,10 +7,10 @@ from pathlib import Path
 
 from quart import Quart
 
-from . import audio
+from . import audio, profiles
 from .config import Config, default_config
 from .content.loader import seed_content
-from .db import Database, connect
+from .db import Database
 from .routes.api import api_bp
 from .routes.views import views_bp
 
@@ -45,11 +45,31 @@ def create_app(config: Config | None = None) -> Quart:
 
     @app.before_serving
     async def _startup() -> None:
-        db = await connect(config)
+        await open_profile_db(app, profiles.active_slug(config))
+
+    async def open_profile_db(target: Quart, slug: str) -> None:
+        """Open (or reopen) the database on one profile.
+
+        Reopening is how a profile switch works — see :mod:`.profiles` for why a
+        file per profile beats a column. The old connection is closed first so
+        the previous profile's WAL is checkpointed before anything reads it.
+        """
+        old: Database | None = target.config.get("JP_DB")
+        if old is not None:
+            await old.close()
+
+        profile = profiles.activate(config, slug)
+        db = Database(profile.path)
+        await db.connect()
         await db.init_schema()
         seeded = await seed_content(db)
-        app.config["JP_DB"] = db
-        log.info("database ready at %s (%s characters)", config.db_path, seeded)
+        target.config["JP_DB"] = db
+        target.config["JP_PROFILE"] = profile.slug
+        log.info("profile %r ready at %s (%s characters)", profile.slug, profile.path, seeded)
+
+    # Exposed so the settings endpoints can switch profiles without importing
+    # the factory, which would be circular.
+    app.config["JP_OPEN_PROFILE"] = open_profile_db
 
     @app.after_serving
     async def _shutdown() -> None:
