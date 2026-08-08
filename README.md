@@ -41,7 +41,7 @@ Full reference: **[docs/FEATURES.md](docs/FEATURES.md)**
 | **Memory games** | Match Up, Pelmanism, Confusion Drill — in all three scripts, unscored boards dealt from your weakest characters |
 | **Audio** | 630 bundled clips in two voices, plus local Japanese-native VOICEVOX synthesis with editable pitch accent |
 | **Analytics** | Per-character miss-rate heatmap, weakest-character drill queue, retention curve, mastery by group, leeches, streak calendar, session history |
-| **Content** | Hiragana 104 · Katakana 104 · Kanji 1,245 across JLPT N5–N1 plus Top 200/500 by frequency — extracted from the reference workbooks |
+| **Content** | Hiragana 104 · Katakana 104 · Kanji 1,251 across JLPT N5–N1 plus Top 200/500 by frequency — extracted from the reference workbooks |
 | **Scoring** | Four schemes: accuracy, speed, streak, SM-2 spaced repetition |
 | **Profiles & data** | Multiple learners, each in its own database file; save progress to a portable file, load it back, or reset to zero |
 
@@ -49,15 +49,17 @@ Full reference: **[docs/FEATURES.md](docs/FEATURES.md)**
 
 ## Status
 
-Working and in daily use. **289 tests passing.**
+Working and in daily use. **290 tests passing.**
 
 | Component | State |
 |---|---|
 | Study cards, scoring, analytics | ✅ Complete |
-| Memory games | ✅ Complete |
+| Memory games | ✅ Complete — 9 boards, 3 per script |
+| Profiles, save / load, reset | ✅ Complete |
 | Audio — bundled + VOICEVOX | ✅ Complete |
 | Desktop window + browser mode | ✅ Complete |
-| Kanji N4–N1 + frequency tiers | ✅ Complete — 1,245 characters, 17 decks |
+| Kanji N4–N1 + frequency tiers | ✅ Complete — 1,251 characters, 17 decks |
+| Audio for the new kanji | ❌ 1,144 characters synthesise live rather than playing a recorded clip |
 | Typed-recall mode | ❌ Planned |
 | Packaging (`.deb`, AppImage) | ❌ Planned |
 
@@ -97,7 +99,7 @@ python3 -m venv --system-site-packages .venv
 ### Develop
 
 ```bash
-.venv/bin/python -m pytest                  # 239 tests, ~3s
+.venv/bin/python -m pytest                  # 290 tests, ~5s
 .venv/bin/python -m ruff check src/ tests/
 .venv/bin/python -m black src/ tests/
 ```
@@ -137,6 +139,7 @@ frontend.
 | Document | Contents |
 |---|---|
 | [FEATURES.md](docs/FEATURES.md) | Complete feature and function reference |
+| [RELEASE-NOTES.md](docs/RELEASE-NOTES.md) | What changed each cycle, why, and what it cost |
 | [STACK-VERIFICATION.md](docs/STACK-VERIFICATION.md) | Stack, modularity and universality audit |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the system works; supportability |
 | [ROADMAP.md](docs/ROADMAP.md) | Everything outstanding, with QA criteria |

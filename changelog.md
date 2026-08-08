@@ -168,3 +168,22 @@
 - Settings dialog reached from the dashboard top bar.
 - Kanji option text enlarged to 15.5px with the reading at 13px.
 - Tests 268 → 289.
+
+## 2026-08-08T02:10:00Z — Documentation pass
+- **New** `docs/RELEASE-NOTES.md`: a full catalogue of this cycle — headline
+  numbers before/after, one section per feature with the reasoning behind each
+  decision, the corrections made along the way, and an explicit known-unfixed
+  list pointing at roadmap ids.
+- `docs/FEATURES.md` substantially expanded: an at-a-glance table, the pace
+  table, the kanji reading reference, per-script shelves and games, the rebuilt
+  miss-rate/streak/weak panels and what was removed, all 17 difficulty keys, all
+  23 endpoints, and a module reference covering all 32 modules.
+- `docs/ROADMAP.md`: N1, N2, U1 and P6 closed; N3 restated (1,144 characters now
+  lack audio, not a handful); new items N3b, N6, N7, U7, U8, Q7, Q8, P7, P8 and a
+  new §7a covering profiles/data follow-ups; completed-this-cycle table extended.
+- `docs/TESTING.md`, `docs/STACK-VERIFICATION.md`, `docs/HANDOFF.md` and
+  `README.md` refreshed against measured figures.
+- **Corrected stale counts**: the docs said 1,453 characters / 1,245 kanji, which
+  was true when written and wrong after six characters were added to N5. Now
+  1,459 / 1,251, and asserted by `test_documented_totals_match_the_seed_set` so
+  the drift cannot recur silently.

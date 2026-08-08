@@ -36,12 +36,20 @@ so `async def` tests need no per-test decorator.
 
 | File | Tests | Lines | Layer | What it proves |
 |---|---:|---:|---|---|
-| [`tests/conftest.py`](../tests/conftest.py) | — | 104 | fixtures | Isolation: every test gets a throwaway DB |
+| [`tests/conftest.py`](../tests/conftest.py) | — | 104 | fixtures | Isolation: every test gets a throwaway DB and data dir |
 | [`tests/test_scoring.py`](../tests/test_scoring.py) | **35** | 186 | pure functions | Four scoring schemes and SM-2 scheduling are exactly right |
-| [`tests/test_content.py`](../tests/test_content.py) | **58** | 256 | data | No Japanese character teaches something false |
-| [`tests/test_analytics.py`](../tests/test_analytics.py) | **41** | 484 | SQL | Every metric computes correctly, and survives an empty DB |
-| [`tests/test_api.py`](../tests/test_api.py) | **33** | 400 | HTTP | The whole stack works end to end, including multiple choice and skip scoring |
-| [`tests/test_audio_library.py`](../tests/test_audio_library.py) | **26** | 213 | assets | No silent, truncated or corrupt clip reaches a learner |
+| [`tests/test_content.py`](../tests/test_content.py) | **59** | 259 | data | No Japanese character teaches something false; documented totals match the seed set |
+| [`tests/test_analytics.py`](../tests/test_analytics.py) | **37** | 520 | SQL | Every metric computes correctly, and survives an empty DB |
+| [`tests/test_api.py`](../tests/test_api.py) | **47** | 648 | HTTP | The whole stack works end to end — choices, skip scoring, per-script boards, volume tiers, kanji option readings |
+| [`tests/test_audio_library.py`](../tests/test_audio_library.py) | **20** | 224 | assets | No silent, truncated or corrupt clip reaches a learner |
+| [`tests/test_userdata.py`](../tests/test_userdata.py) | **16** | 184 | profiles & data | One learner's history never appears in another's; an export round-trips; a reset cannot fire unconfirmed |
+| [`tests/test_kana.py`](../tests/test_kana.py) | **3** | 61 | transliteration | Every seeded reading converts to romaji with no kana left behind |
+| [`tests/test_profiles.py`](../tests/test_profiles.py) | **2** | 26 | pure functions | A profile name always yields a usable filename |
+| [`tests/test_voicelab.py`](../tests/test_voicelab.py) | **14** | 129 | tooling | The voice pipeline's commands behave |
+| [`tests/test_voicevox.py`](../tests/test_voicevox.py) | **14** | 139 | provider | Local synthesis and pitch accent, and the absent-engine path |
+
+**290 tests, ~5 seconds.** The parametrised cases mean the count exceeds the
+number of `def test_` functions.
 | **Total** | **193** | **1,643** | | |
 
 The distribution is deliberate. **Content has the most tests despite being the

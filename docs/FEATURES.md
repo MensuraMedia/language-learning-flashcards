@@ -1,12 +1,36 @@
 # Features & function reference
 
 Everything the application does, and every module, endpoint and control that
-does it. Current as of 2026-08-07 · 239 tests passing.
+does it. Current as of **2026-08-08** · **289 tests passing** · **1,459
+characters seeded**.
 
 - [1. Study cards](#1-study-cards) · [2. Memory games](#2-memory-games) · [3. Dashboard](#3-dashboard--analytics)
 - [4. Audio](#4-audio) · [5. Content](#5-content) · [6. Scoring](#6-scoring--scheduling)
 - [7. HTTP API](#7-http-api) · [8. Modules](#8-module-reference) · [9. CLI](#9-command-line)
-- [10. Configuration](#10-configuration) · [11. Not built](#11-deliberately-not-built)
+- [10. Configuration](#10-configuration) · [10a. Profiles & data](#10a-profiles-and-your-data) · [11. Not built](#11-deliberately-not-built)
+
+Every figure in this document was measured against the working tree, not
+recalled. Where something is unverified or known-weak it says so.
+
+---
+
+## 0. At a glance
+
+| Dimension | Count | Notes |
+|---|---:|---|
+| Characters seeded | **1,459** | 104 hiragana · 104 katakana · 1,251 kanji |
+| Study decks | **17** | 5 hiragana · 5 katakana · 5 JLPT · 2 volume tiers |
+| Memory boards | **9** | 3 modes × 3 scripts |
+| Confusion pairs | **84** | 21 hiragana · 24 katakana · 39 kanji |
+| Scoring schemes | **4** | accuracy · speed · streak · SRS |
+| Dashboard analytics | **13** | see §3 |
+| HTTP endpoints | **23** | 3 views + 20 API |
+| Python modules | **32** | 7,473 lines, zero import cycles |
+| Bundled audio clips | **630** | plus local VOICEVOX synthesis |
+| Tests | **289** | ~5 s, 10 files |
+| Runtime dependencies | **3** | 33 packages in the whole closure |
+
+---
 
 ---
 
@@ -22,19 +46,65 @@ one scores automatically and flips the card, so a wrong answer still teaches.
 | **Front face purity** | The glyph alone — no romaji, meaning or hint. Asserted by a test that parses the markup |
 | **True 3D flip** | `rotateY(180deg)` with `backface-visibility`, 0.55 s |
 | **Multiple choice** | 3 options, server-shuffled so the answer is never in a fixed slot |
-| **Verdict hold** | Correct 1.9 s · wrong 2.9 s. A wrong answer is when the learner actually studies, so it gets longer |
+| **Verdict hold** | Correct 1.9 s · wrong 2.9 s at the default pace. A wrong answer is when the learner actually studies, so it gets longer |
+| **Pace slider** | Five steps scaling the hold 1.0× → 0.2×, so a known deck moves at the learner's speed rather than beginner timing. See below |
 | **Skip** | Scores −1 and records `skipped=1` — an honest "I don't know" |
 | **Back / Next** | One split control. Next is greyed until you have gone back, then returns you forward **free** |
 | **Voice toggle** | Female / male, persisted |
 | **Session recap** | Every character covered, at option-card size, misses in red with romaji beneath |
 | **Colour-coded metrics** | Score, accuracy and streak graded green / amber / red against what was achievable |
+| **Kanji reading reference** | Card backs and options carry romaji — see [Kanji cards](#kanji-cards) |
+| **Per-script accent** | Kanji surfaces use a green accent, kana amber, so the script is never in doubt |
+
+### Pace
+
+The default holds suit someone meeting a character for the first time. A learner
+who already knows the deck wants it to move, and being held at beginner timing
+for 20 cards is the difference between a drill and a chore. The control sits
+directly under the options, persists as `jp.pace`, and steps with `[` and `]`.
+
+| Step | Name | Factor | Correct hold | Wrong hold |
+|---:|---|---:|---:|---:|
+| 1 | relaxed | 1.00× | 1,900 ms | 2,900 ms |
+| 2 | steady | 0.70× | 1,330 ms | 2,030 ms |
+| 3 | brisk | 0.50× | 950 ms | 1,450 ms |
+| 4 | fast | 0.35× | 665 ms | 1,015 ms |
+| 5 | relentless | 0.20× | 380 ms | 580 ms |
+
+Holds are floored at **260 ms**: below that the verdict colour is not
+perceptible, and the whole point of the hold is that a wrong answer can be read.
+Skip keeps its own brisk constant (250 ms) and does not scale — there is no
+verdict to read.
+
+> **Verification note.** The step table above is computed from the constants in
+> `study.js`. One end-to-end timing was measured in the running window (355 ms
+> at *relentless*, against a computed 380 ms); the slower holds were not
+> measured, because the screenshot-polling harness available here is too coarse
+> to time them reliably.
+
+### Kanji cards
+
+A kanji card is graded on its **meaning**, so its options are English. That
+leaves a learner who cannot yet read kana fluently with readings they cannot
+use — the opposite of a reference. Three things address it:
+
+| Feature | Detail |
+|---|---|
+| **Romaji under each reading** | The card back shows on'yomi and kun'yomi in kana with the Hepburn transliteration beneath (ジ → `ji`, あざ → `aza`) |
+| **Readings on the options** | Each option carries the reading of the character it stands for, so three English phrases become three characters you could say |
+| **Double-height options** | "world/generation" does not fit the square that suits `kya`. The kanji column widens and the tiles stop being square |
+
+Transliteration is done by `kana.py` in wapuro romaji — long vowels written out
+(シュウ → `shuu`) rather than macronned, matching the reference charts and
+round-tripping back to the same kana. Option readings are **display only**;
+grading still compares the option text against the answer.
 
 ### Distractor quality
 
 Distractors are not random. In priority order:
 
-1. **Curated visual-confusion partners** — シ/ツ, ソ/ン, る/ろ, ぬ/め, き/さ, は/ほ
-   (45 hand-authored pairs)
+1. **Curated visual-confusion partners** — シ/ツ, ソ/ン, る/ろ, ぬ/め, き/さ, は/ほ,
+   人/入, 大/犬, 問/門 (84 hand-authored pairs across all three scripts)
 2. **Voicing siblings** — ぱ offers `ba` and `ha`, so the han-dakuon deck actually
    tests the は/ば/ぱ contrast it exists for
 3. **Same kana group / JLPT level**
@@ -57,6 +127,7 @@ Every action is reachable without the mouse.
 | `M` | Mute |
 | `P` `R` | Play pronunciation |
 | `V` | Switch voice |
+| `[` `]` | Pace — slower / faster |
 | `Esc` | End session |
 | `?` `H` | Shortcut panel |
 
@@ -86,6 +157,18 @@ Both halves of a confusion pair are always dealt onto the board together. A
 look-alike without its partner is an ordinary memory tile; the discrimination
 only happens when both shapes are in front of you.
 
+### The nine boards
+
+| Script | Match Up pairs on | Confusion drill stacks |
+|---|---|---|
+| **Hiragana** | reading | あ/お · ぬ/め · る/ろ · き/さ · は/ほ (21 pairs) |
+| **Katakana** | reading | シ/ツ · ソ/ン · ク/ワ · ル/レ (24 pairs) |
+| **Kanji** | meaning | 人/入 · 大/犬 · 問/門 · 像/象 · 績/積 (39 pairs) |
+
+### Controls and behaviour
+
+- **Script picker**: switch alphabet without leaving the view; the mode
+  descriptions rewrite themselves to match.
 - **Board shape**: columns in groups of three, count chosen to minimise the
   row/column difference. 6 pairs is a centred 3×4 block, never a long strip —
   position is what a memory game trains.
@@ -94,6 +177,8 @@ only happens when both shapes are in front of you.
 - **Completion**: time, moves, and efficiency against the perfect move count.
 - **Fallback**: a new learner has no weak set, so the deck fills in and the games
   work on day one.
+- **Deep links**: `/games?mode=confusion&script=kanji`, which is what the
+  dashboard rails open.
 
 ### What they record, and what they do not
 
@@ -108,40 +193,109 @@ the same way a chance floor does.
 
 ## 3. Dashboard & analytics
 
-### Instrument row
+The dashboard is the landing page and the diagnostic surface. It is assembled
+from **one** round trip to `/api/summary`, plus two lazy calls for the games
+catalogue and the heatmap.
+
+### 3.1 Instrument row
 
 Sessions run · Cards reviewed · Overall accuracy (with sparkline) · Best streak ·
 Average response · Decks in play.
 
-### Deck shelves
+### 3.2 Shelves — organised by script
 
-Every difficulty key as a physical deck: rung badge, three-glyph preview, an obi
-band doubling as the mastery meter, and the challenge/scoring pairing it opens
-with. Yoon decks preview two glyphs, because digraphs overrun the card.
+Each script gets its **own shelf**, and each shelf is immediately followed by its
+own games rail, so the drill and the game for what you are working on sit
+together.
 
-Empty shelves are hidden rather than rendered as blank cards.
+| Shelf | Decks | Contents |
+|---|---:|---|
+| **Hiragana** | 5 | gojuon 46 · dakuon 20 · han-dakuon 5 · yoon 33 · all 104 |
+| **Katakana** | 5 | the same five rungs in the loanword script |
+| **Kanji — Proficiency** | 5 | JLPT N5 113 · N4 169 · N3 396 · N2 236 · N1 337 |
+| **Kanji — Volume** | 2 | Top 200 · Top 500 by teaching frequency |
 
-### Memory-training cards
+Previously hiragana and katakana shared one horizontally-scrolling rail, which
+pushed katakana off the right edge where it read as missing. Empty shelves are
+hidden rather than rendered as blank cards.
+
+A deck card carries: rung badge, three-glyph preview, an obi band doubling as
+the mastery meter, and the challenge/scoring pairing it opens with. Yoon decks
+preview two glyphs, because digraphs overrun the card.
+
+**Kanji shelves and their games use a green accent**; kana keeps amber. Kana and
+kanji are different undertakings — one is a closed set of 104 sounds you finish,
+the other 1,251 characters you chip at for years — and with the two now stacked
+one above the other, the accent is what tells you which you are looking at. Only
+the accent tokens change; surfaces, ink and card stock are shared, so this is a
+change of signal colour rather than a second theme to maintain.
+
+### 3.3 Memory-training rails
 
 Deliberately a different object from a deck: landscape, a miniature of the board
 they deal (Pelmanism's is genuinely half-covered), what they train instead of
 progress, an `unscored` tag, and a coloured edge per mode.
 
-### Metrics
+### 3.4 Per-character miss rate
+
+The headline diagnostic, rebuilt as a map of a **set** rather than of your
+attempt log.
+
+| Control | Behaviour |
+|---|---|
+| **Set selector** | Hiragana · Katakana · Kanji N5 · N4 · N3 · N2 · N1 · Top 200 |
+| **Table toggle** | The same data as a ranked work list: character, reading, seen, missed, miss rate |
+| **Cell click** | Starts a drill session on that character alone |
+| **Footer** | `N characters · set mean X% · weakest 字` |
+
+Two decisions worth stating:
+
+- **Characters you have never seen are shown**, dashed and empty. A grid built
+  from the `attempts` table alone silently hides everything untouched, which is
+  precisely the most actionable thing the panel could tell you.
+- **The colour ramp tops out at 30% miss rate**, not 100%. Above 30% a character
+  is simply failing; below it is where the differences a learner can act on
+  live, and a 0–100% ramp flattens all of them into the same dim wash.
+
+Set mean is accuracy over *attempts*, not the mean of per-character rates — ten
+tries at one character should not weigh the same as one try at ten.
+
+### 3.5 Streak
+
+| Element | Detail |
+|---|---|
+| **Hero figure** | Longest consecutive-day run on record, with the current run beside it |
+| **28-day strip** | One cell per day in four load bands |
+| **Weekly table** | Last four weeks: sessions · reps · mean accuracy, labelled W-0 … W-3 |
+
+Streaks count **distinct dates**, not sessions: two sessions in one evening is
+one day of the habit. The current run survives today being empty — it breaks
+only once a whole day has been missed, or it would read zero every morning.
+
+Four load bands rather than a continuous ramp, because the question the strip
+answers is "did I study, and roughly how hard", which four bands answer and a
+256-step gradient does not.
+
+### 3.6 Weak characters
+
+A ranked grid: glyph, reading, error rate, and a bar of that rate so the column
+reads as ranked before you take in any numbers. Clicking a card drills it;
+**Drill weak set** opens the whole set as one session.
+
+Ranking is recency-weighted — a miss yesterday outranks one 120 days ago — and
+skips weigh 1.25×, because guessing wrong still shows a partial trace whereas
+passing means no recall at all.
+
+### 3.7 The remaining panels
 
 | Panel | What it computes |
 |---|---|
-| **Per-character miss-rate heatmap** | `missed / seen` per glyph, amber intensity, **click any cell to drill it** |
-| **Weakest characters** | Recency-weighted — a miss yesterday outranks one 120 days ago. Skips weigh 1.25× |
 | **Accuracy per session** | Trend, oldest first |
 | **Accuracy by set** | Per deck |
 | **Retention curve** | Accuracy bucketed by days since that character was last seen |
-| **Time of day** | Accuracy by hour, as a dot plot |
-| **Mastery by group** | Per kana group and JLPT level |
 | **Leeches** | High lapses relative to reps — repeatedly relearned and re-forgotten |
 | **First vs eventual** | Genuine recall against within-session pattern-matching |
 | **Progress velocity** | Newly mastered per week |
-| **Study calendar** | 90-day contribution grid |
 | **Session history** | Date, deck, challenge, scoring, cards, accuracy, average, streak, score |
 
 **Mastery** = `seen ≥ 3 AND miss_rate ≤ 0.15`. Deliberately conservative; three
@@ -150,6 +304,18 @@ exposures is the minimum at which a rate means anything.
 **Every metric is derived at query time** from an append-only `attempts` table,
 so a new metric applies retroactively to all existing history — no migration, no
 backfill. Every one returns a sensible empty structure on a fresh install.
+
+### 3.8 Removed, and why
+
+| Panel | Reason |
+|---|---|
+| **Response latency** | Removed on request. Latency conflates thinking with reading speed and with being interrupted |
+| **Confused with** | Removed on request. The confusion drill acts on the same signal without asking the learner to interpret a matrix |
+| **Time of day** | Removed on request — no action followed from it |
+| **Mastery by group** | Removed on request; the shelves already carry per-deck mastery |
+
+All four are gone end to end — query, endpoint payload, renderer and markup —
+rather than hidden with CSS.
 
 ---
 
@@ -205,7 +371,7 @@ than 0.35 s — it caught a truncated へ at 0.24 s that passed the absolute flo
 | Kanji by frequency | **500** | teaching order, ranked 1–500, slicing the Top 200 and Top 500 tiers |
 | Confusion pairs | **84** | 21 hiragana · 24 katakana · 39 kanji |
 
-**1,453 characters in total**, of which **1,245 are kanji**.
+**1,459 characters in total**, of which **1,251 are kanji**.
 
 N4–N1 were extracted from the reference charts in the companion
 [language-learning](https://github.com/MensuraMedia/language-learning)
@@ -221,12 +387,53 @@ reading affects the reference rows on the card back and nothing scored.
 One known source defect: the N1 chart gives 沌 the kun'yomi `yodmu`, which is
 not a reading. It is dropped rather than guessed at.
 
-Counts match the reference workbooks exactly. **58 tests** guard the data:
-Hepburn traps (し=shi, ち=chi, つ=tsu, ふ=fu, じ=ji, を=wo, ん=n), forbidden
-kunrei forms, Unicode block membership, reading conventions, no duplicates.
+### N5 correction
 
-Difficulty keys: `hiragana:{gojuon,dakuon,handakuon,yoon,all}`, same for
-katakana, and `kanji:N5`.
+The original N5 module and the reference chart differed by six characters each
+way. **夕 田 外 青 赤 言** were on the chart but missing from the transcription,
+and all six are inside the Top 200 by frequency, so without them the volume
+tiers could not be complete. They were added by hand in the curated N5 style,
+with stroke counts and okurigana notation. The six the module has that the chart
+does not (鳥 帰 犬 早 字 魚) were left where they are — they are legitimate
+characters, and moving them would change which deck an existing learner's
+history sits under for no gain.
+
+### The volume tiers
+
+`kanji:top200` and `kanji:top500` slice a **`frequency_rank` column**, populated
+from `content/kanji_frequency.py` — the 500-glyph order taken from the printed
+Top 200/500 flash-card decks in the same reference repository, so screen and
+paper agree. The Top 200 set was verified to be exactly the first 200 entries of
+the Top 500.
+
+This is a **teaching** order, not a corpus frequency count: it front-loads
+numbers, days and the characters a beginner meets first. It deliberately crosses
+JLPT levels — that is the point of the tier.
+
+Before this the keys resolved to "the first N kanji by id", which after seeding
+N5 first would have advertised a mostly-N5 set as the Top 200. Labelling that
+"Top 200" would have been false, so the ranking column was added rather than the
+label kept.
+
+### Difficulty keys — all 17
+
+| Script | Keys |
+|---|---|
+| Hiragana | `hiragana:{gojuon,dakuon,handakuon,yoon,all}` |
+| Katakana | `katakana:{gojuon,dakuon,handakuon,yoon,all}` |
+| Kanji · JLPT | `kanji:{N5,N4,N3,N2,N1}` |
+| Kanji · volume | `kanji:{top200,top500}` |
+
+Every one now resolves to characters; a key with none is omitted from
+`/api/segments` rather than offered as an empty deck.
+
+### Data guarantees
+
+**59 tests** guard the content: Hepburn traps (し=shi, ち=chi, つ=tsu, ふ=fu,
+じ=ji, を=wo, ん=n), forbidden kunrei forms, Unicode block membership, reading
+conventions, no duplicate glyphs, every confusion-pair glyph seeded, and the
+totals quoted in this document and the README asserted against the seed set —
+those drifted once already when the six N5 characters were added.
 
 ---
 
@@ -248,51 +455,122 @@ Wrong resets interval and reps, drops ease by 0.2 with a floor of 1.30.
 
 ## 7. HTTP API
 
-All errors return `{"code", "message"}` with an appropriate status.
+**23 endpoints** — 3 views and 20 JSON. All errors return `{"code", "message"}`
+with an appropriate status.
+
+### Views
 
 | Method | Path | Purpose |
 |---|---|---|
 | `GET` | `/` | Dashboard |
-| `GET` | `/study` | Study view |
-| `GET` | `/games` | Memory games |
+| `GET` | `/study` | Study view. `?difficulty=`, `?challenge=`, `?scoring=`, `?characters=` |
+| `GET` | `/games` | Memory games. `?mode=`, `?script=` |
+
+### Study & content
+
+| Method | Path | Purpose |
+|---|---|---|
 | `GET` | `/api/summary` | Every dashboard panel, one round trip |
-| `GET` | `/api/segments` | Difficulty keys with live counts, plus challenge and scoring axes |
-| `GET` | `/api/games` | Game catalogue with live board previews |
-| `GET` | `/api/credits` | Attribution the active audio provider requires |
+| `GET` | `/api/segments` | The 17 difficulty keys with live counts, plus challenge and scoring axes |
+| `GET` | `/api/heatmap?difficulty=` | One set's characters with miss rates, **including unseen ones** |
 | `GET` | `/api/character/<id>` | Character detail plus recall history |
 | `GET` | `/api/audio/<id>?voice=` | Pronunciation; always returns playable bytes |
+| `GET` | `/api/credits` | Attribution the active audio provider requires |
 | `POST` | `/api/session` | Start a session; `character_ids` overrides `difficulty` (the drill path) |
 | `POST` | `/api/session/<id>/attempt` | Record an answer |
 | `POST` | `/api/session/<id>/end` | Finalise |
-| `POST` | `/api/game/board` | Deal a memory board |
+
+### Games
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/api/games` | Catalogue of all 9 boards with live previews |
+| `POST` | `/api/game/board` | Deal a board — `mode`, `script`, `pairs`, `character_ids` |
 | `POST` | `/api/game/mispair` | Record a wrong pairing |
+
+### Profiles & data
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/api/profiles` | Every profile, active one flagged |
+| `POST` | `/api/profiles` | Create and switch to a profile |
+| `POST` | `/api/profiles/activate` | Switch, reopening the database |
+| `DELETE` | `/api/profiles/<slug>` | Delete a profile and its database |
+| `GET` | `/api/data/summary` | What a reset would remove |
+| `GET` | `/api/data/export` | Progress as a portable document |
+| `POST` | `/api/data/import` | Load an export back |
+| `POST` | `/api/data/reset` | Wipe progress — requires `{"confirm": true}` |
 
 ---
 
 ## 8. Module reference
 
-4,981 lines across 24 modules, zero import cycles. Full audit:
+**7,473 lines across 32 Python modules, zero import cycles.** Full audit:
 [STACK-VERIFICATION.md](STACK-VERIFICATION.md).
+
+### Layering
+
+```
+leaves        models · config · scoring · audio_library · tts_* · kana
+                  · confusions · kanji_frequency
+    ↓
+core          db · profiles
+    ↓
+domain        analytics · session · games · audio · userdata
+    ↓
+composition   routes.api · app · __main__
+```
+
+### Backend
 
 | Module | LOC | Responsibility |
 |---|---:|---|
 | `models` | 142 | Frozen dataclasses: `Character`, `CharacterSeed`, `Attempt`, `Session` |
 | `config` | 153 | XDG-derived paths, `JP_*` env overrides |
-| `db` | 347 | aiosqlite layer, schema, additive migrations, difficulty-key queries |
+| `db` | 365 | aiosqlite layer, schema, additive migrations, difficulty-key queries |
 | `scoring` | 161 | Four schemes, SM-2 `next_review()` |
-| `session` | 347 | Deck building, choice generation, attempt recording |
-| `analytics` | 576 | 16 metric functions, deck shelves, session history |
-| `games` | 214 | Board dealing for three modes, game catalogue |
+| `session` | 385 | Deck building, choice generation, option readings, attempt recording |
+| `analytics` | 664 | 15 metric functions, character grid, deck shelves, session history |
+| `games` | 301 | Script-scoped board dealing for three modes, per-script catalogue |
+| `kana` | 196 | Kana → Hepburn romaji, for the kanji reading reference |
+| `profiles` | 226 | One database file per learner; create, activate, delete |
+| `userdata` | 217 | Export, import and reset of progress |
 | `audio` | 614 | Provider chain, caching, speech-text derivation |
 | `audio_library` | 337 | Clip validation, manifest, cross-voice consistency |
 | `tts_voicevox` | 263 | Local Japanese-native provider, accent extraction |
 | `tts_elevenlabs` | 200 | Cloud fallback provider |
 | `voicelab` | 412 | Audition / cost / build / verify / warm / speakers / accent |
-| `routes.api` | 254 | JSON surface |
+| `routes.api` | 382 | JSON surface, 20 endpoints |
 | `routes.views` | 25 | Three HTML views |
-| `app` | 64 | Quart factory, DB lifecycle |
+| `app` | 84 | Quart factory, profile-aware DB lifecycle |
 | `__main__` | 324 | CLI, pywebview shell, graceful fallback |
-| `content/*` | 543 | Character data and loader |
+
+### Content
+
+| Module | LOC | Contents |
+|---|---:|---|
+| `content.hiragana` | 119 | 104 characters |
+| `content.katakana` | 119 | 104 characters |
+| `content.kanji_n5` | 172 | 113 · hand-curated, with stroke counts and okurigana notation |
+| `content.kanji_n4` | 220 | 169 · extracted from the reference chart |
+| `content.kanji_n3` | 447 | 396 · extracted |
+| `content.kanji_n2` | 287 | 236 · extracted |
+| `content.kanji_n1` | 388 | 337 · extracted |
+| `content.kanji_frequency` | 36 | 500 glyphs in teaching order |
+| `content.confusions` | 105 | 84 visual-confusion pairs |
+| `content.loader` | 113 | Idempotent upsert by glyph, frequency ranking |
+
+### Frontend
+
+No bundler, no framework, no build step.
+
+| Asset | Lines |
+|---|---:|
+| `static/css/theme.css` | 3,185 |
+| `static/js/dashboard.js` | 791 |
+| `static/js/study.js` | 593 |
+| `static/js/games.js` | 295 |
+| `templates/*.html` | 461 |
 
 ---
 
@@ -399,3 +677,4 @@ Stated so the absences read as decisions, not oversights.
 | Character Runners | Evaluated and recommended against — highest build cost, lowest reading-per-minute |
 
 Everything outstanding, with acceptance criteria: [ROADMAP.md](ROADMAP.md).
+What changed and why, cycle by cycle: [RELEASE-NOTES.md](RELEASE-NOTES.md).

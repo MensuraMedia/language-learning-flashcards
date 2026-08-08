@@ -257,3 +257,16 @@ def test_confusion_pairs_include_the_classic_traps():
     normalised = {frozenset(p) for p in CONFUSION_PAIRS}
     for a, b in (("シ", "ツ"), ("ソ", "ン")):
         assert frozenset((a, b)) in normalised, f"missing classic pair {a}/{b}"
+
+
+def test_documented_totals_match_the_seed_set():
+    """Counts appear in the README, the docs and the dashboard subtitle.
+
+    They drifted once already — six characters were added to N5 after the
+    figures were written — so the numbers are asserted rather than trusted.
+    """
+    kanji = [s for s in ALL_SEEDS if s.script == "kanji"]
+    assert len(ALL_SEEDS) == 1459
+    assert len(kanji) == 1251
+    by_level = Counter(s.jlpt_level for s in kanji)
+    assert by_level == {"N5": 113, "N4": 169, "N3": 396, "N2": 236, "N1": 337}

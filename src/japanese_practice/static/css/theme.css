@@ -3123,7 +3123,7 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
 
 /* ── kanji accent ───────────────────────────────────────────────────────────
    Kana and kanji are different undertakings — one is a closed set of 104 sounds
-   you finish, the other is 1,245 characters you chip at for years. Giving kanji
+   you finish, the other is 1,251 characters you chip at for years. Giving kanji
    its own accent means the script you are looking at is never in question, on a
    dashboard where the two now sit one above the other.
 

@@ -637,7 +637,7 @@ def _segment_clause(key: str) -> str:
     if script == "kanji":
         # A volume tier is the first N of the teaching order, not every kanji —
         # without the rank bound the Top 200 deck would report progress across
-        # all 1,245 seeded characters.
+        # all 1,251 seeded characters.
         limit = KANJI_VOLUME_TIERS.get(group)
         if limit is None:
             return "script = 'kanji'"

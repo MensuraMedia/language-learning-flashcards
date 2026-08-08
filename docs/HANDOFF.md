@@ -4,11 +4,11 @@
 It is the single place a new session (human or agent) reads to know where the
 project stands, what is real, what is assumed, and what to do next.
 
-- **Last updated:** 2026-08-07 20:10 UTC-4
+- **Last updated:** 2026-08-08 01:45 UTC-4
 - **Updated by:** session `30934411` (Claude Opus 5)
 - **Project root:** `/home/user/projects/japanese_practice`
 - **Remote:** https://github.com/MensuraMedia/language-learning-flashcards (public)
-- **Current state:** application runs end to end; 155 tests passing; UI polish outstanding
+- **Current state:** application runs end to end; **290 tests passing**; 1,459 characters across 17 decks; profiles, save/load and reset shipped
 
 ---
 
@@ -36,14 +36,20 @@ works on this project **must**:
 | Japanese content model | ✅ Complete and verified |
 | Design mockups (5 directions) | ✅ Complete, direction chosen |
 | Application skeleton | ✅ Runs end to end |
-| Analytics engine | ✅ All 13 metrics compute from real data |
+| Analytics engine | ✅ 13 metrics compute from real data (time-of-day and mastery-by-group removed on request) |
 | Desktop window (pywebview) | ✅ Opens and renders |
 | UI layout polish | ✅ Dashboard rebuilt to the approved mockup (deck shelves, instrument row, history) |
 | Audio (local TTS) | ✅ **Working end to end.** espeak-ng + `ja` voice; API returns audible WAV (peaks 0.385–0.786); renders cached |
 | Audio (ElevenLabs) | ✅ **630 clips built** — Matilda/Daniel, validated, shipped offline |
 | Clip library + validation | ✅ `audio_library.py`, manifest + checksums |
 | Keyboard controls | ✅ **All verified with xdotool** |
-| Tests | ✅ **216 passing**, lint + format clean — see [TESTING.md](TESTING.md) |
+| Tests | ✅ **290 passing**, lint + format clean — see [TESTING.md](TESTING.md) |
+| Kanji content N4–N1 | ✅ **1,138 characters** extracted from the reference charts |
+| Kanji frequency tiers | ✅ Top 200 / Top 500 backed by a real `frequency_rank` |
+| Per-script shelves & games | ✅ 17 decks, 9 memory boards |
+| Profiles, save/load, reset | ✅ Settings dialog, file per profile, glyph-keyed export |
+| Kanji audio | ❌ **1,144 of 1,459 characters have no recorded clip** — they fall through to live VOICEVOX synthesis (roadmap N3) |
+| Frontend JS tests | ❌ 1,679 lines untested; no runner, `node` not installed (roadmap Q2) |
 | Packaging / distribution | ❌ Not started |
 
 **Chosen design direction:** `mockups/05-tactile-deck.html`, with the analytics
@@ -82,7 +88,8 @@ All of the following were run on 2026-08-06 and produced the stated result.
 **Content data** — exact counts against the authoritative reference:
 - Hiragana 104 (46 gojuon + 20 dakuon + 5 handakuon + 33 yoon)
 - Katakana 104 (same split)
-- Kanji N5 107
+- Kanji N5 113 · N4 169 · N3 396 · N2 236 · N1 337 — **1,251 kanji, 1,459 total**
+- Kanji frequency list 500, Top 200 verified as its first 200
 - No duplicate glyphs; all glyphs inside their correct Unicode ranges
 - Hepburn romanisation correct on the classic traps (し=shi, ち=chi, つ=tsu,
   ふ=fu, じ=ji, を=wo, ん=n, しゃ=sha, じゅ=ju, ちょ=cho)
@@ -237,21 +244,43 @@ chosen deliberately to keep the real address out of public history.
 
 ## 8. Next actions, in order
 
-1. ~~Detached `.btn`~~ — **SOLVED 2026-08-07.** Not a flex problem at all:
-   `class="btn ghost"` collided with `.ghost`, the deck's fanned-sheet class
-   (`position:absolute; inset:0`, with a 記 `::after`). The button was pulled
-   clean out of its row. Renamed `.btn-ghost`. **This is the second such
-   collision** — see also `.skip`. Grep `theme.css` before naming a class.
-2. **Finish the dashboard layout** — check every panel below the fold renders
-   (trend, retention, latency, time-of-day, leeches, mastery, calendar). Move the
-   inline `style=` stopgaps into `theme.css`.
-3. **Add `pytest-cov`** and set a coverage floor; the suite exists but coverage
-   is unmeasured.
-4. **Seed Kanji N4–N1** so those difficulty keys stop returning empty decks.
-5. **Bundle real kana audio clips** to replace TTS for the fixed 104-character sets.
-6. **Decide the `.claude/rules/` duplicate** and whether to drop the non-applicable
-   example rules and agents.
-7. **Package** — `.deb` / AppImage, per the README roadmap.
+Full register with QA criteria: [ROADMAP.md](ROADMAP.md).
+
+1. **Rotate the ElevenLabs API key.** It was pasted into a session transcript and
+   has never been rotated. Nothing else on this list matters as much.
+2. **Narrate the 1,144 new kanji** (roadmap N3). The speaker button on a kanji
+   card currently falls through to live VOICEVOX synthesis every time — correct,
+   but slower and unvalidated. Decide which reading to record first (N3b).
+3. **Audit the single-reading on/kun assignments** (roadmap N6). ~530 entries had
+   their field picked by a lexicon rule measured at 94.6%, so roughly 30 are
+   likely mislabelled. They are card-back annotations, not scored, but they are
+   wrong.
+4. **Add `pytest-cov`** and a coverage floor (Q1); coverage is still unmeasured
+   across 290 tests.
+5. **Get a JS test runner in place** (Q2). The frontend is now 1,679 untested
+   lines and this cycle added the pace scaling, the heatmap, the streak panel and
+   the settings dialog to it.
+6. **Verify the remaining below-the-fold panels** (U3) — retention,
+   accuracy-by-set, leeches and session history have not been confirmed together
+   with real data.
+7. **Close the game-theory decisions D1–D4.** They are cheap individually and
+   interact; the scored mode still has a dominant strategy.
+8. **Decide the `.claude/rules/` duplicate** and whether to drop the
+   non-applicable example rules and agents (S1, S2).
+9. **Package** — `.deb` / AppImage (P1–P3), and make sure an upgrade preserves
+   profiles (P7).
+
+### Solved, do not redo
+
+- ~~Detached `.btn`~~ — **2026-08-07.** Not a flex problem: `class="btn ghost"`
+  collided with `.ghost`, the deck's fanned-sheet class (`position:absolute;
+  inset:0`, with a 記 `::after`). **The second such collision** — see also
+  `.skip`. Grep `theme.css` before naming a class.
+- ~~Seed Kanji N4–N1~~ — **2026-08-08.** 1,138 characters from the reference
+  charts.
+- ~~Top 200 / Top 500 decks~~ — **2026-08-08.** Backed by a `frequency_rank`
+  column rather than an id slice.
+- ~~Data export~~ — **2026-08-08.** Glyph-keyed JSON, plus profiles and reset.
 
 ---
 
@@ -260,6 +289,7 @@ chosen deliberately to keep the real address out of public history.
 | Document | Purpose |
 |---|---|
 | `README.md` | Public-facing: what the app is, features, roadmap |
+| `docs/RELEASE-NOTES.md` | What changed each cycle, with the reasoning and the known-unfixed list |
 | `docs/HANDOFF.md` | **This file** — session-to-session continuity |
 | `docs/ARCHITECTURE.md` | How the system works; stack rationale; supportability, applicability, universality |
 | `docs/BUILD-SPEC.md` | Binding implementation contract — paths, signatures, schema |
