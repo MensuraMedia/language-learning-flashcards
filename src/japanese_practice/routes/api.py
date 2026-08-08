@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import asdict
+from datetime import datetime, timezone
 from typing import Any
 
 from quart import Blueprint, Response, current_app, jsonify, request
@@ -176,6 +177,58 @@ async def end_session(session_id: int) -> Any:
     except ValueError as exc:
         return _error("not_found", str(exc), 404)
     return jsonify(asdict(record))
+
+
+# -- preferences ------------------------------------------------------------
+#
+# Interface settings live on the server rather than in the browser. The desktop
+# webview accepts localStorage writes and silently drops them, so a preference
+# set on the dashboard never reached the study view — a full page navigation
+# starts a fresh JS context with nothing to read.
+
+
+#: Only these keys are accepted. An open key-value store reachable from the page
+#: is a way to fill someone's database with whatever a bug decides to write.
+ALLOWED_PREFERENCES = frozenset(
+    {"jp.sound", "jp.cue", "jp.volume", "jp.muted", "jp.voice", "jp.pace"}
+)
+MAX_PREFERENCE_LENGTH = 64
+
+
+@api_bp.get("/preferences")
+async def preferences_get() -> Response:
+    """Every stored preference for the active profile."""
+    rows = await get_db().fetch_all("SELECT key, value FROM preferences")
+    return jsonify({row["key"]: row["value"] for row in rows})
+
+
+# POST as well as PUT: navigator.sendBeacon, which flushes queued settings as the
+# window closes, can only issue a POST.
+@api_bp.route("/preferences", methods=["PUT", "POST"])
+async def preferences_put() -> Any:
+    """Merge a set of preferences. Unknown keys are rejected, not ignored."""
+    body = await request.get_json(silent=True) or {}
+    if not isinstance(body, dict):
+        return _error("invalid_request", "expected an object of key/value pairs", 400)
+
+    unknown = sorted(set(body) - ALLOWED_PREFERENCES)
+    if unknown:
+        return _error("invalid_request", f"unknown preference(s): {', '.join(unknown)}", 400)
+
+    too_long = [k for k, v in body.items() if len(str(v)) > MAX_PREFERENCE_LENGTH]
+    if too_long:
+        return _error("invalid_request", f"value too long: {', '.join(sorted(too_long))}", 400)
+
+    now = datetime.now(tz=timezone.utc).isoformat()
+    await get_db().execute_many(
+        """
+        INSERT INTO preferences (key, value, updated_at) VALUES (?, ?, ?)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value,
+                                       updated_at = excluded.updated_at
+        """,
+        [(key, str(value), now) for key, value in body.items()],
+    )
+    return jsonify({"saved": sorted(body)})
 
 
 # -- profiles and user data -------------------------------------------------

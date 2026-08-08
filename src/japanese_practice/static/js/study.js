@@ -19,7 +19,7 @@ const el = (tag, cls, html) => {
 // How long the verdict stays on screen before the next card. A correct answer
 // needs a beat to register; a wrong one needs longer, because that is the moment
 // the learner actually studies the option they should have picked.
-import { readPref, writePref } from "./prefs.js";
+import { prefsReady, readPref, writePref } from "./prefs.js";
 import { playCorrect, primeCue, soundEnabled } from "./sound.js";
 
 // Preferences go through prefs.js, which keeps the authority in memory so a
@@ -438,11 +438,15 @@ function changeVolume(delta) {
   showVolume();
 }
 
+function paintVoice() {
+  const label = $("voice-label");
+  if (label) label.textContent = state.voice;
+}
+
 function toggleVoice() {
   state.voice = state.voice === "female" ? "male" : "female";
   storageSet(VOICE_KEY, state.voice);
-  const label = $("voice-label");
-  if (label) label.textContent = state.voice;
+  paintVoice();
   toast(`Voice: ${state.voice}`);
   playAudio();
 }
@@ -587,7 +591,16 @@ function on(id, event, handler, options) {
 on("help-open", "click", toggleHelp);
 on("help-close", "click", toggleHelp);
 
-applyPace(state.pace, { announce: false });
-primeCue();
-
-start();
+// Preferences come from the server, so they are not known at module load. Adopt
+// them before the first card is dealt — otherwise a pace, voice or cue chosen on
+// the dashboard would not take effect until the second session.
+prefsReady.then(() => {
+  state.pace = readPace();
+  state.volume = readVolume();
+  state.muted = readMuted();
+  state.voice = readPref("jp.voice") === "male" ? "male" : "female";
+  applyPace(state.pace, { announce: false });
+  paintVoice();
+  primeCue();
+  start();
+});

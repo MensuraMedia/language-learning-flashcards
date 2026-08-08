@@ -363,3 +363,27 @@ suspends it when the window loses focus.
   wrapping to two lines made that row taller, and the last row — one tile —
   different again. Fixed height, single-line hints, full text on the title.
 - Diagnostics report storage availability alongside audio state.
+
+## 2026-08-08T07:55:00Z — Preferences moved to the server, so selections apply
+- **Fixed: choosing a different cue changed nothing in the study view.** The
+  root cause was the page boundary. `prefs.js` held preferences in memory, but
+  `/study` is a *full page navigation* — a fresh JS context with an empty cache
+  — and the `localStorage` mirror is silently dropped by this webview. So the
+  study view always fell back to the default cue. Pace, voice and volume were
+  crossing the same boundary and failing the same way.
+- **New `preferences` table and `GET`/`PUT`/`POST /api/preferences`.** Settings
+  now live in the profile's own database file, which makes them **per-profile
+  for free** and persistent across restarts. The key set is closed and values
+  are length-capped: an open key-value store reachable from the page is a way
+  to fill someone's database.
+- `prefs.js` rewritten: synchronous reads from a cache primed at start-up,
+  writes applied immediately and flushed on a 250 ms debounce, with
+  `navigator.sendBeacon` on `pagehide` so a setting changed just before closing
+  is not lost. `POST` is accepted because a beacon cannot `PUT`.
+- The study view now adopts pace, voice, volume and cue **before dealing the
+  first card**, rather than reading them at module load when nothing has arrived.
+- Verified end to end by selecting *marimba*, navigating into a session, and
+  identifying the sound recorded from the speakers: 0.23 s at 1070 Hz, matching
+  marimba (0.26 s / 1116 Hz) and not ding (0.32 s / 625 Hz).
+- Six new tests: round trip, merge, unknown-key rejection, oversize rejection,
+  `POST` for beacons, and per-profile isolation.

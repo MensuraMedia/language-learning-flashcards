@@ -1,76 +1,122 @@
-// Preference storage that cannot silently fail.
+// Interface preferences — pace, voice, volume, sound cue, master mute.
 //
-// This project has already been bitten twice by `localStorage` in the desktop
-// webview: once by it *throwing* on access, which killed the study module
-// before it started, and once by writes appearing to succeed while nothing was
-// stored — which made the Settings audio toggle look inert. A toggle that does
-// not toggle is worse than an absent one, because the user reasonably concludes
-// the whole feature is broken.
+// **Stored on the server, not in the browser.** This project has been bitten
+// three times by `localStorage` in the desktop webview: once by it throwing on
+// access, once by writes being accepted and silently dropped, and once by the
+// consequence of that — a preference set on the dashboard never reached the
+// study view, because a full page navigation starts a fresh JS context and
+// there was nothing to read back. Selecting a different sound appeared to work
+// and then did nothing.
 //
-// So every preference is held in memory as the authority for the current
-// session, and mirrored to `localStorage` only as a best-effort attempt at
-// persisting across restarts. Reads come from memory, which means:
+// An in-memory cache cannot fix that in a multi-page application. The server
+// can: each profile is already its own database file, so the `preferences`
+// table is per-profile without a profile column, and settings now survive both
+// navigation and restarting the app.
 //
-//   * a control always reflects what you just did, storage or no storage
-//   * a throwing or silently-dropping backend degrades to "settings work now
-//     but reset when you relaunch", instead of "settings do nothing"
-//
-// `available` records which of those you are getting, so the UI can say so
-// rather than leaving the user to guess.
+// Reads are synchronous against a cache primed at start-up. Writes update the
+// cache immediately — so a control always reflects what you just did — and are
+// flushed to the server on a short debounce.
 
-const memory = new Map();
+const ENDPOINT = "/api/preferences";
+const FLUSH_MS = 250;
 
-/** Whether the browser gave us usable persistent storage. */
-export let available = false;
+const cache = new Map();
+const pending = new Map();
+let flushTimer = null;
 
-// Probe once, with a real write-read-delete round trip. Feature-detecting by
-// `"localStorage" in window` is not enough: the object exists in configurations
-// where every write throws, and in others where writes are accepted and dropped.
-try {
-  const probe = "__jp_probe__";
-  localStorage.setItem(probe, "1");
-  available = localStorage.getItem(probe) === "1";
-  localStorage.removeItem(probe);
-} catch {
-  available = false;
+/** Resolves once the cache holds the server's copy. */
+export let prefsReady = Promise.resolve();
+
+/** Whether the last write reached the server. */
+export let available = true;
+
+/** Read a preference. Synchronous; awaits nothing. */
+export function readPref(key, fallback = null) {
+  return cache.has(key) ? cache.get(key) : fallback;
 }
 
-// Seed memory from storage so a restart picks up where the last session left
-// off, when storage is working.
-if (available) {
+/**
+ * Write a preference. Takes effect immediately in this page and is persisted
+ * shortly after — batching means dragging a volume slider is one request, not
+ * one per step.
+ */
+export function writePref(key, value) {
+  const text = String(value);
+  cache.set(key, text);
+  pending.set(key, text);
+  // localStorage is still written when it works, purely so a page opened before
+  // the server responds has something to start from. It is never the authority.
+  try {
+    localStorage.setItem(key, text);
+  } catch {
+    /* expected in this webview; the server is what actually persists */
+  }
+  if (flushTimer === null) flushTimer = setTimeout(flush, FLUSH_MS);
+  return true;
+}
+
+async function flush() {
+  flushTimer = null;
+  if (pending.size === 0) return;
+  const body = Object.fromEntries(pending);
+  pending.clear();
+  try {
+    const res = await fetch(ENDPOINT, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    available = res.ok;
+    if (!res.ok) throw new Error(`preferences: ${res.status}`);
+  } catch {
+    available = false;
+    // Put them back so the next flush retries rather than losing the setting.
+    for (const [k, v] of Object.entries(body)) if (!pending.has(k)) pending.set(k, v);
+  }
+}
+
+/** Load the server's copy into the cache. Called once, at module load. */
+async function load() {
+  // Seed from localStorage first so the very first paint is not empty on the
+  // rare browser where it does work.
   try {
     for (let i = 0; i < localStorage.length; i += 1) {
       const key = localStorage.key(i);
-      if (key && key.startsWith("jp.")) memory.set(key, localStorage.getItem(key));
+      if (key && key.startsWith("jp.")) cache.set(key, localStorage.getItem(key));
     }
   } catch {
-    available = false;
+    /* fine — the server is the authority */
   }
-}
-
-/** Read a preference. Memory is the authority for the running session. */
-export function readPref(key, fallback = null) {
-  if (memory.has(key)) return memory.get(key);
-  return fallback;
-}
-
-/** Write a preference. Always takes effect; persists when it can. */
-export function writePref(key, value) {
-  const text = String(value);
-  memory.set(key, text);
-  if (!available) return false;
   try {
-    localStorage.setItem(key, text);
-    return true;
+    const res = await fetch(ENDPOINT, { headers: { Accept: "application/json" } });
+    if (!res.ok) throw new Error(String(res.status));
+    const stored = await res.json();
+    for (const [key, value] of Object.entries(stored)) cache.set(key, String(value));
+    available = true;
   } catch {
     available = false;
-    return false;
   }
+}
+
+prefsReady = load();
+
+// Anything still queued when the window closes would otherwise be lost.
+if (typeof window !== "undefined") {
+  window.addEventListener("pagehide", () => {
+    if (pending.size === 0) return;
+    const body = JSON.stringify(Object.fromEntries(pending));
+    try {
+      // sendBeacon survives the page teardown that would abort a fetch.
+      navigator.sendBeacon?.(ENDPOINT, new Blob([body], { type: "application/json" }));
+    } catch {
+      /* best effort on the way out */
+    }
+  });
 }
 
 /** Human-readable state, for the Settings diagnostics line. */
 export function storageNote() {
   return available
-    ? "Settings persist between sessions."
-    : "This window has no persistent storage — settings apply now but reset when you relaunch.";
+    ? "Settings are saved to this profile."
+    : "Settings could not be saved — they apply now but will reset.";
 }

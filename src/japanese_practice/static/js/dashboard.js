@@ -1,6 +1,7 @@
 // Dashboard: renders the full analytics surface from /api/summary.
 // Charts are inline SVG built here — no library, no external request.
 
+import { prefsReady } from "./prefs.js";
 import {
   CUES,
   currentCue,
@@ -653,6 +654,17 @@ function paintSoundToggle() {
   if (toggle) toggle.setAttribute("aria-checked", String(soundEnabled()));
 }
 
+function paintCuePicker() {
+  const host = $("cue-pick");
+  if (!host) return;
+  const selected = currentCue();
+  [...host.children].forEach((b) => {
+    const on = b.dataset.cue === selected;
+    b.classList.toggle("is-on", on);
+    b.setAttribute("aria-checked", String(on));
+  });
+}
+
 // Choosing a cue plays it. Picking a sound you cannot hear first would be
 // choosing blind, and the whole point of offering a set is that one of them
 // suits you better than the others.
@@ -661,12 +673,10 @@ function initCuePicker() {
   if (!host || host.dataset.ready) return;
   host.dataset.ready = "1";
 
-  const selected = currentCue();
   CUES.forEach((cue) => {
-    const button = el("button", `cue-opt${cue.id === selected ? " is-on" : ""}`);
+    const button = el("button", "cue-opt");
     button.type = "button";
     button.setAttribute("role", "radio");
-    button.setAttribute("aria-checked", String(cue.id === selected));
     button.dataset.cue = cue.id;
     button.title = `${cue.label} — ${cue.hint}`;
     button.innerHTML =
@@ -678,16 +688,14 @@ function initCuePicker() {
     primeCue(cue.id);
   });
 
+  paintCuePicker();
+
   host.addEventListener("click", (event) => {
     const button = event.target.closest("[data-cue]");
     if (!button) return;
     const id = button.dataset.cue;
     setCue(id);
-    [...host.children].forEach((b) => {
-      const on = b === button;
-      b.classList.toggle("is-on", on);
-      b.setAttribute("aria-checked", String(on));
-    });
+    paintCuePicker();
     unlock();
     playCorrect(id);
     const note = $("snd-status");
@@ -747,7 +755,13 @@ function initSettings() {
   const open = () => {
     dialog.hidden = false;
     setStatus("");
+    // Repaint from the server's copy: another view may have changed a setting.
+    prefsReady.then(() => {
+      paintSoundToggle();
+      paintCuePicker();
+    });
     paintSoundToggle();
+    paintCuePicker();
     loadProfiles();
     loadDataSummary();
   };

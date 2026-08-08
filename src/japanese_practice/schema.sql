@@ -48,6 +48,18 @@ CREATE TABLE IF NOT EXISTS review_state (
   last_seen     TEXT
 );
 
+-- Interface preferences: pace, voice, volume, sound cue and so on.
+--
+-- Server-side because the desktop webview's localStorage accepts writes and
+-- drops them, so nothing set on the dashboard survived the navigation to the
+-- study view. Each profile is its own database file, which makes this table
+-- per-profile without a profile column.
+CREATE TABLE IF NOT EXISTS preferences (
+  key        TEXT PRIMARY KEY,
+  value      TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_attempts_char    ON attempts(character_id);
 CREATE INDEX IF NOT EXISTS idx_attempts_session ON attempts(session_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_started ON sessions(started_at);

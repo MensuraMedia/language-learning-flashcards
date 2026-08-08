@@ -39,7 +39,13 @@ export const CUES = [
 const DEFAULT_CUE = "ding";
 const cueUrl = (id) => `/static/audio/sounds/cue-${id}.wav`;
 
-import { available as storageAvailable, readPref, storageNote, writePref } from "./prefs.js";
+import {
+  available as storageAvailable,
+  prefsReady,
+  readPref,
+  storageNote,
+  writePref,
+} from "./prefs.js";
 
 const SOUND_KEY = "jp.sound";
 const CUE_KEY = "jp.cue";
@@ -71,7 +77,9 @@ export function setSoundEnabled(on) {
 /** Which cue is selected. Falls back to the default if the stored id is stale. */
 export function currentCue() {
   const stored = get(CUE_KEY);
-  return CUES.some((c) => c.id === stored) ? stored : DEFAULT_CUE;
+  const id = CUES.some((c) => c.id === stored) ? stored : DEFAULT_CUE;
+  soundStatus.cue = id;
+  return id;
 }
 
 export function setCue(id) {
@@ -102,6 +110,7 @@ export const soundStatus = {
   supported: typeof window !== "undefined" && !!(window.AudioContext || window.webkitAudioContext),
   storage: storageAvailable,
   storageNote: storageNote(),
+  cue: null,
   contextState: "none",
   decoded: false,
   plays: 0,
@@ -170,6 +179,15 @@ export function unlock() {
   soundStatus.contextState = audio.state;
   primeCue();
 }
+
+// Preferences arrive asynchronously, so the selected cue is not known at module
+// load. Decoding before then would warm the default and leave the real choice
+// to decode on first use.
+prefsReady.then(() => {
+  soundStatus.storage = storageAvailable;
+  soundStatus.storageNote = storageNote();
+  primeCue();
+});
 
 // One listener, removed after it fires. Any of these counts as the gesture the
 // autoplay policy is waiting for.

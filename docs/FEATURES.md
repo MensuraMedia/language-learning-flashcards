@@ -592,19 +592,31 @@ board pairs a match — the same event to a learner, so the same feedback.
 Full contract and rationale for the assets:
 [`static/audio/sounds/README.md`](../src/japanese_practice/static/audio/sounds/README.md).
 
-### Preferences and storage
+### Preferences
 
-`static/js/prefs.js` holds every `jp.*` preference **in memory as the authority
-for the session**, mirroring to `localStorage` only as a best-effort attempt at
-persisting across restarts.
+Pace, voice, volume, master mute and the chosen cue are stored **on the server**,
+in the active profile's own database file.
 
-This is not belt-and-braces. The desktop webview here accepts `localStorage`
-writes and drops them, which made the Settings audio toggle appear inert — the
-write vanished, the next read returned the old value, and the switch repainted
-itself back on. A toggle that does not toggle is worse than an absent one. With
-memory as the authority a control always reflects what you just did, and a
-storage failure degrades to "settings reset when you relaunch" rather than
-"settings do nothing". Settings says which you are getting.
+That is not the obvious choice for interface settings, and it was arrived at by
+elimination. The desktop webview accepts `localStorage` writes and silently
+drops them, which first made the audio toggle look inert. Moving the authority
+into memory fixed the toggle *within a page* — but `/study` is a full page
+navigation, so the study view started with an empty cache and fell back to
+defaults. A cue chosen on the dashboard never applied. Pace, voice and volume
+had been failing the same way, unnoticed, because nothing visibly contradicted
+itself the way a toggle does.
+
+Because each profile is already a separate database file, the `preferences`
+table is per-profile without a profile column, and settings now survive both
+navigation and restarting the application.
+
+| Aspect | Detail |
+|---|---|
+| Endpoint | `GET` / `PUT` / `POST /api/preferences`. `POST` exists because `navigator.sendBeacon`, used to flush on `pagehide`, cannot `PUT` |
+| Keys | A closed set — `jp.sound`, `jp.cue`, `jp.volume`, `jp.muted`, `jp.voice`, `jp.pace`. Unknown keys are rejected rather than ignored |
+| Limits | Values capped at 64 characters. An open key-value store reachable from the page is a way to fill someone's database |
+| Reads | Synchronous, against a cache primed at start-up |
+| Writes | Applied immediately, flushed on a 250 ms debounce, so dragging a slider is one request |
 
 ### Regenerating the screenshots
 
