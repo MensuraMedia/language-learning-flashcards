@@ -247,3 +247,18 @@
 - Fixed two broken cross-document anchors: `TESTING.md` pointed at the old §4
   heading, and `ARCHITECTURE.md` pointed at a README section that no longer
   exists. All internal links and anchors across every document now resolve.
+
+## 2026-08-08T04:15:00Z — Local backup retaken
+- New set `20260808-0015`: bundle (11.7 MB, 29 commits), worktree tarball
+  (24.5 MB, including git-ignored files), userdata tarball (48 KB — the first
+  one to actually carry a study database; the previous was 121 bytes of empty
+  directory).
+- **Verified by restoring, not by inspecting**: cloned the bundle to a scratch
+  directory and ran the suite from the restored tree — 290/290, clean tree, 630
+  clips, 13 screenshots, five kanji seed modules.
+- Credential scan across all three artefacts: clean.
+- `RESTORE.md` corrected — its own "take a fresh backup" recipe ran
+  `git bundle verify` from the backup directory, where it fails with "need a
+  repository to verify a bundle" and looks like corruption. Also adds the
+  commit-before-backup rule and a clone-and-test verification step.
+- HANDOFF §10 rewritten with the verification table.

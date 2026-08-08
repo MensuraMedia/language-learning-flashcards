@@ -345,8 +345,8 @@ Full register with QA criteria: [ROADMAP.md](ROADMAP.md).
    interact; the scored mode still has a dominant strategy.
 8. **Decide the `.claude/rules/` duplicate** and whether to drop the
    non-applicable example rules and agents (S1, S2).
-9. **Retake the local backup** (see §10). The existing set predates 1,144
-   characters, profiles, save/load and the licence rewrite.
+9. ~~Retake the local backup~~ — **done 2026-08-08**, set `20260808-0015`,
+   verified by restoring and running the suite from it (§10).
 10. **Package** — `.deb` / AppImage (P1–P3), and make sure an upgrade preserves
     profiles (P7).
 
@@ -403,16 +403,38 @@ Local backup set at `/home/user/projects/backups/japanese_practice/`, with
 |---|---|
 | `*.bundle` | Full git history — the authoritative copy |
 | `*-worktree-*.tar.gz` | Working tree **including git-ignored files** (`REPO-ACCESS.md`, `settings.local.json`) |
-| `*-userdata-*.tar.gz` | `~/.local/share/japanese-practice/` — the study database |
+| `*-userdata-*.tar.gz` | `~/.local/share/japanese-practice/` — the study database, `active-profile` and any `profiles/*.db`, minus the regenerable audio cache |
 
 The bundle omits ignored files; the tarball omits history. Keep both.
 
-**Verified 2026-08-07:** cloned from the bundle, 630 clips intact, 216/216 tests
-passed from the restored tree. The ElevenLabs key is confirmed absent from every
-artefact. Keep the worktree tarball local — it contains `REPO-ACCESS.md`.
+### Current set — `20260808-0015`
 
-> **The backup set is stale.** It predates the kanji expansion, profiles,
-> save/load, the licence rewrite and the screenshots — the tree has gone from
-> 216 to 290 tests and from 315 to 1,459 characters since it was taken. Git
-> history is safe on the remote (`4661b01`), but the git-ignored files in the
-> worktree tarball and the local study database are not. **Retake it.**
+**Verified 2026-08-08 by restoring it**, not by inspecting it: cloned the bundle
+into a scratch directory → 29 commits, clean tree, 630 audio clips, 13
+screenshots, five kanji seed modules, and **290/290 tests passed from the
+restored tree**.
+
+| Check | Result |
+|---|---|
+| `git bundle verify` | okay · records a complete history at `ec3410e` |
+| `sha256sum -c SHA256SUMS.txt` | all 6 artefacts OK |
+| Git-ignored files present in worktree tarball | `docs/REPO-ACCESS.md` ✓ · `.claude/settings.local.json` ✓ |
+| Private/derived content excluded | `universal-instruction-set-main` 0 · `.venv` 0 · `__pycache__` 0 |
+| Credential scan across all three artefacts | clean — the live token values appear in none of them |
+
+The `20260807-0540` set is kept as a rollback point only. It predates 1,144
+characters, profiles, save/load, the licence rewrite and the screenshots — and
+**its userdata tarball is 121 bytes, an empty directory**, because no study
+database existed when it was taken.
+
+### Two traps in the procedure itself
+
+1. **`git bundle verify` must run from inside a repository.** In the backup
+   directory it fails with `need a repository to verify a bundle`, which reads
+   like a corrupt bundle and is not. The command in `RESTORE.md` was wrong on
+   this point and has been corrected.
+2. **Commit and push before backing up.** The bundle carries committed history;
+   the worktree tarball carries files. A dirty tree makes the two artefacts
+   disagree, silently.
+
+Keep the worktree tarball local — it contains `REPO-ACCESS.md`.
