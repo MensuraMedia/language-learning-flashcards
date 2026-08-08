@@ -200,6 +200,31 @@ python3 -m venv --system-site-packages .venv
 .venv/bin/python -m japanese_practice --no-window  # browser mode
 ```
 
+### Install as a desktop application (Linux)
+
+To get it in your application menu rather than running it from a checkout:
+
+```bash
+./tools/install-desktop.sh
+```
+
+That builds a wheel, installs it into its own virtualenv under
+`~/.local/opt/japanese-practice`, puts a `japanese-practice` launcher on your
+`PATH`, and registers an icon and menu entry. Nothing is written outside `$HOME`
+and no root is needed. The installed copy is **independent of the checkout** —
+the wheel is installed non-editable, so moving or deleting the source afterwards
+does not break it. Re-run the script to upgrade.
+
+```bash
+./tools/uninstall-desktop.sh            # removes the app, keeps your history
+./tools/uninstall-desktop.sh --purge    # also deletes every profile and session
+```
+
+**Your study data lives in `~/.local/share/japanese-practice/` and neither
+script touches it** unless you pass `--purge` and then type `DELETE` at the
+prompt. Uninstalling an application should not throw away the practice you did
+with it.
+
 ### Develop
 
 ```bash

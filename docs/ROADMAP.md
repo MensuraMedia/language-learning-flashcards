@@ -202,6 +202,7 @@ Shipped 2026-08-08; these are the follow-ups it created.
 
 | ID | Item | Effort | QA — done when |
 |---|---|---|---|
+| ~~P0~~ | ~~**Local desktop install**~~ | — | ✅ **Done 2026-08-08.** `tools/install-desktop.sh` — own venv under `~/.local/opt`, launcher on PATH, hicolor icons, validated `.desktop` entry. Verified by launching from both PATH and the menu, and by confirming zero mappings from the source tree |
 | P1 | **`.deb` package** | M | Installs, launches from the desktop menu, icon appears |
 | P2 | **AppImage** | M | Runs on a clean machine with no Python set up |
 | P3 | **PyPI release** | S | `pip install japanese-practice` then `japanese-practice` works |
@@ -210,6 +211,8 @@ Shipped 2026-08-08; these are the follow-ups it created.
 | ~~P6~~ | ~~**Data export**~~ | — | ✅ **Done 2026-08-08.** Save/load of a glyph-keyed JSON document, plus reset, from the Settings dialog |
 | **P7** | **Profile-aware packaging.** A packaged build must place profile files under the platform data dir and survive upgrades | M | Installing over an existing version keeps every profile and its history |
 | **P8** | **Export format v2.** v1 carries progress only. Sharing a *configuration* — chosen pace, voice, deck defaults — is the obvious next ask | S | v2 documented, and v1 files still load |
+| **P9** | **PEP 639 licence metadata.** Modern setuptools deprecates `license = {file = ...}` in favour of an SPDX expression. Migrating needs `setuptools>=77`, which would break `pip install -e .` on this machine (59.6.0), so the build currently emits a deprecation notice that the install script hides | S | Metadata migrated and `pip install -e .` still works on the minimum supported setuptools |
+| **P10** | **Installed app does not self-update.** Re-running the install script is the only upgrade path, and nothing tells a user a newer version exists | M | The app reports its version and where it was installed from |
 
 ---
 

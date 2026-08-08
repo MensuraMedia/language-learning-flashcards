@@ -262,3 +262,20 @@
   repository to verify a bundle" and looks like corruption. Also adds the
   commit-before-backup rule and a clone-and-test verification step.
 - HANDOFF §10 rewritten with the verification table.
+
+## 2026-08-08T04:40:00Z — Installed as a desktop application on this machine
+- **New** `tools/install-desktop.sh`: builds a wheel, installs it non-editable
+  into its own venv at `~/.local/opt/japanese-practice`, links a launcher into
+  `~/.local/bin`, installs five icon sizes into the hicolor theme, and writes a
+  validated `.desktop` entry. User-scoped; no root.
+- **New** `tools/uninstall-desktop.sh`: removes all of the above and **keeps
+  study history** by default. `--purge` deletes it, behind a typed confirmation.
+- Verified: wheel carries all 630 audio clips, 4 templates, 6 icons, schema and
+  11 content modules; the app launches from `PATH` and from the menu entry; and
+  `/proc/<pid>/maps` shows **zero mappings from the project tree**, so the
+  install is genuinely independent of the checkout.
+- Uninstall/reinstall cycle exercised end to end; study data survived it.
+- The install script routes build output to a log and surfaces it only on
+  failure — modern setuptools emits a PEP 639 deprecation notice about this
+  project's `license = {file = ...}` metadata, and migrating to SPDX would need
+  setuptools>=77 and break `pip install -e .` here. Logged as roadmap P9.

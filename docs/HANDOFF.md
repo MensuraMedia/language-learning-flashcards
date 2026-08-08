@@ -53,6 +53,7 @@ works on this project **must**:
 | Frontend JS tests | ❌ 1,679 lines untested; no runner, `node` not installed (roadmap Q2) |
 | Licence & attribution | ✅ Personal-use licence with §5 attribution for derived language-learning apps; `NOTICE` ships in the distribution |
 | Screenshots | ✅ 13 in `docs/screenshots/`, regenerable via `tools/demo_data.py` |
+| Local desktop install | ✅ **Installed on this machine 2026-08-08.** `tools/install-desktop.sh` — own venv at `~/.local/opt`, launcher on PATH, icon + menu entry. Verified from PATH and from the menu |
 | Packaging / distribution | ❌ Not started |
 
 **Chosen design direction:** `mockups/05-tactile-deck.html`, with the analytics
@@ -81,6 +82,21 @@ python3 -m venv --system-site-packages .venv
 
 Override the database location with `JP_DB_PATH`. Default is
 `~/.local/share/japanese-practice/practice.db`.
+
+### As an installed application
+
+It is installed on this machine. Launch from the application menu, or:
+
+```bash
+japanese-practice                      # ~/.local/bin -> ~/.local/opt/japanese-practice
+./tools/install-desktop.sh             # reinstall / upgrade from this tree
+./tools/uninstall-desktop.sh           # remove it, keeping study history
+```
+
+The installed copy is a **non-editable wheel in its own venv**, so it does not
+read this tree at runtime — verified: `/proc/<pid>/maps` shows zero mappings
+from `projects/japanese_practice`. Edits here do not reach the installed app
+until the install script is re-run.
 
 ---
 
