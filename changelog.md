@@ -406,3 +406,23 @@ suspends it when the window loses focus.
 - Every figure in the new document was checked against the code and the assets
   rather than written from memory — 7 cues declared and 7 on disk, all mono
   44.1 kHz, ≤0.38 s, peak 0.95.
+
+## 2026-08-08T09:10:00Z — Word decks, a More… card, and the exercise catalogue
+- **Six word decks**, 106 entries: days 7, months 12, numbers 36, time 16
+  (extracted from the reference worksheets) plus demonstratives 20 and
+  particles 15 (authored — both are closed, rigidly structured sets, unlike
+  open vocabulary which would have to be invented).
+- **`characters` is now unique on `(glyph, script)`.** Seeding words against the
+  old glyph-unique table silently overwrote 41 characters — は the particle
+  replaced は the hiragana, 一 the number replaced 一 the kanji, and the Top 200
+  deck quietly shrank to 175. Migration rebuilds the table preserving ids, so
+  attempt history still points at the same characters.
+- **More… deck closes every shelf**, opening `/decks`: all 23 working decks
+  grouped by shelf, plus eight designed-but-unbuilt exercises each carrying a
+  status and **what is blocking it** — phrases, expressions, verbs, word
+  combinations, counters, adjectives, typed recall, listening.
+- **Wider cards where the content needs it**: word prompts and their options,
+  and the deck faces on the Words shelf.
+- Fixed a `NameError` that stopped the app booting: `db.py` used `log` without a
+  logger. It failed loudly at startup, which is the right way for it to fail.
+- Tests 312 → 322.

@@ -18,13 +18,13 @@ recalled. Where something is unverified or known-weak it says so.
 
 | Dimension | Count | Notes |
 |---|---:|---|
-| Characters seeded | **1,459** | 104 hiragana · 104 katakana · 1,251 kanji |
-| Study decks | **17** | 5 hiragana · 5 katakana · 5 JLPT · 2 volume tiers |
+| Cards seeded | **1,565** | 104 hiragana · 104 katakana · 1,251 kanji · 106 words |
+| Study decks | **23** | 5 hiragana · 5 katakana · 5 JLPT · 2 volume · 6 word sets |
 | Memory boards | **9** | 3 modes × 3 scripts |
 | Confusion pairs | **84** | 21 hiragana · 24 katakana · 39 kanji |
 | Scoring schemes | **4** | accuracy · speed · streak · SRS |
 | Dashboard analytics | **13** | see §3 |
-| HTTP endpoints | **23** | 3 views + 20 API |
+| HTTP endpoints | **27** | 4 views + 23 API |
 | Python modules | **32** | 7,473 lines, zero import cycles |
 | Bundled audio clips | **630** | plus local VOICEVOX synthesis |
 | Tests | **289** | ~5 s, 10 files |
@@ -230,6 +230,33 @@ one above the other, the accent is what tells you which you are looking at. Only
 the accent tokens change; surfaces, ink and card stock are shared, so this is a
 change of signal colour rather than a second theme to maintain.
 
+### 3.2a The More… card, and the catalogue
+
+Every shelf ends with a **More…** deck. It is deliberately a deck rather than a
+link: it sits in the same rail and reads as "there are more of these", which is
+what it means. A five-deck rail also leaves room for a sixth on a wide screen,
+and the catalogue is otherwise unreachable — the app has no menu.
+
+It opens `/decks`, which lists **every exercise in one place**: the 23 that work,
+grouped by shelf, and the eight that are designed but not built.
+
+Listing the second group is the point. A catalogue showing only what works tells
+a learner nothing about where the app is going, and hiding unbuilt work invites
+the same question every few weeks. Each entry carries a status —
+`experimental` (designed, no implementation) or `planned` (also waiting on
+content that must be sourced rather than invented) — and, critically, **what is
+blocking it**. That is what stops the list becoming a wish list that implies
+work is imminent.
+
+| In development | Status | Blocked on |
+|---|---|---|
+| Phrases · Expressions · Adjectives | planned | A sourced list; the reference worksheets do not cover them |
+| Verbs | planned | Conjugation is a generator, not a card list — it needs its own exercise type |
+| Word combinations | experimental | Derivable from the seeded kanji, but the pairings need checking |
+| Counters | experimental | A closed set and safe to author; not yet written |
+| Typed recall | experimental | Roadmap M1 — scoring is ready, the input mode is not |
+| Listening | experimental | Roadmap M7 — the clip library and endpoint already exist |
+
 ### 3.3 Memory-training rails
 
 Deliberately a different object from a deck: landscape, a miniature of the board
@@ -369,9 +396,46 @@ than 0.35 s — it caught a truncated へ at 0.24 s that passed the absolute flo
 | Kanji JLPT N2 | **236** | same |
 | Kanji JLPT N1 | **337** | same |
 | Kanji by frequency | **500** | teaching order, ranked 1–500, slicing the Top 200 and Top 500 tiers |
+| Words · days | **7** | extracted from the reference worksheets |
+| Words · months | **12** | same |
+| Words · numbers | **36** | same |
+| Words · time | **16** | same |
+| Words · demonstratives | **20** | こそあど, authored — a closed 4 × 5 grid |
+| Words · particles | **15** | authored — the closed set a beginner meets first |
 | Confusion pairs | **84** | 21 hiragana · 24 katakana · 39 kanji |
 
-**1,459 characters in total**, of which **1,251 are kanji**.
+**1,565 cards in total**: 1,459 characters, of which 1,251 are kanji, plus 106
+whole words.
+
+### Words
+
+The first decks whose prompt is a **word** rather than a glyph. The engine
+needed no change — a word sits in `glyph` exactly as a character does, is graded
+on `meaning` the way kanji already were, and carries its reading in `romaji`.
+What changed is presentation: 月曜日 and "Wednesday" need more room than あ and
+"a", so word cards and their options are wider.
+
+Days, months, numbers and time were **extracted** from the reference worksheets.
+Demonstratives and particles were **authored**, because the worksheets do not
+cover them and both are closed, rigidly structured systems that every N5 course
+teaches identically — unlike open vocabulary, where writing entries from memory
+would produce confident, plausible, unverifiable data.
+
+**Distractors come from the same set.** Offering "March" against a 月曜日 card
+can be solved by category rather than by knowing the word.
+
+### One glyph, two meanings
+
+は is a hiragana character *and* the topic particle. 一 is a kanji *and* the
+number one. They are different learning objects with different answers, so
+`characters` is unique on **`(glyph, script)`**, not on `glyph` alone.
+
+That was not the original design. Seeding the word sets against a glyph-unique
+table silently *overwrote* 41 characters — the Top 200 kanji deck quietly shrank
+to 175 — because an upsert keyed on glyph treated the particle は and the
+character は as the same row. Fixed by rebuilding the table with the wider
+constraint; ids are copied verbatim, so existing attempt history keeps pointing
+at the same characters.
 
 N4–N1 were extracted from the reference charts in the companion
 [language-learning](https://github.com/MensuraMedia/language-learning)

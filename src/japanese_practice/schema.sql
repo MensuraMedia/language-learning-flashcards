@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS characters (
   id            INTEGER PRIMARY KEY,
-  glyph         TEXT NOT NULL UNIQUE,
+  glyph         TEXT NOT NULL,
   script        TEXT NOT NULL,      -- 'hiragana' | 'katakana' | 'kanji'
   romaji        TEXT,               -- kana only
   meaning       TEXT,               -- kanji only
@@ -10,7 +10,12 @@ CREATE TABLE IF NOT EXISTS characters (
   jlpt_level    TEXT,               -- 'N5'..'N1'
   category      TEXT,               -- thematic grouping
   stroke_count  INTEGER,
-  frequency_rank INTEGER   -- 1..500 teaching order; NULL outside the Top 500
+  frequency_rank INTEGER,  -- 1..500 teaching order; NULL outside the Top 500
+  -- Unique per script, not globally. は is a hiragana character *and* a topic
+  -- particle; 一 is a kanji *and* the number one. They are different learning
+  -- objects with different answers, and a glyph-only constraint made seeding one
+  -- silently overwrite the other.
+  UNIQUE (glyph, script)
 );
 
 CREATE TABLE IF NOT EXISTS sessions (

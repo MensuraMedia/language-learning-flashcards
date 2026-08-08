@@ -342,6 +342,87 @@ async def heatmap() -> Any:
         return _error("invalid_request", str(exc), 400)
 
 
+#: Exercises that are designed but not built. Listed rather than hidden, because
+#: a catalogue that shows only what works tells a learner nothing about where the
+#: app is going — and hiding them invites the same question every few weeks.
+#: Every one of these is a roadmap item with acceptance criteria in ROADMAP.md.
+PLANNED_DECKS: tuple[dict[str, str], ...] = (
+    {
+        "name": "Phrases",
+        "jp": "フレーズ",
+        "detail": "Greetings, apologies, requests — whole utterances rather than words",
+        "status": "planned",
+        "blocker": "Needs a sourced phrase list; none of the reference worksheets cover it",
+    },
+    {
+        "name": "Expressions",
+        "jp": "表現",
+        "detail": "Set expressions whose meaning is not the sum of their parts",
+        "status": "planned",
+        "blocker": "Same sourcing gap as Phrases",
+    },
+    {
+        "name": "Verbs",
+        "jp": "動詞",
+        "detail": "Dictionary form, -masu, -te, past — the conjugation a sentence needs",
+        "status": "planned",
+        "blocker": "Conjugation is a generator, not a card list; needs its own exercise type",
+    },
+    {
+        "name": "Word combinations",
+        "jp": "複合語",
+        "detail": "Compounds and collocations — words that travel together",
+        "status": "experimental",
+        "blocker": "Can be derived from the seeded kanji, but the pairings need checking",
+    },
+    {
+        "name": "Counters",
+        "jp": "助数詞",
+        "detail": "本, 枚, 匹, 人 — the classifier a number takes depends on the thing",
+        "status": "experimental",
+        "blocker": "A closed set and safe to author; not yet written",
+    },
+    {
+        "name": "Adjectives",
+        "jp": "形容詞",
+        "detail": "い- and な-adjectives, and how each one attaches",
+        "status": "planned",
+        "blocker": "Needs a sourced list",
+    },
+    {
+        "name": "Typed recall",
+        "jp": "入力",
+        "detail": "Type the reading instead of picking it — no 33% chance floor",
+        "status": "experimental",
+        "blocker": "Roadmap M1. The scoring is ready; the input mode is not",
+    },
+    {
+        "name": "Listening",
+        "jp": "聞き取り",
+        "detail": "Audio plays, no glyph shown — pick what you heard",
+        "status": "experimental",
+        "blocker": "Roadmap M7. The clip library and endpoint already exist",
+    },
+)
+
+
+@api_bp.get("/catalogue")
+async def catalogue() -> Response:
+    """Every exercise: the decks that work, and the ones that do not yet."""
+    decks = await analytics.deck_shelves(get_db())
+    return jsonify(
+        {
+            "decks": decks,
+            "planned": [dict(item) for item in PLANNED_DECKS],
+            "counts": {
+                "available": len(decks),
+                "planned": sum(1 for d in PLANNED_DECKS if d["status"] == "planned"),
+                "experimental": sum(1 for d in PLANNED_DECKS if d["status"] == "experimental"),
+            },
+        }
+    )
+
+
 @api_bp.get("/games")
 async def game_catalogue() -> Response:
     """The games the dashboard offers, with a live preview of each board."""

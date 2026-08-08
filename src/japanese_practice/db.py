@@ -10,6 +10,7 @@ All SQL is parameterised — no value is ever formatted into a statement.
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from types import TracebackType
@@ -19,6 +20,8 @@ import aiosqlite
 
 from .config import Config
 from .models import Character
+
+log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:  # pragma: no cover - typing-only, never imported at runtime
     from typing_extensions import Self  # Python < 3.11 stand-in for typing.Self
@@ -68,9 +71,33 @@ DIFFICULTY_KEYS: tuple[str, ...] = (
     "kanji:N1",
     "kanji:top200",
     "kanji:top500",
+    # Whole words rather than single characters. Sliced by `category`, since a
+    # vocabulary set is a theme, not a level.
+    "vocab:days",
+    "vocab:months",
+    "vocab:numbers",
+    "vocab:time",
+    "vocab:demonstratives",
+    "vocab:particles",
 )
 
+#: Difficulty-key group -> the `characters.category` it selects.
+VOCAB_CATEGORIES: dict[str, str] = {
+    "days": "Days of the week",
+    "months": "Months",
+    "numbers": "Numbers",
+    "time": "Time",
+    "demonstratives": "Demonstratives",
+    "particles": "Particles",
+}
+
 _GROUP_LABELS: dict[str, str] = {
+    "days": "Days of the week",
+    "months": "Months",
+    "numbers": "Numbers",
+    "time": "Time",
+    "demonstratives": "Demonstratives",
+    "particles": "Particles",
     "gojuon": "Gojuon",
     "dakuon": "Dakuon",
     "handakuon": "Han-dakuon",
@@ -84,6 +111,7 @@ _SCRIPT_LABELS: dict[str, str] = {
     "hiragana": "Hiragana",
     "katakana": "Katakana",
     "kanji": "Kanji",
+    "vocab": "Words",
 }
 
 _CHARACTER_COLUMNS = (
@@ -166,6 +194,55 @@ class Database:
                     "ALTER TABLE characters ADD COLUMN frequency_rank INTEGER"
                 )
                 await self.connection.commit()
+
+        await self._widen_glyph_uniqueness()
+
+    async def _widen_glyph_uniqueness(self) -> None:
+        """Move the unique constraint from ``glyph`` to ``(glyph, script)``.
+
+        The original schema made ``glyph`` globally unique, which is wrong: は is
+        a hiragana character *and* the topic particle, 一 is a kanji *and* the
+        number one. Seeding the second silently overwrote the first.
+
+        SQLite cannot alter a constraint, so the table is rebuilt. Ids are copied
+        verbatim, which is what keeps the ``attempts`` and ``review_state``
+        foreign keys pointing at the same characters.
+        """
+        async with self.connection.execute(
+            "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'characters'"
+        ) as cursor:
+            row = await cursor.fetchone()
+        if row is None or "UNIQUE (glyph, script)" in (row[0] or ""):
+            return
+
+        log.info("migrating characters: glyph unique -> (glyph, script) unique")
+        async with self._write_lock:
+            await self.connection.execute("PRAGMA foreign_keys=OFF")
+            await self.connection.executescript("""
+                CREATE TABLE characters_migrated (
+                  id            INTEGER PRIMARY KEY,
+                  glyph         TEXT NOT NULL,
+                  script        TEXT NOT NULL,
+                  romaji        TEXT,
+                  meaning       TEXT,
+                  onyomi        TEXT,
+                  kunyomi       TEXT,
+                  kana_group    TEXT,
+                  jlpt_level    TEXT,
+                  category      TEXT,
+                  stroke_count  INTEGER,
+                  frequency_rank INTEGER,
+                  UNIQUE (glyph, script)
+                );
+                INSERT INTO characters_migrated
+                  SELECT id, glyph, script, romaji, meaning, onyomi, kunyomi,
+                         kana_group, jlpt_level, category, stroke_count, frequency_rank
+                    FROM characters;
+                DROP TABLE characters;
+                ALTER TABLE characters_migrated RENAME TO characters;
+                """)
+            await self.connection.execute("PRAGMA foreign_keys=ON")
+            await self.connection.commit()
 
     async def close(self) -> None:
         """Close the connection if it is open."""
@@ -280,6 +357,8 @@ def _difficulty_clause(difficulty: str) -> tuple[str, list[Any], int | None]:
     script, group = parse_difficulty(difficulty)
     if group == "all":
         return "script = ?", [script], None
+    if script == "vocab":
+        return "script = ? AND category = ?", [script, VOCAB_CATEGORIES[group]], None
     if script == "kanji":
         if group in KANJI_VOLUME_TIERS:
             # Ranked by teaching order, which is not the id order — the levels

@@ -12,6 +12,7 @@ from typing import Any
 
 from ..db import Database
 from ..models import CharacterSeed
+from .expressions import EXPRESSIONS
 from .hiragana import HIRAGANA
 from .kanji_frequency import KANJI_BY_FREQUENCY
 from .kanji_n1 import KANJI_N1
@@ -20,6 +21,7 @@ from .kanji_n3 import KANJI_N3
 from .kanji_n4 import KANJI_N4
 from .kanji_n5 import KANJI_N5
 from .katakana import KATAKANA
+from .vocabulary import VOCABULARY
 
 __all__ = ["ALL_SEEDS", "apply_frequency_ranks", "seed_content"]
 
@@ -33,6 +35,8 @@ ALL_SEEDS: tuple[CharacterSeed, ...] = (
     *KANJI_N3,
     *KANJI_N2,
     *KANJI_N1,
+    *VOCABULARY,
+    *EXPRESSIONS,
 )
 
 _UPSERT = """
@@ -40,8 +44,7 @@ INSERT INTO characters (
     glyph, script, romaji, meaning, onyomi, kunyomi,
     kana_group, jlpt_level, category, stroke_count
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-ON CONFLICT(glyph) DO UPDATE SET
-    script       = excluded.script,
+ON CONFLICT(glyph, script) DO UPDATE SET
     romaji       = excluded.romaji,
     meaning      = excluded.meaning,
     onyomi       = excluded.onyomi,
@@ -69,20 +72,24 @@ def _params(seed: CharacterSeed) -> tuple[Any, ...]:
 
 
 def _deduplicate(seeds: Sequence[CharacterSeed]) -> list[CharacterSeed]:
-    """Keep the last seed declared for each glyph, preserving first-seen order."""
-    order: dict[str, int] = {}
+    """Keep the last seed declared for each ``(glyph, script)``, in first-seen order.
+
+    Keyed on the pair, not the glyph: は exists as both a hiragana character and
+    a particle, and deduplicating on glyph alone would drop one of them.
+    """
+    order: dict[tuple[str, str], int] = {}
     unique: list[CharacterSeed] = []
     for seed in seeds:
-        index = order.get(seed.glyph)
+        index = order.get((seed.glyph, seed.script))
         if index is None:
-            order[seed.glyph] = len(unique)
+            order[(seed.glyph, seed.script)] = len(unique)
             unique.append(seed)
         else:
             unique[index] = seed
     return unique
 
 
-_RANK = "UPDATE characters SET frequency_rank = ? WHERE glyph = ?"
+_RANK = "UPDATE characters SET frequency_rank = ? WHERE glyph = ? AND script = 'kanji'"
 
 
 async def apply_frequency_ranks(db: Database) -> int:

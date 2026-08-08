@@ -662,3 +662,75 @@ async def test_every_cue_is_served(client, cue_id):
     assert len(body) > 1024
     # A real RIFF/WAVE header, not an HTML error page returned with a 200.
     assert body[:4] == b"RIFF" and body[8:12] == b"WAVE"
+
+
+# -- word decks and the catalogue ------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "key,count",
+    [
+        ("vocab:days", 7),
+        ("vocab:months", 12),
+        ("vocab:numbers", 36),
+        ("vocab:time", 16),
+        ("vocab:demonstratives", 20),
+        ("vocab:particles", 15),
+    ],
+)
+async def test_word_decks_are_offered_with_their_counts(client, key, count):
+    payload = await (await client.get("/api/segments")).get_json()
+    segments = {s["key"]: s["count"] for s in payload["segments"]}
+    assert segments[key] == count
+
+
+async def test_seeding_words_did_not_clobber_characters(client):
+    """は is a hiragana character *and* a particle; 一 is a kanji *and* the number one.
+
+    A glyph-unique constraint made seeding the second overwrite the first, which
+    silently shrank the kana and kanji decks.
+    """
+    payload = await (await client.get("/api/segments")).get_json()
+    segments = {s["key"]: s["count"] for s in payload["segments"]}
+    assert segments["hiragana:gojuon"] == 46
+    assert segments["hiragana:all"] == 104
+    assert segments["kanji:top200"] == 200
+
+
+async def test_a_word_card_is_graded_on_meaning_against_its_own_set(client):
+    """Offering "March" against a 月曜日 card can be solved by category alone."""
+    created = await (
+        await client.post("/api/session", json={"difficulty": "vocab:days", "limit": 5})
+    ).get_json()
+    days = {
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+    }
+    for card in created["cards"]:
+        assert card["answer"] in days
+        assert set(card["choices"]) <= days, "a distractor came from another set"
+        assert card["answer"] in card["choices"]
+
+
+async def test_catalogue_lists_what_works_and_what_does_not(client):
+    payload = await (await client.get("/api/catalogue")).get_json()
+    assert payload["counts"]["available"] == 23
+    assert payload["planned"], "the catalogue must show what is being built"
+    for item in payload["planned"]:
+        assert item["status"] in {"planned", "experimental"}
+        # Every unbuilt entry says what is blocking it, so the list cannot become
+        # a wish list that implies work is imminent.
+        assert item["blocker"]
+
+
+async def test_decks_view_renders(client):
+    response = await client.get("/decks")
+    assert response.status_code == 200
+    body = await response.get_data(as_text=True)
+    assert 'class="view on"' in body
+    assert "decks.js" in body

@@ -239,6 +239,21 @@ def test_stroke_counts_are_plausible_when_present():
 # -- confusion pairs -------------------------------------------------------
 
 
+def test_a_glyph_may_repeat_across_scripts_but_never_within_one():
+    """は is a hiragana character and the topic particle; 一 is a kanji and 1.
+
+    They are different learning objects with different answers. What must never
+    happen is the same glyph twice *inside* one script.
+    """
+    seen = Counter((s.glyph, s.script) for s in ALL_SEEDS)
+    duplicates = [pair for pair, n in seen.items() if n > 1]
+    assert not duplicates, f"duplicated within a script: {duplicates[:8]}"
+
+    across = Counter(s.glyph for s in ALL_SEEDS)
+    shared = [g for g, n in across.items() if n > 1]
+    assert shared, "expected some glyphs to be shared between scripts"
+
+
 def test_confusion_pairs_reference_known_glyphs():
     # Every bundled set, not just the three original ones — a confusion pair is
     # useless if either half is missing from the database.
@@ -266,7 +281,9 @@ def test_documented_totals_match_the_seed_set():
     figures were written — so the numbers are asserted rather than trusted.
     """
     kanji = [s for s in ALL_SEEDS if s.script == "kanji"]
-    assert len(ALL_SEEDS) == 1459
+    vocab = [s for s in ALL_SEEDS if s.script == "vocab"]
+    assert len(ALL_SEEDS) == 1565
     assert len(kanji) == 1251
+    assert len(vocab) == 106
     by_level = Counter(s.jlpt_level for s in kanji)
     assert by_level == {"N5": 113, "N4": 169, "N3": 396, "N2": 236, "N1": 337}

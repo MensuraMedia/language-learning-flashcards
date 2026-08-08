@@ -3291,3 +3291,91 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
   text-overflow: ellipsis;
 }
 .cue-opt:focus-visible { outline: 2px solid var(--amber-line); outline-offset: 2px; }
+
+/* ── the More… deck that closes each shelf ──────────────────────────────── */
+.deck-more .deck-face {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-style: dashed;
+  border-color: var(--line-2);
+  background: linear-gradient(158deg, #1a1a20 0%, #141418 60%, #101014 100%);
+}
+.deck-more:hover .deck-face { border-color: var(--amber-line); }
+.deck-more-mark {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  font-size: 46px;
+  line-height: 1;
+  color: var(--ink-4);
+  letter-spacing: .08em;
+}
+.deck-more:hover .deck-more-mark { color: var(--amber); }
+.deck-more-note {
+  display: block;
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--ink-4);
+  margin-top: 8px;
+}
+
+/* ── word decks are wider: 月曜日 and "Wednesday" need the room ─────────── */
+.deck-wide { width: clamp(200px, 20vw, 264px); }
+.shelf-scroll .deck-wide .deck-glyphs span { font-size: clamp(20px, 2.4vw, 30px); }
+
+/* ── the catalogue view ─────────────────────────────────────────────────── */
+.shelf-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 22px 4px 10px;
+}
+
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 12px;
+}
+.plan-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 13px 15px;
+  border: 1px dashed var(--line-2);
+  border-radius: var(--r-md);
+  background: var(--panel);
+}
+.plan-card.is-experimental { border-color: var(--amber-line); }
+.plan-head { display: flex; align-items: baseline; gap: 8px; }
+.plan-name { font-size: 13px; font-weight: 650; color: var(--ink); }
+.plan-jp { font-size: 11px; color: var(--ink-4); }
+.plan-status { margin-left: auto; font-size: 9px; }
+.plan-card.is-experimental .plan-status { color: var(--amber); border-color: var(--amber-line); }
+.plan-detail { font-size: 11.5px; color: var(--ink-2); line-height: 1.5; }
+.plan-blocker { font-size: 10.5px; color: var(--ink-4); line-height: 1.5; }
+.plan-blocker em { font-style: normal; color: var(--ink-3); }
+
+/* ── word cards: whole words need more room than single characters ───────── */
+/* The prompt is 月曜日, not あ, and the answer is "Wednesday", not "a". The card
+   widens, the glyph shrinks to fit its longer string, and the options get a
+   second register for the reading. */
+.mode-word .deck3d { width: clamp(300px, 34vw, 430px); }
+.mode-word #glyph,
+.mode-word #back-glyph {
+  font-size: clamp(30px, 4.6vw, 58px);
+  line-height: 1.25;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  text-align: center;
+  padding: 0 10px;
+}
+.mode-word #back-sound { font-size: clamp(15px, 1.7vw, 21px); }
+
+.choices.wider { width: clamp(190px, 19vw, 250px); }
+.choices.wider .choice { min-height: 74px; }
+.choices.wider .choice .txt {
+  font-size: 14px;
+  line-height: 1.3;
+  white-space: normal;
+}

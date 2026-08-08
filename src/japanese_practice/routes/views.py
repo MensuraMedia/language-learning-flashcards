@@ -13,6 +13,12 @@ async def dashboard() -> str:
     return await render_template("dashboard.html")
 
 
+@views_bp.get("/decks")
+async def decks() -> str:
+    """Every exercise in one place — what exists, and what is being built."""
+    return await render_template("decks.html")
+
+
 @views_bp.get("/games")
 async def games_view() -> str:
     """Memory-training boards: Match Up, Pelmanism, Confusion Drill."""

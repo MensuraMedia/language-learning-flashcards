@@ -550,6 +550,48 @@ DECK_META: dict[str, dict[str, str]] = {
         "challenge": "recognition",
         "scoring": "accuracy",
     },
+    "vocab:days": {
+        "shelf": "words",
+        "rung": "DAYS",
+        "jp": "曜日",
+        "challenge": "recognition",
+        "scoring": "accuracy",
+    },
+    "vocab:months": {
+        "shelf": "words",
+        "rung": "MONTHS",
+        "jp": "月",
+        "challenge": "recognition",
+        "scoring": "accuracy",
+    },
+    "vocab:numbers": {
+        "shelf": "words",
+        "rung": "NUMBERS",
+        "jp": "数字",
+        "challenge": "recall",
+        "scoring": "speed",
+    },
+    "vocab:time": {
+        "shelf": "words",
+        "rung": "TIME",
+        "jp": "時間",
+        "challenge": "recognition",
+        "scoring": "accuracy",
+    },
+    "vocab:demonstratives": {
+        "shelf": "words",
+        "rung": "THIS / THAT",
+        "jp": "こそあど",
+        "challenge": "recall",
+        "scoring": "streak",
+    },
+    "vocab:particles": {
+        "shelf": "words",
+        "rung": "PARTICLES",
+        "jp": "助詞",
+        "challenge": "mixed",
+        "scoring": "srs",
+    },
     "kanji:top500": {
         "shelf": "vol",
         "rung": "TOP 500",
@@ -630,6 +672,11 @@ def _segment_clause(key: str) -> str:
     """Inline WHERE fragment for a difficulty key. Keys are a closed set, so
     this cannot carry user input into SQL."""
     script, group = key.split(":", 1)
+    if script == "vocab":
+        from .db import VOCAB_CATEGORIES
+
+        category = VOCAB_CATEGORIES[group].replace("'", "''")
+        return f"script = 'vocab' AND category = '{category}'"
     if group == "all":
         return f"script = '{script}'"
     if script == "kanji" and group.startswith("N"):

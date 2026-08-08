@@ -200,9 +200,14 @@ async def end_session(db: Database, session_id: int) -> Session:
 CHOICE_COUNT = 3
 
 
+#: Scripts graded on meaning rather than sound. A kana card asks "what does this
+#: sound like"; a kanji or a word asks "what does this mean".
+MEANING_SCRIPTS = ("kanji", "vocab")
+
+
 def answer_text(character: Character) -> str:
-    """What the learner is choosing between: romaji for kana, meaning for kanji."""
-    if character.script == "kanji":
+    """What the learner is choosing between: romaji for kana, meaning otherwise."""
+    if character.script in MEANING_SCRIPTS:
         return character.meaning or character.glyph
     return character.romaji or character.glyph
 
@@ -252,14 +257,20 @@ async def build_choices(db: Database, character: Character, count: int = CHOICE_
     an English meaning beside two romaji would give the answer away.
     """
     correct = answer_text(character)
-    column = "meaning" if character.script == "kanji" else "romaji"
+    column = "meaning" if character.script in MEANING_SCRIPTS else "romaji"
     wanted = max(0, count - 1)
 
     # Prefer distractors from the same kana group (or JLPT level for kanji):
     # offering "hyo" and "bi" against "a" can be solved by elimination, which
     # tests nothing. Same-group options force actual recall.
-    peer_column = "kana_group" if character.script != "kanji" else "jlpt_level"
-    peer_value = character.kana_group if character.script != "kanji" else character.jlpt_level
+    # Distractors come from the same set: a "Monday" card offering "March"
+    # can be solved by category rather than by knowing the word.
+    if character.script == "vocab":
+        peer_column, peer_value = "category", character.category
+    elif character.script == "kanji":
+        peer_column, peer_value = "jlpt_level", character.jlpt_level
+    else:
+        peer_column, peer_value = "kana_group", character.kana_group
 
     options: list[str] = []
 

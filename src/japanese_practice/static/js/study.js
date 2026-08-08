@@ -147,11 +147,15 @@ function render() {
     $("back-readings").innerHTML = "";
   }
 
-  // English meanings need far more room than a two-letter romaji reading, and
-  // kanji carry their own accent so the script you are in is never in doubt.
+  // Room scales with what is on the card. A kana answer is "kya"; a kanji answer
+  // is "world/generation"; a word answer is "Wednesday" against a 月曜日 prompt,
+  // which needs the most room of the three — on the card as well as the options.
   const isKanji = card.script === "kanji";
-  $("choices").classList.toggle("wide", isKanji);
+  const isWord = card.script === "vocab";
+  $("choices").classList.toggle("wide", isKanji || isWord);
+  $("choices").classList.toggle("wider", isWord);
   document.body.classList.toggle("theme-kanji", isKanji);
+  document.body.classList.toggle("mode-word", isWord);
 
   state.furthest = Math.max(state.furthest, state.index);
   renderChoices(card);

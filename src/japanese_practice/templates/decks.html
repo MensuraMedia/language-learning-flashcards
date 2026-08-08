@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}All exercises — Japanese Practice{% endblock %}
+
+{% block topbar %}
+  <span class="lbl-sm" id="cat-count">—</span>
+  <a class="btn btn-sm" href="/">← Dashboard</a>
+{% endblock %}
+
+{% block content %}
+<main class="view on" id="decks">
+
+  <section class="sec">
+    <span class="lbl">All exercises</span>
+    <span class="lbl-sm">everything that exists, and everything being built</span>
+  </section>
+
+  <!-- Available decks, grouped by the shelf they belong to. -->
+  <div id="cat-shelves"></div>
+
+  <section class="sec" style="margin-top:34px">
+    <span class="lbl">In development</span>
+    <span class="lbl-sm">listed rather than hidden — each one says what is blocking it</span>
+  </section>
+  <div class="plan-grid" id="cat-planned"></div>
+
+  <p class="credits lbl-sm" style="margin-top:26px">
+    Exercises marked <b>experimental</b> have a design and no implementation;
+    <b>planned</b> ones are also waiting on content that has to be sourced rather
+    than invented. Acceptance criteria for every item are in
+    <span class="jp">docs/ROADMAP.md</span>.
+  </p>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/decks.js', v=asset_version) }}"></script>
+{% endblock %}

@@ -86,13 +86,37 @@ function deckNode(deck) {
   return node;
 }
 
+// Closes every shelf. Deliberately a deck, not a link: it sits in the same rail
+// and reads as "there are more of these", which is what it means.
+function moreNode(shelf) {
+  const node = el("a", "deck deck-more");
+  node.href = "/decks";
+  node.setAttribute("aria-label", "More exercises — the full catalogue");
+  node.innerHTML = `
+    <span class="sheet s3"></span>
+    <span class="sheet s2"></span>
+    <span class="deck-face">
+      <span class="deck-top"><span class="rung">ALL</span></span>
+      <span class="deck-more-mark jp">…</span>
+      <span class="deck-id">
+        <span class="deck-name" style="display:block">More…</span>
+        <span class="deck-jp jp" style="display:block">その他</span>
+      </span>
+      <span class="deck-more-note">Every exercise, including what is still being built</span>
+    </span>`;
+  return node;
+}
+
 function renderShelves(decks) {
-  for (const shelf of ["hiragana", "katakana", "jlpt", "vol"]) {
+  for (const shelf of ["hiragana", "katakana", "jlpt", "vol", "words"]) {
     const host = $(`shelf-${shelf}`);
     if (!host) continue;
     host.innerHTML = "";
     const mine = decks.filter((d) => d.shelf === shelf);
     mine.forEach((d) => host.appendChild(deckNode(d)));
+    // A rail of five decks leaves room for a sixth on a wide screen, and the
+    // catalogue is otherwise unreachable — there is no menu.
+    if (mine.length) host.appendChild(moreNode(shelf));
     // Hide a shelf with nothing on it rather than leaving an empty rail.
     if (!mine.length) {
       host.hidden = true;
