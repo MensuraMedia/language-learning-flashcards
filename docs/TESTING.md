@@ -209,7 +209,7 @@ Real requests through Quart's test client.
 Three of these are **regression tests for bugs found during development** — the
 front-face purity check, the `.view on` check, and the study-view scaffold
 check. Each corresponds to a defect documented in
-[`HANDOFF.md` §4](HANDOFF.md#4-three-bugs-found-and-fixed-do-not-reintroduce).
+[`HANDOFF.md` §4](HANDOFF.md#4-bugs-found-and-fixed-do-not-reintroduce).
 
 ---
 

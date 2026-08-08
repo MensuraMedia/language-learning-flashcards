@@ -4,11 +4,12 @@
 It is the single place a new session (human or agent) reads to know where the
 project stands, what is real, what is assumed, and what to do next.
 
-- **Last updated:** 2026-08-08 01:45 UTC-4
+- **Last updated:** 2026-08-08 03:30 UTC-4
 - **Updated by:** session `30934411` (Claude Opus 5)
 - **Project root:** `/home/user/projects/japanese_practice`
 - **Remote:** https://github.com/MensuraMedia/language-learning-flashcards (public)
-- **Current state:** application runs end to end; **290 tests passing**; 1,459 characters across 17 decks; profiles, save/load and reset shipped
+- **Current state:** application runs end to end; **290 tests passing**; 1,459 characters across 17 decks; profiles, save/load and reset shipped; README carries 13 real screenshots
+- **Head:** `4661b01` — pushed
 
 ---
 
@@ -50,6 +51,8 @@ works on this project **must**:
 | Profiles, save/load, reset | ✅ Settings dialog, file per profile, glyph-keyed export |
 | Kanji audio | ❌ **1,144 of 1,459 characters have no recorded clip** — they fall through to live VOICEVOX synthesis (roadmap N3) |
 | Frontend JS tests | ❌ 1,679 lines untested; no runner, `node` not installed (roadmap Q2) |
+| Licence & attribution | ✅ Personal-use licence with §5 attribution for derived language-learning apps; `NOTICE` ships in the distribution |
+| Screenshots | ✅ 13 in `docs/screenshots/`, regenerable via `tools/demo_data.py` |
 | Packaging / distribution | ❌ Not started |
 
 **Chosen design direction:** `mockups/05-tactile-deck.html`, with the analytics
@@ -83,44 +86,72 @@ Override the database location with `JP_DB_PATH`. Default is
 
 ## 3. Verified working (executed, not assumed)
 
-All of the following were run on 2026-08-06 and produced the stated result.
+Nothing in this section is inferred. Each line is something a command produced.
 
-**Content data** — exact counts against the authoritative reference:
-- Hiragana 104 (46 gojuon + 20 dakuon + 5 handakuon + 33 yoon)
-- Katakana 104 (same split)
+### Verified 2026-08-08 (this session)
+
+**Suite** — `290 passed in ~5s`; `ruff check src/ tests/ tools/` and
+`black --check` both clean.
+
+**Content** — asserted by `test_documented_totals_match_the_seed_set`, not just
+counted once:
+- Hiragana 104 · Katakana 104
 - Kanji N5 113 · N4 169 · N3 396 · N2 236 · N1 337 — **1,251 kanji, 1,459 total**
-- Kanji frequency list 500, Top 200 verified as its first 200
+- Frequency list 500; Top 200 verified to be exactly its first 200
+- 789/789 extracted readings round-tripped romaji → kana → romaji identically
+- 84 confusion pairs, every glyph confirmed seeded
+
+**API** — served from a cold start on a fresh database:
+`/api/segments` (**17** decks) · `/api/games` · `/api/profiles` ·
+`/api/data/summary` · `/api/heatmap?difficulty=kanji:top200` — all 200.
+
+**Kanji option readings** — spot-checked against the cards dealt:
+父 `fu` · 本 `hon` · 足 `soku` · 飲 `in` · 食 `shoku` · 四 `shi` · 魚 `gyo` ·
+田 `den` · 言 `gen`. All correct on'yomi.
+
+**Confusion boards deal both halves of a pair** — hiragana も/ま に/こ あ/め ·
+katakana ス/ヌ ツ/シ チ/テ · kanji 像/象 百/白 木/休.
+
+**Profiles isolate history** — default profile 1 attempt → create "Kenji" → 0
+attempts → switch back → 1 attempt. Also covered by
+`test_profiles_keep_separate_histories`.
+
+**Export is glyph-keyed** — an attempt row exports as
+`{"glyph": "ひ", "session_id": 1, "correct": 1, …}` with no `character_id`.
+
+**Packaging** — `importlib.metadata` reports `License-File: LICENSE, NOTICE`.
+
+**Desktop window** — captured 13 screenshots from the live pywebview window:
+dashboard, kanji shelf, both card types front and back, session recap, memory
+board, heatmap, streak, weak characters, performance, settings.
+
+### Verified earlier, still true
+
+- Hepburn traps correct: し=shi, ち=chi, つ=tsu, ふ=fu, じ=ji, を=wo, ん=n,
+  しゃ=sha, じゅ=ju, ちょ=cho
 - No duplicate glyphs; all glyphs inside their correct Unicode ranges
-- Hepburn romanisation correct on the classic traps (し=shi, ち=chi, つ=tsu,
-  ふ=fu, じ=ji, を=wo, ん=n, しゃ=sha, じゅ=ju, ちょ=cho)
+- Full session lifecycle: start → answer → score → end, persisted
+- `GET /api/audio/<id>` returns a playable WAV.
+  **CORRECTION (2026-08-06 22:00):** an earlier note here claimed this was "real
+  espeak synthesis". It was not. 17,684 bytes is *exactly* the silent stub
+  (0.4s × 22050Hz × 2 bytes + 44-byte header) — the size was inferred from,
+  rather than verified against, the content, and **no TTS binary was installed
+  at all**. `espeak-ng` has since been installed and real synthesis is verified
+  by amplitude (peak 0.571, 772 ms for あ). **Never infer audio validity from
+  file size.**
+- Every keyboard control exercised against the live window with `xdotool`
 
-**API** — every endpoint exercised with curl:
-- `GET /` → 200
-- `GET /api/segments` → 13 segments with live counts
-- `POST /api/session` → session created, deck returned
-- `POST /api/session/<id>/attempt` → scores and streaks update correctly
-- `POST /api/session/<id>/end` → totals finalised
-- `GET /api/character/<id>` → character + recall history
-- `GET /api/audio/<id>` → 200 with a playable WAV.
-  **CORRECTION (2026-08-06 22:00):** an earlier note in this file claimed this
-  was "real espeak synthesis". It was not. 17,684 bytes is *exactly* the silent
-  stub (0.4s x 22050Hz x 2 bytes + 44-byte header) — the size was inferred from,
-  not verified against, the content, and **no TTS binary was installed at all**.
-  `espeak-ng` has since been installed and real synthesis is now verified by
-  amplitude (peak 0.571, 772ms for あ). Never infer audio validity from file size.
-- Bad input → `{"code","message"}` with HTTP 400
+### Measured, but not fully
 
-**Analytics** — computed over 545 seeded attempts across 28 sessions / 20 days.
-Every metric returned real values. The confusion-pair detector independently
-surfaced the genuine learner traps: る/ろ, ぬ/め, き/さ, わ/ね, は/ほ.
-
-**Desktop window** — pywebview opened `Japanese Practice — 日本語練習`, loaded
-the dashboard, and pulled 21 KB of analytics from the API. Japanese glyphs render
-correctly (Noto Sans CJK JP present system-wide).
+- **Pace timing.** The five-step table in FEATURES is *computed* from the
+  constants in `study.js`. Exactly one hold was measured end to end — 355 ms at
+  *relentless*, against a computed 380 ms. The other four were not: the
+  screenshot-polling harness available here costs ~250 ms per sample, which is
+  too coarse. Roadmap **Q7**.
 
 ---
 
-## 4. Three bugs found and fixed (do not reintroduce)
+## 4. Bugs found and fixed (do not reintroduce)
 
 1. **Circular import.** `app.py` imported `routes.api`, which imported `get_db`
    back from `app`. Fixed by defining `get_db()` inside `routes/api.py` using
@@ -142,60 +173,101 @@ correctly (Noto Sans CJK JP present system-wide).
    stack with no CJK member, which renders tofu. Fixed in `.back-sound`.
    **Rule: `--mono` is for numerals only. All Japanese text uses `--jp`.**
 
+5. **A third class collision.** `class="btn ghost"` inherited `.ghost`, the
+   deck's fanned-sheet class (`position:absolute; inset:0`, `::after` content
+   記), and the button was pulled out of its row. Renamed `.btn-ghost`.
+   **That is three collisions now** (`.skip`, `.ghost`, and `.view` behaving as
+   a switcher). Grep `theme.css` before naming any class.
+
+6. **`.btn` carries `flex: 1`.** It is set for the study foot's three-across
+   row, so a `.btn` dropped into any other flex container stretches to fill it.
+   Seen on `Drill weak set` and the settings buttons. Add `flex: 0 0 auto` in
+   new containers.
+
+7. **Statement nested inside a handler it was meant to precede.** The
+   "reflect a deep-linked mode in the picker" line sat *inside* the mode
+   picker's own click listener, so it only ran on a click. Arriving from a
+   dashboard game card dealt the correct board while the picker still
+   highlighted Match Up — a mismatch that looked like a routing bug and was an
+   indentation bug.
+
+8. **Content sized for kana does not fit kanji.** Twice: study options
+   ("world/generation" in a square built for `kya`) and game tiles
+   ("interval, between" running off the edge). **Whenever a surface shows a
+   reading, check it with a kanji meaning, not a two-letter romaji.**
+
+9. **`sqlite_sequence` does not exist here.** The schema uses no `AUTOINCREMENT`,
+   so a reset that tried to clear it would have raised. Plain rowids restart on
+   their own once a table is empty.
+
+10. **Documented counts drift.** The docs said 1,453 characters / 1,245 kanji —
+    true when written, wrong the moment six characters were added to N5. Now
+    asserted by `test_documented_totals_match_the_seed_set`. **Do not quote a
+    count in prose without a test behind it.**
+
 ---
 
 ## 5. What works / what does not
 
 ### Works
-- **Multiple-choice answering** — three options per card, server-shuffled, drawn
-  from the same kana group / JLPT level so they cannot be solved by elimination.
-  Selection auto-scores; no self-grading buttons remain.
-- **Skip scores −1** and is stored as `attempts.skipped = 1`, which feeds the
-  weakness views (skips weigh 1.25x a wrong guess in `weighted_miss`, since a
-  pass means no recall at all rather than a partial trace).
-- **Test suite: 193 passing in ~1.5s**, `ruff` and `black` clean
-- Full session lifecycle: start → answer → score → end, persisted to SQLite
-- All 13 analytics metrics, computed at query time from `attempts`
-- Per-character miss-rate heatmap, amber-intensity encoded, click-to-drill
-- Deck shelf with live segment counts
-- Real TTS audio with graceful degradation
-- pywebview desktop window and `--no-window` browser mode
-- Post-edit lint hook (black + ruff on Python edits)
+
+**Study**
+- Multiple-choice answering — three options, server-shuffled, drawn from
+  confusion partners → voicing siblings → same group → same script, so a card
+  cannot be won by elimination. Selection auto-scores; no self-grading buttons.
+- Skip scores −1 and stores `attempts.skipped = 1`, which feeds the weakness
+  views (a skip weighs 1.25× a wrong guess in `weighted_miss`: a pass means no
+  recall at all, where a wrong guess still shows a partial trace).
+- Back / Next split control; Next is live only after going back.
+- **Pace slider** — 5 steps, 1.0× → 0.2× on the verdict hold, floored at 260 ms.
+- **Kanji reading reference** — romaji on the card back and on every option.
+- Session recap: every character seen, misses in red with romaji beneath.
+- Full keyboard control, verified with `xdotool` against the live window.
+
+**Content** — 1,459 characters, 17 decks, all keys resolving. See §3.
+
+**Games** — 9 boards (3 modes × 3 scripts), script picker, confusion boards
+dealing both halves of a pair.
+
+**Dashboard** — per-script shelves each with their own games rail; the
+miss-rate map with set selector, table view and unseen characters shown; streak;
+weak characters; accuracy trend, accuracy by deck, retention curve, leeches,
+session history. Kanji surfaces carry a green accent.
+
+**Profiles & data** — file per profile, glyph-keyed export/import, reset behind
+an explicit confirmation.
+
+**Platform** — pywebview window and `--no-window` browser mode; post-edit lint
+hook (black + ruff).
 
 ### Does not work / not done
-- **Reverse-face glyph enlarged 2026-08-06** — `.back-mini` went from a flat
-  38px muted thumbnail to `clamp(64px, 8.5vw, 96px)` in full ink. Verified on
-  both a kana back (あ) and the worst-case kanji back (三 with meaning, on'yomi
-  and kun'yomi) — no overflow in either.
-- **UI layout is functional but unpolished.** `theme.css` (2159 lines) was
-  generated against the mockup's exact DOM; the templates approximate it. Several
-  panels below the fold are unverified visually. Inline `style=` attributes were
-  used as spacing stopgaps in `dashboard.html` — these should move into CSS.
-- ~~`study.html` unverified~~ — **FULLY VERIFIED 2026-08-06** with `xdotool`
-  installed. Every keyboard control exercised against the live pywebview window:
-  Space flips, ←/→ navigate, ↑/↓ change volume (readout confirmed at 90%),
-  M mutes, P plays, H opens the shortcut panel, J/F grade (score 30, streak
-  reset on a wrong answer confirmed), Esc ends and shows the recap.
-- ~~No tests~~ — **155 tests passing** as of 2026-08-06 (scoring 35, content 58,
-  analytics 41, API 21). Full breakdown and coverage gaps in
-  [TESTING.md](TESTING.md). Not covered: frontend JS, keyboard controls, the CSS
-  flip animation, and the live ElevenLabs call.
-- **`first_vs_eventual` reads 0% against the demo data** — the seeded history
-  sets `first_attempt=1` on every row, so there is nothing to contrast. The
-  metric itself is correct and is now proven by
-  `test_first_vs_eventual_separates_recall_from_recognition`, which asserts
-  first 0.5 / eventual 0.75 / gap 0.25. Real usage will populate it.
-- **Kanji beyond N5 is not seeded.** `content/kanji_n5.py` only. The dashboard
-  shelf code fully supports N4–N1 and the Top 200/500 volume tiers — `DECK_META`
-  defines all of them — but with no characters seeded those shelves are hidden
-  rather than rendered as empty cards. This is the single largest visible gap
-  against the mockup, and it is a **content** gap, not a UI one.
-- **`.claude/rules/` contains a duplicate** — `memory-rules.md` and
-  `universal-memory-rules.md` are byte-identical. Kept both because the standards
-  forbid removing universal rules; worth a decision.
-- **Unused example rules and agents** were deployed (`backend-example.md`,
-  `infra-example.md`, `react-example.md`, `chrome-ext.md`, `stream-engineer.md`)
-  and do not apply to this stack.
+
+| Gap | Detail | Roadmap |
+|---|---|---|
+| **Kanji audio** | 1,144 of 1,459 characters have no recorded clip and synthesise live on every press — correct, but slower and unvalidated. Which reading to record is also undecided | N3, N3b |
+| **Reading-field accuracy** | ~530 single-reading entries had on'/kun' picked by a lexicon rule measured at 94.6%, implying ~30 mislabels. Card-back annotations only — kanji are graded on meaning — but wrong | N6 |
+| **Stroke counts** | 1,138 kanji have `stroke_count = NULL`; the charts do not carry them | N7 |
+| **Frontend JS untested** | 1,679 lines across three files, no runner, `node` not installed. Three of the four bugs found this project have been in exactly this code | Q2 |
+| **No real-window test** | Everything runs through the Quart test client. Every WebKit-only defect so far — invisible `.view`, three class collisions, `localStorage` throwing — was invisible to it | Q8 |
+| **Pace timing** | Four of the five holds never measured end to end | Q7 |
+| **Below-the-fold panels** | Retention, accuracy-by-set, leeches and session history have not been visually confirmed *together* with real data. The rest have | U3 |
+| **4 of 5 challenge types** | `recall`, `timed`, `listening`, `mixed` are stored, displayed as tags, and never branched on. Only `recognition` exists | M1–M7 |
+| **Scored mode has a dominant strategy** | Flip reveals the answer and is free and unrecorded; skip is strictly dominated by guessing | D1–D4, C1 |
+| **Mastery means recognition** | At a 33% chance floor, `miss_rate ≤ 0.15` is roughly 78% true recall. The meter says "mastered" | C4 |
+| **Preferences are per-browser** | Pace, voice, volume live in `localStorage`, so two profiles on one machine share them | X2 |
+| **Inline `style=` stopgaps** | Still present in `dashboard.html` | U2 |
+| **Packaging** | Not started; an upgrade must also preserve profiles | P1–P3, P7 |
+| **`.claude/rules/` duplicate** | `memory-rules.md` and `universal-memory-rules.md` are byte-identical; kept because the standards forbid removing universal rules | S1 |
+| **Unused example rules/agents** | `backend-example.md`, `infra-example.md`, `react-example.md`, `chrome-ext.md`, `stream-engineer.md` do not apply to this stack | S2 |
+
+### Resolved since the last handoff
+
+- ~~Kanji beyond N5 not seeded~~ — 1,138 characters added 2026-08-08.
+- ~~Top 200/500 decks withdrawn~~ — backed by `frequency_rank`.
+- ~~No data export~~ — glyph-keyed save/load plus profiles and reset.
+- ~~`first_vs_eventual` reads 0%~~ — the demo generator now produces in-session
+  repeats, so it reports a real gap.
+- ~~Detached `.btn`~~ — a class collision, not a flex problem. See §4.5.
 
 ---
 
@@ -209,7 +281,13 @@ correctly (Noto Sans CJK JP present system-wide).
 | **`pkill -f japanese_practice` kills the calling shell** | The pattern matches the shell's own command line. Use a narrower pattern |
 | **Never `git checkout <file>` to undo a temporary patch** | That file may also hold uncommitted work. It cost the `/games` route: the route was added, temp-patched for a screenshot, then `git checkout`-ed to undo the patch — which silently deleted the route too. Copy the file aside first, or edit the patch back out |
 | **Firefox headless screenshots are unreliable here** | It restores previous session tabs, times out, and renders app pages BLANK even when the app is correct. It cost significant debugging time chasing a non-bug. **Always verify UI in the real pywebview window** + ImageMagick `import -window <id>` |
-| **No `xdotool`, no `xvfb-run`** | `wmctrl` and `import` are available |
+| **The webview caches CSS hard** | `ctrl+r` is not enough — a stylesheet edit can appear not to apply. Restart the process. The `asset_version` stamp handles this for users, not for a running dev window |
+| **Quotes inside `git commit -m "…"`** | A message containing `"` breaks the shell parse and git reports a bogus `pathspec` error. Write the message to a file and use `-F` |
+| **`xdotool` IS installed** | An earlier note here said it was not. `wmctrl`, `import` (ImageMagick) and `xdotool` are all available |
+| **Click with `--window`, not absolute coordinates** | `xdotool getwindowgeometry` returns the *frame* origin, and the client area starts below the decoration. Absolute clicks land ~30 px high, which still hits a large deck card but misses a 22 px topbar button entirely. Use `xdotool mousemove --window <id> <x> <y>`, with coordinates read straight off an `import -window` capture |
+| **`xdotool --window key` does not work on WebKit** | Synthetic events sent to a specific window are ignored. Keystrokes must go through XTEST: `xdotool key <k>` with **no** `--window`, after `windowactivate --sync` |
+| **The window resizes itself between runs** | Captures come back 1280×860 or 1920×1008 depending on the session. Always `identify` the capture before computing crop coordinates from it |
+| **Scroll with the pointer in the left gutter** | Scrolling with the cursor over a deck card can activate it. Park at `x = 6` first |
 
 **Git push (the only method that works on this machine):**
 
@@ -267,8 +345,10 @@ Full register with QA criteria: [ROADMAP.md](ROADMAP.md).
    interact; the scored mode still has a dominant strategy.
 8. **Decide the `.claude/rules/` duplicate** and whether to drop the
    non-applicable example rules and agents (S1, S2).
-9. **Package** — `.deb` / AppImage (P1–P3), and make sure an upgrade preserves
-   profiles (P7).
+9. **Retake the local backup** (see §10). The existing set predates 1,144
+   characters, profiles, save/load and the licence rewrite.
+10. **Package** — `.deb` / AppImage (P1–P3), and make sure an upgrade preserves
+    profiles (P7).
 
 ### Solved, do not redo
 
@@ -281,6 +361,8 @@ Full register with QA criteria: [ROADMAP.md](ROADMAP.md).
 - ~~Top 200 / Top 500 decks~~ — **2026-08-08.** Backed by a `frequency_rank`
   column rather than an id slice.
 - ~~Data export~~ — **2026-08-08.** Glyph-keyed JSON, plus profiles and reset.
+- ~~README has no screenshots~~ — **2026-08-08.** 13 captures, with
+  `tools/demo_data.py` to regenerate the history behind them.
 
 ---
 
@@ -305,12 +387,14 @@ Full register with QA criteria: [ROADMAP.md](ROADMAP.md).
 | `docs/REPO-ACCESS.md` | **Local only, never pushed** — credential paths and working git commands |
 | `mockups/COMPARISON.md` | Evaluation of the five design directions |
 | `mockups/_reference/JAPANESE-CONTENT-MODEL.md` | Authoritative character data — binding |
+| `tools/demo_data.py` | Deterministic generator for a plausible study history — needed to photograph or eyeball the analytics panels |
+| `docs/screenshots/` | 13 captures used by the README; regenerate with the tool above |
 | `changelog.md` | Append-only change log |
 | `.claude/memory/decisions.md` | Architectural decisions with rationale |
 
 ---
 
-## 11. Backups
+## 10. Backups
 
 Local backup set at `/home/user/projects/backups/japanese_practice/`, with
 `RESTORE.md` alongside the artefacts.
@@ -326,3 +410,9 @@ The bundle omits ignored files; the tarball omits history. Keep both.
 **Verified 2026-08-07:** cloned from the bundle, 630 clips intact, 216/216 tests
 passed from the restored tree. The ElevenLabs key is confirmed absent from every
 artefact. Keep the worktree tarball local — it contains `REPO-ACCESS.md`.
+
+> **The backup set is stale.** It predates the kanji expansion, profiles,
+> save/load, the licence rewrite and the screenshots — the tree has gone from
+> 216 to 290 tests and from 315 to 1,459 characters since it was taken. Git
+> history is safe on the remote (`4661b01`), but the git-ignored files in the
+> worktree tarball and the local study database are not. **Retake it.**

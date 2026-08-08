@@ -228,3 +228,22 @@
 - Also fixed: `Drill weak set` stretched full width (`.btn` carries `flex: 1`
   for the study foot's three-across row), and the weak-characters empty state
   was squeezed into an 88px grid column.
+
+## 2026-08-08T03:45:00Z — Handoff brought current
+- `docs/HANDOFF.md` §3 rewritten: every claim is now something a command
+  produced this session, with a separate "measured, but not fully" heading for
+  the pace timing rather than letting a computed table read as verified.
+- §5 rewritten. It still said 193 tests, "Kanji beyond N5 is not seeded" and
+  "13 segments"; the gap list is now a table with a roadmap id per row.
+- §4 grew from 4 entries to 10: the third class collision, `.btn` carrying
+  `flex: 1`, a statement nested inside the handler it was meant to precede,
+  kana-sized surfaces not fitting kanji, `sqlite_sequence` not existing under
+  this schema, and documented counts drifting.
+- §6 gotchas corrected — an earlier note claimed `xdotool` was unavailable; it
+  is installed. Added the window-frame click offset, XTEST vs `--window` for
+  keystrokes, webview CSS caching, and quotes breaking `git commit -m`.
+- §10 renumbered (there had never been a §10) and the backup set flagged stale:
+  it predates 1,144 characters, profiles, save/load and the licence rewrite.
+- Fixed two broken cross-document anchors: `TESTING.md` pointed at the old §4
+  heading, and `ARCHITECTURE.md` pointed at a README section that no longer
+  exists. All internal links and anchors across every document now resolve.

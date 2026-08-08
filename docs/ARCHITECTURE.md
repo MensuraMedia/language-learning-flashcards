@@ -5,7 +5,8 @@ supportability, applicability and universality.
 
 > **Status:** describes the v0.1 architecture as specified in
 > [BUILD-SPEC.md](BUILD-SPEC.md). Implementation status is tracked in the
-> [README roadmap](../README.md#roadmap).
+> [ROADMAP.md](ROADMAP.md), with a summary in the
+> [README status table](../README.md#status).
 
 ---
 
