@@ -279,3 +279,8 @@
   failure — modern setuptools emits a PEP 639 deprecation notice about this
   project's `license = {file = ...}` metadata, and migrating to SPDX would need
   setuptools>=77 and break `pip install -e .` here. Logged as roadmap P9.
+
+## 2026-08-08T05:05:00Z — Recap button spacing
+- `.recap-act` gains `margin-top: 22px`. The Back to dashboard action sat tight
+  under the card grid, reading as another row of it rather than as the control
+  that closes the summary.

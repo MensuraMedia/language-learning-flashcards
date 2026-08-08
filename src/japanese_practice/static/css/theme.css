@@ -2268,6 +2268,10 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
 .panel-h .btn,
 .recap-act .btn { flex: 0 0 auto; }
 
+/* The action sat tight under the card grid, reading as part of it rather than
+   as the thing that closes the summary. Give it its own space. */
+.recap-act { margin-top: 22px; }
+
 /* `.recap` is display:none in the base system and was revealed by a class in
    the mockup. This view drives it with the `hidden` attribute instead, so make
    that attribute the single source of truth. `[hidden]{display:none!important}`
