@@ -18,8 +18,8 @@ recalled. Where something is unverified or known-weak it says so.
 
 | Dimension | Count | Notes |
 |---|---:|---|
-| Cards seeded | **1,613** | 104 hiragana · 104 katakana · 1,251 kanji · 106 words · 48 phrases |
-| Study decks | **28** | 5 hiragana · 5 katakana · 5 JLPT · 2 volume · 6 word sets · 5 phrase sets |
+| Cards seeded | **1,658** | 104 hiragana · 104 katakana · 1,251 kanji · 106 words · 93 phrases |
+| Study decks | **33** | 5 hiragana · 5 katakana · 5 JLPT · 2 volume · 6 word sets · 10 phrase sets |
 | Memory boards | **9** | 3 modes × 3 scripts |
 | Confusion pairs | **84** | 21 hiragana · 24 katakana · 39 kanji |
 | Scoring schemes | **4** | accuracy · speed · streak · SRS |
@@ -455,6 +455,34 @@ deliberately still absent, and stays on the catalogue as unbuilt.
 Phrase deck titles drop the script prefix: the shelf is already called Phrase
 Sets, so "At the convenience store" says what the deck is without wrapping the
 card onto two lines.
+
+### Cards that carry context
+
+Five of the phrase sets exist because **the English gloss alone would mislead**,
+so every card in them has a `note` — a line of usage context shown beneath the
+reading on the card back.
+
+| Set | Why the gloss is not enough |
+|---|---|
+| **Praising someone** | さすが is praise that assumes a track record; said to a beginner it sounds sarcastic. よくできました from one adult to another is patronising |
+| **Encouraging someone** | 頑張れ is the shouted form — fine from a friend, rough from a stranger. あきらめないで implies they were about to quit |
+| **Describing things** | One word covers two English ones: きれい is beautiful *and* clean, 高い is expensive *and* tall, 面白い is funny *and* interesting |
+| **Rough language** | ばか is mild in Osaka and sharp in Tokyo. 死ね is not banter in any register |
+| **Personality — がり** | 強がり is **not** "a strong person" — it is someone putting on a brave face. The gloss alone teaches the opposite of the word |
+
+`〜がり` is rule-governed like `〜ましょう`: an adjective stem plus がり names the
+kind of person who feels that way. 寒い → 寒がり. One rule, a whole class of
+personality words.
+
+**On Rough language.** It is included for *recognition*, not production. These
+appear constantly in manga, games and television, and a learner meets them
+whether or not a course admits they exist — knowing that 死ね is said to wound
+rather than to tease is safety information. The deck is labelled
+`ROUGH — RECOGNISE ONLY` and every note states how hard the word lands.
+
+A test asserts that **every** card in these five sets has a note longer than 20
+characters. A card here without its context is worse than no card, because it
+teaches something subtly wrong.
 
 ### One glyph, two meanings
 

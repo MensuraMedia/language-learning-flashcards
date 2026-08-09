@@ -86,6 +86,12 @@ DIFFICULTY_KEYS: tuple[str, ...] = (
     "phrase:lets",
     "phrase:requests",
     "phrase:basics",
+    # Sets whose cards carry a usage note — see content/social.py.
+    "phrase:praise",
+    "phrase:encourage",
+    "phrase:describe",
+    "phrase:rough",
+    "phrase:gari",
 )
 
 #: Difficulty-key group -> the `characters.category` it selects.
@@ -95,6 +101,11 @@ PHRASE_CATEGORIES: dict[str, str] = {
     "lets": "Let's — ましょう",
     "requests": "Please — てください",
     "basics": "Getting by",
+    "praise": "Praising someone",
+    "encourage": "Encouraging someone",
+    "describe": "Describing things",
+    "rough": "Rough language",
+    "gari": "Personality — がり",
 }
 
 VOCAB_CATEGORIES: dict[str, str] = {
@@ -112,6 +123,11 @@ _GROUP_LABELS: dict[str, str] = {
     "lets": "Let's — ましょう",
     "requests": "Please — てください",
     "basics": "Getting by",
+    "praise": "Praising someone",
+    "encourage": "Encouraging someone",
+    "describe": "Describing things",
+    "rough": "Rough language",
+    "gari": "Personality — がり",
     "days": "Days of the week",
     "months": "Months",
     "numbers": "Numbers",
@@ -136,7 +152,7 @@ _SCRIPT_LABELS: dict[str, str] = {
 }
 
 _CHARACTER_COLUMNS = (
-    "id, glyph, script, romaji, meaning, onyomi, kunyomi, "
+    "id, glyph, script, romaji, meaning, onyomi, kunyomi, note, "
     "kana_group, jlpt_level, category, stroke_count"
 )
 _SELECT_CHARACTER = f"SELECT {_CHARACTER_COLUMNS} FROM characters"
@@ -215,6 +231,10 @@ class Database:
                     "ALTER TABLE characters ADD COLUMN frequency_rank INTEGER"
                 )
                 await self.connection.commit()
+        if "note" not in columns:
+            async with self._write_lock:
+                await self.connection.execute("ALTER TABLE characters ADD COLUMN note TEXT")
+                await self.connection.commit()
 
         await self._widen_glyph_uniqueness()
 
@@ -253,11 +273,13 @@ class Database:
                   category      TEXT,
                   stroke_count  INTEGER,
                   frequency_rank INTEGER,
+                  note          TEXT,
                   UNIQUE (glyph, script)
                 );
                 INSERT INTO characters_migrated
                   SELECT id, glyph, script, romaji, meaning, onyomi, kunyomi,
-                         kana_group, jlpt_level, category, stroke_count, frequency_rank
+                         kana_group, jlpt_level, category, stroke_count, frequency_rank,
+                         NULL
                     FROM characters;
                 DROP TABLE characters;
                 ALTER TABLE characters_migrated RENAME TO characters;

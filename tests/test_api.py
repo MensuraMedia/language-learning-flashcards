@@ -719,7 +719,7 @@ async def test_a_word_card_is_graded_on_meaning_against_its_own_set(client):
 
 async def test_catalogue_lists_what_works_and_what_does_not(client):
     payload = await (await client.get("/api/catalogue")).get_json()
-    assert payload["counts"]["available"] == 28
+    assert payload["counts"]["available"] == 33
     assert len(payload["planned"]) == 11
     names = {item["name"] for item in payload["planned"]}
     assert "Alternate phrases" in names
@@ -786,3 +786,53 @@ async def test_every_phrase_carries_its_reading(client):
     for card in created["cards"]:
         assert card["romaji"], f"{card['glyph']} has no reading"
         assert card["script"] == "phrase"
+
+
+# -- cards that carry context ----------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "key,count",
+    [
+        ("phrase:praise", 10),
+        ("phrase:encourage", 10),
+        ("phrase:describe", 8),
+        ("phrase:rough", 10),
+        ("phrase:gari", 7),
+    ],
+)
+async def test_context_sets_are_offered_with_their_counts(client, key, count):
+    payload = await (await client.get("/api/segments")).get_json()
+    segments = {s["key"]: s["count"] for s in payload["segments"]}
+    assert segments[key] == count
+
+
+@pytest.mark.parametrize(
+    "key", ["phrase:praise", "phrase:encourage", "phrase:describe", "phrase:rough", "phrase:gari"]
+)
+async def test_every_card_in_a_context_set_has_a_note(client, key):
+    """These sets exist because the gloss alone misleads.
+
+    強がり is not "a strong person" but someone putting on a brave face; ばか is
+    mild in Osaka and sharp in Tokyo. A card here without its note is worse than
+    no card, because it teaches the learner something subtly wrong.
+    """
+    created = await (
+        await client.post("/api/session", json={"difficulty": key, "limit": 10})
+    ).get_json()
+    for card in created["cards"]:
+        assert card["note"], f"{card['glyph']} in {key} has no usage note"
+        assert len(card["note"]) > 20, f"{card['glyph']} has a note too short to be context"
+
+
+async def test_a_note_survives_the_round_trip_to_the_card(client):
+    created = await (
+        await client.post("/api/session", json={"difficulty": "phrase:gari", "limit": 7})
+    ).get_json()
+    by_glyph = {c["glyph"]: c for c in created["cards"]}
+    tsuyogari = by_glyph.get("強がり")
+    assert tsuyogari is not None
+    assert tsuyogari["answer"] == "someone putting on a brave face"
+    # The note is what stops 強がり being read as "a strong person".
+    assert "bluffing" in tsuyogari["note"]
+    assert tsuyogari["romaji"] == "tsuyogari"

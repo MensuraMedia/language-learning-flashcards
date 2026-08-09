@@ -27,6 +27,18 @@ class CharacterSeed:
     jlpt_level: str | None = None
     category: str | None = None
     stroke_count: int | None = None
+    #: A usage note. Some cards are unusable without one — 強がり is not "a
+    #: strong person" but someone putting on a brave face, and a learner who
+    #: only sees the gloss will use it wrongly.
+    note: str | None = None
+
+
+def _optional(row: Mapping[str, Any], key: str) -> Any:
+    """Read a column that older rows may not have."""
+    try:
+        return row[key]
+    except (KeyError, IndexError):
+        return None
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,6 +56,7 @@ class Character:
     jlpt_level: str | None
     category: str | None
     stroke_count: int | None
+    note: str | None
 
     @classmethod
     def from_row(cls, row: Mapping[str, Any]) -> Character:
@@ -60,6 +73,9 @@ class Character:
             jlpt_level=row["jlpt_level"],
             category=row["category"],
             stroke_count=row["stroke_count"],
+            # try/except rather than a membership test: on `sqlite3.Row`,
+            # `in` searches the *values*, so `"note" in row` would be wrong.
+            note=_optional(row, "note"),
         )
 
     def to_seed(self) -> CharacterSeed:

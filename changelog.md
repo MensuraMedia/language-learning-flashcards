@@ -463,3 +463,25 @@ suspends it when the window loses focus.
 - Catalogue's "Phrases" entry replaced with "More phrase sets", stating what
   ships now and what the bar is for adding another.
 - Tests 322 → 330.
+
+## 2026-08-09T02:10:00Z — Five context sets, and a note field on every card
+- **New `note` column** on `characters` (additive migration), surfaced through
+  the card payload and rendered beneath the reading on the card back. Some cards
+  are unusable without one: 強がり is not "a strong person" but someone putting
+  on a brave face, and a learner who sees only the gloss learns the opposite.
+- **Five sets, 45 cards, every one with a note**: Praising someone (10),
+  Encouraging someone (10), Describing things (8), Rough language (10),
+  Personality — がり (7).
+- **〜がり is rule-governed** like 〜ましょう — adjective stem + がり names the kind
+  of person who feels that way: 寒い → 寒がり, 面倒くさい → 面倒くさがり.
+- **Rough language is included for recognition, not production.** These appear
+  constantly in manga and television whether or not a course admits it; each
+  note states how hard the word lands, and the deck is labelled
+  `ROUGH — RECOGNISE ONLY`.
+- **Rebalanced the likes set**: かわいい and おいしい moved to Describing things,
+  where their notes can cover the range each spans. They describe the thing;
+  the likes set is statements about you. This also resolved a `(glyph, script)`
+  collision that would have failed the upsert.
+- Fixed a placeholder that slipped into the describing set before it shipped.
+- Tests 330 → 341, including one asserting every card in a context set has a
+  note of real length.

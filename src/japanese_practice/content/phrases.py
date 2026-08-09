@@ -51,14 +51,17 @@ def _p(glyph: str, romaji: str, meaning: str, category: str) -> CharacterSeed:
 
 
 #: Reacting well is most of early conversation. These are the words that carry
-#: enthusiasm, and they are adjectives and nouns rather than sentences, so they
-#: work on their own without any grammar attached.
+#: enthusiasm, and they work on their own without any grammar attached.
+#:
+#: Deliberately *statements about you* — what you like, how you feel. Words that
+#: describe the thing itself (かわいい, おいしい) live in the Describing things
+#: set, where their notes can cover the range each one actually spans.
 _LIKE_PHRASES = (
     ("大好き", "daisuki", "I love it"),
     ("好き", "suki", "I like it"),
-    ("おいしい", "oishii", "it's delicious"),
-    ("かわいい", "kawaii", "it's cute"),
     ("すごい", "sugoi", "amazing / wow"),
+    ("やった", "yatta", "yes! / I did it"),
+    ("嬉しい", "ureshii", "I'm glad"),
     ("最高", "saikou", "the best"),
     ("楽しみ", "tanoshimi", "I'm looking forward to it"),
     ("気に入った", "ki ni itta", "I've taken a liking to it"),

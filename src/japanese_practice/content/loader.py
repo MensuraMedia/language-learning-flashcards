@@ -22,6 +22,7 @@ from .kanji_n4 import KANJI_N4
 from .kanji_n5 import KANJI_N5
 from .katakana import KATAKANA
 from .phrases import PHRASES
+from .social import SOCIAL
 from .vocabulary import VOCABULARY
 
 __all__ = ["ALL_SEEDS", "apply_frequency_ranks", "seed_content"]
@@ -39,13 +40,14 @@ ALL_SEEDS: tuple[CharacterSeed, ...] = (
     *VOCABULARY,
     *EXPRESSIONS,
     *PHRASES,
+    *SOCIAL,
 )
 
 _UPSERT = """
 INSERT INTO characters (
     glyph, script, romaji, meaning, onyomi, kunyomi,
-    kana_group, jlpt_level, category, stroke_count
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    kana_group, jlpt_level, category, stroke_count, note
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(glyph, script) DO UPDATE SET
     romaji       = excluded.romaji,
     meaning      = excluded.meaning,
@@ -54,7 +56,8 @@ ON CONFLICT(glyph, script) DO UPDATE SET
     kana_group   = excluded.kana_group,
     jlpt_level   = excluded.jlpt_level,
     category     = excluded.category,
-    stroke_count = excluded.stroke_count
+    stroke_count = excluded.stroke_count,
+    note         = excluded.note
 """
 
 
@@ -70,6 +73,7 @@ def _params(seed: CharacterSeed) -> tuple[Any, ...]:
         seed.jlpt_level,
         seed.category,
         seed.stroke_count,
+        seed.note,
     )
 
 

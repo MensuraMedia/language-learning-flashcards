@@ -63,6 +63,7 @@ def _card(
         # read them yet. Send the transliteration with them.
         "onyomi_romaji": to_romaji(character.onyomi),
         "kunyomi_romaji": to_romaji(character.kunyomi),
+        "note": getattr(character, "note", None),
         "kana_group": character.kana_group,
         "jlpt_level": character.jlpt_level,
     }

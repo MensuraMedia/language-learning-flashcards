@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS characters (
   category      TEXT,               -- thematic grouping
   stroke_count  INTEGER,
   frequency_rank INTEGER,  -- 1..500 teaching order; NULL outside the Top 500
+  note          TEXT,      -- usage context; some cards are unusable without it
   -- Unique per script, not globally. は is a hiragana character *and* a topic
   -- particle; 一 is a kanji *and* the number one. They are different learning
   -- objects with different answers, and a glyph-only constraint made seeding one

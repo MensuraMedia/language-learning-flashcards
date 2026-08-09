@@ -283,9 +283,9 @@ def test_documented_totals_match_the_seed_set():
     kanji = [s for s in ALL_SEEDS if s.script == "kanji"]
     vocab = [s for s in ALL_SEEDS if s.script == "vocab"]
     phrases = [s for s in ALL_SEEDS if s.script == "phrase"]
-    assert len(ALL_SEEDS) == 1613
+    assert len(ALL_SEEDS) == 1658
     assert len(kanji) == 1251
     assert len(vocab) == 106
-    assert len(phrases) == 48
+    assert len(phrases) == 93
     by_level = Counter(s.jlpt_level for s in kanji)
     assert by_level == {"N5": 113, "N4": 169, "N3": 396, "N2": 236, "N1": 337}

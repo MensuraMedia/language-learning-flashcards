@@ -159,6 +159,14 @@ function render() {
   document.body.classList.toggle("mode-word", isWord || isPhrase);
   document.body.classList.toggle("mode-phrase", isPhrase);
 
+  // Some cards are unusable without their note: 強がり is not "a strong person"
+  // but someone putting on a brave face. Shown on the back, under the meaning.
+  const note = $("back-note");
+  if (note) {
+    note.textContent = card.note || "";
+    note.hidden = !card.note;
+  }
+
   state.furthest = Math.max(state.furthest, state.index);
   renderChoices(card);
   updateNavPair();
