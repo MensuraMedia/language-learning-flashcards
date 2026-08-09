@@ -369,6 +369,41 @@ PLANNED_DECKS: tuple[dict[str, str], ...] = (
         "blocker": "Conjugation is a generator, not a card list; needs its own exercise type",
     },
     {
+        "name": "Alternate phrases",
+        "jp": "言い換え",
+        "detail": (
+            "Many ways to say one thing — thanks as ありがとう / どうも / "
+            "感謝します, sorry as すみません / ごめん / 失礼します, and the same "
+            "again for interest, agreement and liking something"
+        ),
+        "status": "experimental",
+        "blocker": (
+            "Needs a card type that grades a *set* of right answers, not one. "
+            "The engine currently has exactly one correct option per card"
+        ),
+    },
+    {
+        "name": "Politeness registers",
+        "jp": "敬語",
+        "detail": (
+            "One meaning across casual, polite and humble — 食べる / 食べます / "
+            "いただきます. Choosing the wrong register is the mistake that gets "
+            "noticed"
+        ),
+        "status": "planned",
+        "blocker": "Depends on Alternate phrases: it is the same one-to-many problem",
+    },
+    {
+        "name": "Reactions",
+        "jp": "相槌",
+        "detail": (
+            "あいづち — へえ, なるほど, そうですね. The short responses that show "
+            "you are listening, and whose absence sounds cold"
+        ),
+        "status": "planned",
+        "blocker": "A sourced list; the reference worksheets do not cover conversation",
+    },
+    {
         "name": "Word combinations",
         "jp": "複合語",
         "detail": "Compounds and collocations — words that travel together",

@@ -3379,3 +3379,59 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
   line-height: 1.3;
   white-space: normal;
 }
+
+/* ── the catalogue: headings sized for a page, not a rail ────────────────────
+   `.lbl` is 9.5px, which is right for a label sitting beside a dense shelf on
+   the dashboard. On a full page whose entire job is naming and separating
+   groups, it reads as fine print. These are titles, so they are sized and
+   spaced like titles. */
+/* The page title is a different thing from a shelf title and should not be the
+   same size as one, or the first shelf reads as a subtitle of the page. */
+.page-head { padding: 4px 4px 0; margin-bottom: 6px; }
+.page-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 650;
+  letter-spacing: -.01em;
+  color: var(--ink);
+}
+.page-sub {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+
+#decks .sec {
+  align-items: baseline;
+  gap: 14px;
+  margin: 46px 0 0;
+  padding: 0 4px;
+}
+/* A little more air before the second half of the page. */
+#decks .sec-major { margin-top: 58px; }
+
+#decks .sec .lbl {
+  font-size: 17px;
+  letter-spacing: .04em;
+  text-transform: none;
+  font-weight: 650;
+  color: var(--ink);
+}
+#decks .sec .lbl-sm {
+  font-size: 11px;
+  letter-spacing: .04em;
+  text-transform: none;
+  color: var(--ink-4);
+}
+
+/* The rail below a heading brings its own top padding; without this the gap
+   above a title and the gap below it are visibly different. */
+#decks .shelf-wrap { padding-top: 14px; }
+#decks .plan-grid { margin-top: 18px; }
+#decks .credits { margin-top: 34px; line-height: 1.7; }
+
+/* The in-development cards carry more prose than a deck face does. */
+.plan-card { padding: 15px 17px; gap: 7px; }
+.plan-name { font-size: 14px; }
+.plan-detail { font-size: 12px; }

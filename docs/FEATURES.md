@@ -251,6 +251,9 @@ work is imminent.
 | In development | Status | Blocked on |
 |---|---|---|
 | Phrases · Expressions · Adjectives | planned | A sourced list; the reference worksheets do not cover them |
+| **Alternate phrases** | experimental | Needs a card type that grades a *set* of right answers. Thanks is ありがとう *and* どうも *and* 感謝します; sorry is すみません *and* ごめん *and* 失礼します. The engine has exactly one correct option per card |
+| Politeness registers | planned | The same one-to-many problem — 食べる / 食べます / いただきます |
+| Reactions (相槌) | planned | A sourced list; the worksheets do not cover conversation |
 | Verbs | planned | Conjugation is a generator, not a card list — it needs its own exercise type |
 | Word combinations | experimental | Derivable from the seeded kanji, but the pairings need checking |
 | Counters | experimental | A closed set and safe to author; not yet written |

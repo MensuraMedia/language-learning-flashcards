@@ -426,3 +426,19 @@ suspends it when the window loses focus.
 - Fixed a `NameError` that stopped the app booting: `db.py` used `log` without a
   logger. It failed loudly at startup, which is the right way for it to fail.
 - Tests 312 → 322.
+
+## 2026-08-09T00:20:00Z — Catalogue typography, and three more planned exercises
+- `/decks` headings resized and spaced. `.lbl` is 9.5px, which suits a label
+  beside a dense shelf but reads as fine print on a page whose whole job is
+  naming groups. The page title is now its own element at 26px with a subtitle,
+  shelf titles are 17px, and the gap above a title no longer differs visibly
+  from the gap below it.
+- **Alternate phrases** added to In development — thanks as ありがとう / どうも /
+  感謝します, sorry as すみません / ごめん / 失礼します, and the same for interest,
+  agreement and liking something. Marked experimental with a real blocker: it
+  needs a card type that grades a **set** of correct answers, and the engine has
+  exactly one correct option per card.
+- **Politeness registers** (食べる / 食べます / いただきます) and **Reactions**
+  (相槌 — へえ, なるほど, そうですね) added alongside it; the first shares the
+  one-to-many blocker, the second needs sourcing.
+- In development is now 11 entries: 5 experimental, 6 planned.
