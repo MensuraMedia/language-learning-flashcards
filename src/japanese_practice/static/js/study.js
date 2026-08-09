@@ -152,10 +152,12 @@ function render() {
   // which needs the most room of the three — on the card as well as the options.
   const isKanji = card.script === "kanji";
   const isWord = card.script === "vocab";
-  $("choices").classList.toggle("wide", isKanji || isWord);
-  $("choices").classList.toggle("wider", isWord);
+  const isPhrase = card.script === "phrase";
+  $("choices").classList.toggle("wide", isKanji || isWord || isPhrase);
+  $("choices").classList.toggle("wider", isWord || isPhrase);
   document.body.classList.toggle("theme-kanji", isKanji);
-  document.body.classList.toggle("mode-word", isWord);
+  document.body.classList.toggle("mode-word", isWord || isPhrase);
+  document.body.classList.toggle("mode-phrase", isPhrase);
 
   state.furthest = Math.max(state.furthest, state.index);
   renderChoices(card);

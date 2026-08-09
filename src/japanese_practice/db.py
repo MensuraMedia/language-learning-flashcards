@@ -79,9 +79,24 @@ DIFFICULTY_KEYS: tuple[str, ...] = (
     "vocab:time",
     "vocab:demonstratives",
     "vocab:particles",
+    # Phrase sets. Each is built on one pattern, so learning the pattern
+    # delivers the whole set — see content/phrases.py.
+    "phrase:likes",
+    "phrase:konbini",
+    "phrase:lets",
+    "phrase:requests",
+    "phrase:basics",
 )
 
 #: Difficulty-key group -> the `characters.category` it selects.
+PHRASE_CATEGORIES: dict[str, str] = {
+    "likes": "Saying you like it",
+    "konbini": "At the convenience store",
+    "lets": "Let's — ましょう",
+    "requests": "Please — てください",
+    "basics": "Getting by",
+}
+
 VOCAB_CATEGORIES: dict[str, str] = {
     "days": "Days of the week",
     "months": "Months",
@@ -92,6 +107,11 @@ VOCAB_CATEGORIES: dict[str, str] = {
 }
 
 _GROUP_LABELS: dict[str, str] = {
+    "likes": "Saying you like it",
+    "konbini": "At the convenience store",
+    "lets": "Let's — ましょう",
+    "requests": "Please — てください",
+    "basics": "Getting by",
     "days": "Days of the week",
     "months": "Months",
     "numbers": "Numbers",
@@ -112,6 +132,7 @@ _SCRIPT_LABELS: dict[str, str] = {
     "katakana": "Katakana",
     "kanji": "Kanji",
     "vocab": "Words",
+    "phrase": "Phrases",
 }
 
 _CHARACTER_COLUMNS = (
@@ -347,9 +368,17 @@ def parse_difficulty(difficulty: str) -> tuple[str, str]:
 
 
 def difficulty_label(difficulty: str) -> str:
-    """A human-readable name for a difficulty key, e.g. ``Hiragana · Gojuon``."""
+    """A human-readable name for a difficulty key, e.g. ``Hiragana · Gojuon``.
+
+    Phrase sets drop the script prefix. "Phrases · At the convenience store" is
+    both redundant on a shelf already titled Phrase Sets and long enough to wrap
+    the deck face onto two lines; the set name alone says what the deck is.
+    """
     script, group = parse_difficulty(difficulty)
-    return f"{_SCRIPT_LABELS[script]} · {_GROUP_LABELS.get(group, group)}"
+    name = _GROUP_LABELS.get(group, group)
+    if script == "phrase":
+        return name
+    return f"{_SCRIPT_LABELS[script]} · {name}"
 
 
 def _difficulty_clause(difficulty: str) -> tuple[str, list[Any], int | None]:
@@ -359,6 +388,8 @@ def _difficulty_clause(difficulty: str) -> tuple[str, list[Any], int | None]:
         return "script = ?", [script], None
     if script == "vocab":
         return "script = ? AND category = ?", [script, VOCAB_CATEGORIES[group]], None
+    if script == "phrase":
+        return "script = ? AND category = ?", [script, PHRASE_CATEGORIES[group]], None
     if script == "kanji":
         if group in KANJI_VOLUME_TIERS:
             # Ranked by teaching order, which is not the id order — the levels

@@ -202,7 +202,7 @@ CHOICE_COUNT = 3
 
 #: Scripts graded on meaning rather than sound. A kana card asks "what does this
 #: sound like"; a kanji or a word asks "what does this mean".
-MEANING_SCRIPTS = ("kanji", "vocab")
+MEANING_SCRIPTS = ("kanji", "vocab", "phrase")
 
 
 def answer_text(character: Character) -> str:
@@ -265,7 +265,7 @@ async def build_choices(db: Database, character: Character, count: int = CHOICE_
     # tests nothing. Same-group options force actual recall.
     # Distractors come from the same set: a "Monday" card offering "March"
     # can be solved by category rather than by knowing the word.
-    if character.script == "vocab":
+    if character.script in ("vocab", "phrase"):
         peer_column, peer_value = "category", character.category
     elif character.script == "kanji":
         peer_column, peer_value = "jlpt_level", character.jlpt_level

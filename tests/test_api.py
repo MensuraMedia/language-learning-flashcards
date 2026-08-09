@@ -719,7 +719,7 @@ async def test_a_word_card_is_graded_on_meaning_against_its_own_set(client):
 
 async def test_catalogue_lists_what_works_and_what_does_not(client):
     payload = await (await client.get("/api/catalogue")).get_json()
-    assert payload["counts"]["available"] == 23
+    assert payload["counts"]["available"] == 28
     assert len(payload["planned"]) == 11
     names = {item["name"] for item in payload["planned"]}
     assert "Alternate phrases" in names
@@ -736,3 +736,53 @@ async def test_decks_view_renders(client):
     body = await response.get_data(as_text=True)
     assert 'class="view on"' in body
     assert "decks.js" in body
+
+
+# -- phrase sets -----------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "key,count",
+    [
+        ("phrase:likes", 10),
+        ("phrase:konbini", 10),
+        ("phrase:lets", 10),
+        ("phrase:requests", 8),
+        ("phrase:basics", 10),
+    ],
+)
+async def test_phrase_sets_are_offered_with_their_counts(client, key, count):
+    payload = await (await client.get("/api/segments")).get_json()
+    segments = {s["key"]: s["count"] for s in payload["segments"]}
+    assert segments[key] == count
+
+
+async def test_a_phrase_card_is_graded_on_meaning_within_its_own_set(client):
+    """Offering "let's eat" against a convenience-store card gives it away."""
+    created = await (
+        await client.post("/api/session", json={"difficulty": "phrase:lets", "limit": 6})
+    ).get_json()
+    for card in created["cards"]:
+        assert card["answer"].startswith("let's"), card["answer"]
+        assert all(c.startswith("let's") for c in card["choices"]), card["choices"]
+        assert card["answer"] in card["choices"]
+
+
+async def test_phrase_deck_titles_drop_the_redundant_prefix(client):
+    """The shelf is already called Phrase Sets; the deck says what the set is."""
+    payload = await (await client.get("/api/segments")).get_json()
+    labels = {s["key"]: s["label"] for s in payload["segments"]}
+    assert labels["phrase:konbini"] == "At the convenience store"
+    assert labels["phrase:lets"] == "Let's — ましょう"
+    # Other scripts keep theirs, because there the prefix is the distinction.
+    assert labels["katakana:gojuon"] == "Katakana · Gojuon"
+
+
+async def test_every_phrase_carries_its_reading(client):
+    """A phrase without a reading cannot be said, which is the point of it."""
+    created = await (
+        await client.post("/api/session", json={"difficulty": "phrase:konbini", "limit": 10})
+    ).get_json()
+    for card in created["cards"]:
+        assert card["romaji"], f"{card['glyph']} has no reading"
+        assert card["script"] == "phrase"

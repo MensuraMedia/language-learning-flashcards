@@ -348,11 +348,18 @@ async def heatmap() -> Any:
 #: Every one of these is a roadmap item with acceptance criteria in ROADMAP.md.
 PLANNED_DECKS: tuple[dict[str, str], ...] = (
     {
-        "name": "Phrases",
+        "name": "More phrase sets",
         "jp": "フレーズ",
-        "detail": "Greetings, apologies, requests — whole utterances rather than words",
+        "detail": (
+            "Five pattern sets ship today. Next: at the station, ordering food, "
+            "small talk, and the casual counterparts of 〜ましょう and 〜てください"
+        ),
         "status": "planned",
-        "blocker": "Needs a sourced phrase list; none of the reference worksheets cover it",
+        "blocker": (
+            "Each new set has to be either rule-governed or a small stock every "
+            "course teaches the same way. Open phrase vocabulary stays out until "
+            "it can be sourced rather than recalled"
+        ),
     },
     {
         "name": "Expressions",

@@ -592,6 +592,41 @@ DECK_META: dict[str, dict[str, str]] = {
         "challenge": "mixed",
         "scoring": "srs",
     },
+    "phrase:likes": {
+        "shelf": "phrases",
+        "rung": "I LIKE IT",
+        "jp": "好み",
+        "challenge": "recognition",
+        "scoring": "accuracy",
+    },
+    "phrase:konbini": {
+        "shelf": "phrases",
+        "rung": "CONVENIENCE STORE",
+        "jp": "コンビニ",
+        "challenge": "recognition",
+        "scoring": "accuracy",
+    },
+    "phrase:lets": {
+        "shelf": "phrases",
+        "rung": "LET'S —",
+        "jp": "ましょう",
+        "challenge": "recall",
+        "scoring": "streak",
+    },
+    "phrase:requests": {
+        "shelf": "phrases",
+        "rung": "PLEASE —",
+        "jp": "てください",
+        "challenge": "recall",
+        "scoring": "streak",
+    },
+    "phrase:basics": {
+        "shelf": "phrases",
+        "rung": "GETTING BY",
+        "jp": "基本",
+        "challenge": "mixed",
+        "scoring": "srs",
+    },
     "kanji:top500": {
         "shelf": "vol",
         "rung": "TOP 500",
@@ -672,11 +707,12 @@ def _segment_clause(key: str) -> str:
     """Inline WHERE fragment for a difficulty key. Keys are a closed set, so
     this cannot carry user input into SQL."""
     script, group = key.split(":", 1)
-    if script == "vocab":
-        from .db import VOCAB_CATEGORIES
+    if script in ("vocab", "phrase"):
+        from .db import PHRASE_CATEGORIES, VOCAB_CATEGORIES
 
-        category = VOCAB_CATEGORIES[group].replace("'", "''")
-        return f"script = 'vocab' AND category = '{category}'"
+        table = VOCAB_CATEGORIES if script == "vocab" else PHRASE_CATEGORIES
+        category = table[group].replace("'", "''")
+        return f"script = '{script}' AND category = '{category}'"
     if group == "all":
         return f"script = '{script}'"
     if script == "kanji" and group.startswith("N"):

@@ -442,3 +442,24 @@ suspends it when the window loses focus.
   (相槌 — へえ, なるほど, そうですね) added alongside it; the first shares the
   one-to-many blocker, the second needs sourcing.
 - In development is now 11 entries: 5 experimental, 6 planned.
+
+## 2026-08-09T01:10:00Z — Phrase sets built on shared patterns
+- **Five phrase decks, 48 cards**, on a new Phrase Sets shelf: Saying you like
+  it (10), At the convenience store (10), Let's — ましょう (10), Please —
+  てください (8), Getting by (10).
+- Each set is chosen because **one structure generates all of it**. 〜ましょう
+  and 〜てください are mechanical rules, so learning the shape delivers the whole
+  set rather than ten unrelated sentences. The convenience-store set is ordered
+  as the transaction actually happens.
+- Politeness is kept uniform inside a set; mixing 行こう with 食べましょう would
+  teach register as noise rather than as a choice.
+- **Corrected one supplied example.** "I'm a fan — tsugi no wa" was wrong: 次のは
+  means "the next one". Shipped as ファンです.
+- Phrase deck titles drop the script prefix — "At the convenience store" rather
+  than "Phrases · At the convenience store", which was redundant under a shelf
+  called Phrase Sets and wrapped the card onto two lines.
+- Card and option widths step again for phrases: ゆっくり話してください needs more
+  room than a word, which needed more than a character.
+- Catalogue's "Phrases" entry replaced with "More phrase sets", stating what
+  ships now and what the bar is for adding another.
+- Tests 322 → 330.

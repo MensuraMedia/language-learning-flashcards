@@ -23,11 +23,13 @@ const SHELVES = [
   { id: "jlpt", title: "Kanji — proficiency", note: "JLPT N5 → N1" },
   { id: "vol", title: "Kanji — volume", note: "Top 200 → Top 500 by teaching frequency" },
   { id: "words", title: "Words & grammar", note: "whole words rather than single characters" },
+  { id: "phrases", title: "Phrase sets", note: "one pattern, many phrases — learn the shape and the set follows" },
 ];
 
 function deckNode(deck) {
   const pct = deck.count ? Math.round((deck.mastered / deck.count) * 100) : 0;
-  const node = el("button", `deck${deck.shelf === "words" ? " deck-wide" : ""}`);
+  const wide = deck.shelf === "words" ? " deck-wide" : deck.shelf === "phrases" ? " deck-phrase" : "";
+  const node = el("button", `deck${wide}`);
   node.type = "button";
   node.setAttribute(
     "aria-label",

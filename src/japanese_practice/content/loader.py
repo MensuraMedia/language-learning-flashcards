@@ -21,6 +21,7 @@ from .kanji_n3 import KANJI_N3
 from .kanji_n4 import KANJI_N4
 from .kanji_n5 import KANJI_N5
 from .katakana import KATAKANA
+from .phrases import PHRASES
 from .vocabulary import VOCABULARY
 
 __all__ = ["ALL_SEEDS", "apply_frequency_ranks", "seed_content"]
@@ -37,6 +38,7 @@ ALL_SEEDS: tuple[CharacterSeed, ...] = (
     *KANJI_N1,
     *VOCABULARY,
     *EXPRESSIONS,
+    *PHRASES,
 )
 
 _UPSERT = """

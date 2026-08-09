@@ -46,7 +46,7 @@ function node(name, attrs) {
 
 function deckNode(deck) {
   const pct = deck.count ? Math.round((deck.mastered / deck.count) * 100) : 0;
-  const node = el("button", "deck");
+  const node = el("button", `deck${deck.shelf === "phrases" ? " deck-phrase" : ""}`);
   node.type = "button";
   node.setAttribute(
     "aria-label",
@@ -108,7 +108,7 @@ function moreNode(shelf) {
 }
 
 function renderShelves(decks) {
-  for (const shelf of ["hiragana", "katakana", "jlpt", "vol", "words"]) {
+  for (const shelf of ["hiragana", "katakana", "jlpt", "vol", "words", "phrases"]) {
     const host = $(`shelf-${shelf}`);
     if (!host) continue;
     host.innerHTML = "";

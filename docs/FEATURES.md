@@ -18,8 +18,8 @@ recalled. Where something is unverified or known-weak it says so.
 
 | Dimension | Count | Notes |
 |---|---:|---|
-| Cards seeded | **1,565** | 104 hiragana · 104 katakana · 1,251 kanji · 106 words |
-| Study decks | **23** | 5 hiragana · 5 katakana · 5 JLPT · 2 volume · 6 word sets |
+| Cards seeded | **1,613** | 104 hiragana · 104 katakana · 1,251 kanji · 106 words · 48 phrases |
+| Study decks | **28** | 5 hiragana · 5 katakana · 5 JLPT · 2 volume · 6 word sets · 5 phrase sets |
 | Memory boards | **9** | 3 modes × 3 scripts |
 | Confusion pairs | **84** | 21 hiragana · 24 katakana · 39 kanji |
 | Scoring schemes | **4** | accuracy · speed · streak · SRS |
@@ -426,6 +426,35 @@ would produce confident, plausible, unverifiable data.
 
 **Distractors come from the same set.** Offering "March" against a 月曜日 card
 can be solved by category rather than by knowing the word.
+
+### Phrase sets
+
+Each set is chosen because **one structure generates all of it**. Learn that
+〜ましょう turns a verb into "let's" and 行きましょう, 食べましょう and 飲みましょう
+arrive together — a different kind of learning from memorising ten unrelated
+sentences, and what makes these worth cards.
+
+| Set | Pattern | Reach |
+|---|---|---|
+| **Saying you like it** | Adjectives and nouns that stand alone — no grammar attached | Reacting well is most of early conversation |
+| **At the convenience store** | A complete transaction, ordered as it happens | Ask for a bag, say how you are paying, ask the price — a real errand, start to finish |
+| **Let's — ましょう** | Polite stem + ましょう. 行きます → 行きましょう | One rule turns every verb you know into an invitation |
+| **Please — てください** | te-form + ください. 待って → 待ってください | The same rule turns any verb into a polite request |
+| **Getting by** | A stock, not a pattern | The highest-reach set here: these work in any situation |
+
+**Politeness is consistent inside a set.** Mixing 行こう with 食べましょう would
+teach register as noise rather than as a choice, so the volitional set is
+uniformly polite and the casual forms belong to a future set of their own.
+
+**On accuracy.** These are authored, not extracted — the reference worksheets
+cover vocabulary, not conversation. That is defensible only because each set is
+either rule-governed (〜ましょう and 〜てください are mechanical) or a small stock
+every beginner course teaches identically. Open-ended phrase vocabulary is
+deliberately still absent, and stays on the catalogue as unbuilt.
+
+Phrase deck titles drop the script prefix: the shelf is already called Phrase
+Sets, so "At the convenience store" says what the deck is without wrapping the
+card onto two lines.
 
 ### One glyph, two meanings
 

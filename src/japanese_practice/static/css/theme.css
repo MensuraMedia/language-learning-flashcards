@@ -3435,3 +3435,23 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
 .plan-card { padding: 15px 17px; gap: 7px; }
 .plan-name { font-size: 14px; }
 .plan-detail { font-size: 12px; }
+
+/* ── phrase decks and phrase cards ────────────────────────────────────────
+   ゆっくり話してください is nine characters and "please speak slowly" is three
+   words; both need markedly more room than a word, which needed more than a
+   character. Each step down the scale gets wider and sets its text smaller. */
+.deck-phrase { width: clamp(230px, 23vw, 300px); }
+.shelf-scroll .deck-phrase .deck-glyphs span,
+.shelf-wrap .deck-phrase .deck-glyphs span { font-size: clamp(15px, 1.7vw, 21px); }
+.deck-phrase .deck-glyphs { gap: 4px; flex-wrap: wrap; line-height: 1.35; }
+
+.mode-phrase .deck3d { width: clamp(340px, 40vw, 520px); }
+.mode-phrase #glyph,
+.mode-phrase #back-glyph {
+  font-size: clamp(22px, 3.1vw, 40px);
+  line-height: 1.4;
+}
+.mode-phrase #back-sound { font-size: clamp(13px, 1.4vw, 18px); }
+.mode-phrase .choices.wider { width: clamp(210px, 21vw, 280px); }
+.mode-phrase .choices.wider .choice { min-height: 84px; }
+.mode-phrase .choices.wider .choice .txt { font-size: 13px; }
