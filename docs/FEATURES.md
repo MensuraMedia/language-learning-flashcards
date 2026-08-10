@@ -72,6 +72,10 @@ and a phrase card.
 
 ### Card size follows content
 
+Full standard, thresholds and the checklist for adding a set:
+**[CARD-DIMENSIONS.md](CARD-DIMENSIONS.md)**.
+
+
 The face is sized by **what is on it**, not by which script it belongs to.
 
 | Bucket | Face | Used by |

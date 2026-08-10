@@ -543,3 +543,23 @@ suspends it when the window loses focus.
 - `RESTORE.md` and HANDOFF §10 updated; older sets now list what each predates,
   so nobody restores `20260807-0540` expecting study history and finds an empty
   directory.
+
+## 2026-08-10T08:00:00Z — Recap tiles sized to the session, and a sizing standard
+- **Fixed: recap tiles were squares built for a single character.** 高い wrapped
+  to two lines and "expensive / tall" to two more, in the one place a learner
+  reads every card at once. Tiles are now sized from the widest item in *that*
+  session — a grid of mixed widths reads worse than one sized for its longest
+  member — across four steps: 84px square · 122 · 158 · 206.
+- **The answer counts toward the width**, divided by 2.4 to bring Latin
+  characters onto roughly the same scale as Japanese. Without that term the
+  tiles fit 高い but not its meaning, which is what the defect looked like.
+- **New `docs/CARD-DIMENSIONS.md`** — the sizing standard for every surface that
+  shows Japanese: the rule, the thresholds for the study card, its options, the
+  recap tiles, deck faces and game tiles, the alignment rule, and a checklist to
+  run before shipping a new content set. Written because the same mistake —
+  sizing by category rather than by content — has now been made four times, and
+  each time it looked fine on the content that existed when it was written.
+- The document records **measured headroom**: the longest prompt today is
+  ゆっくり話してください at 11 glyphs, and one more bucket would be needed at
+  roughly 15.
+- Every threshold in the document was checked against the code before commit.

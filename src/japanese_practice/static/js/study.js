@@ -408,6 +408,18 @@ function renderRecapCards() {
     return;
   }
 
+  // The tiles are sized for the widest thing in *this* session, not for a single
+  // character. 高い wrapped to two lines and "beautiful / clean" to two more,
+  // inside a square built for あ — the same fault the study card had, in the one
+  // place a learner reads every card at once.
+  const widest = seen.reduce((n, i) => {
+    const o = state.outcomes.get(i);
+    return Math.max(n, [...(o.glyph || "")].length, Math.ceil((o.answer || "").length / 2.4));
+  }, 1);
+  host.classList.toggle("is-wide", widest > 2 && widest <= 5);
+  host.classList.toggle("is-wider", widest > 5 && widest <= 8);
+  host.classList.toggle("is-widest", widest > 8);
+
   seen.forEach((index) => {
     const o = state.outcomes.get(index);
     const tile = el("div", "recap-card-tile" + (o.correct ? "" : " is-wrong"));

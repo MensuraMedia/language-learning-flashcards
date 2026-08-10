@@ -427,6 +427,7 @@ Full register with QA criteria: [ROADMAP.md](ROADMAP.md).
 | `docs/BUILD-SPEC.md` | Binding implementation contract — paths, signatures, schema |
 | `docs/AUDIO.md` | **Pronunciation**: resolution chain, ElevenLabs setup, voice-selection criteria |
 | `docs/INTERFACE-SOUND.md` | **Interface sound**: the correct-answer cue set, Web Audio graph, and server-side preferences |
+| `docs/CARD-DIMENSIONS.md` | **Sizing standard** for every surface showing Japanese — read before adding a content set |
 | `docs/FEATURES.md` | Complete feature and function reference |
 | `docs/STACK-VERIFICATION.md` | Stack, modularity and universality audit |
 | `LICENSE` | **Personal use only** — commercial use, modification and redistribution need written consent; §5 requires attribution for any derived language-learning app |
