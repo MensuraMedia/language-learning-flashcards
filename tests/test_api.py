@@ -880,3 +880,28 @@ async def test_a_studied_deck_still_deals_a_full_session(client):
     for extra in ({}, {"shuffle": True}):
         again = await (await client.post("/api/session", json={**body, **extra})).get_json()
         assert len(again["cards"]) == 8, f"dealt {len(again['cards'])} of 8 with {extra}"
+
+
+async def test_a_weak_character_drill_also_reshuffles(client):
+    """The drill path returns early, so it has to honour shuffle itself.
+
+    Practice again on a drill of the characters you keep missing is the case it
+    matters most for, and it was the one path that ignored the flag.
+    """
+    seed = await (
+        await client.post("/api/session", json={"difficulty": "hiragana:gojuon", "limit": 10})
+    ).get_json()
+    ids = [c["id"] for c in seed["cards"]]
+
+    plain = await (await client.post("/api/session", json={"character_ids": ids})).get_json()
+    assert [c["id"] for c in plain["cards"]] == ids, "without shuffle the order is as given"
+
+    orders = set()
+    for _ in range(6):
+        again = await (
+            await client.post("/api/session", json={"character_ids": ids, "shuffle": True})
+        ).get_json()
+        got = [c["id"] for c in again["cards"]]
+        assert sorted(got) == sorted(ids), "a repeat changed which characters are drilled"
+        orders.add(tuple(got))
+    assert len(orders) > 1, "every shuffled drill dealt the same order"

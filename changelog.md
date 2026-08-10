@@ -600,3 +600,24 @@ suspends it when the window loses focus.
 - Regression test: record an attempt on every card, then assert a repeat still
   deals the full 8, with and without `shuffle`.
 - Verified in the running app: four repeats, 8 cards each, four distinct orders.
+
+## 2026-08-10T11:00:00Z — Universal sizing, drill reshuffle, and a volume control
+Answering "is this applied universally?" honestly turned up two places it was not.
+
+- **Answer options were still sized by script.** Every kanji deck got the same
+  column whether its answers read `sun` or `world/generation`, and every phrase
+  deck the same whether they read `let's go` or `please speak slowly`. They now
+  follow the card's rule: one width per session, computed from the longest
+  answer — 96px for `kya`, 262px for `I'm fine, thanks / no need`.
+- **Weak-character drills ignored `shuffle`.** The drill path returns early from
+  `build_deck`, before the shuffle, so Practice again on a drill dealt the same
+  order every time — the case it matters most for. Fixed, with a test.
+- **New volume control**, in two places sharing one `jp.volume` preference:
+  Settings → Audio (global, discoverable) and beside the pace slider in the
+  study view (in context, where you actually hear something). It governs both
+  the character pronunciation and the correct-answer cue, which is what the
+  preference already did — there was simply no visible control for it, only the
+  arrow keys inside a session.
+- Dragging off zero un-mutes: leaving `jp.muted` set would move the slider and
+  produce no sound, which reads as broken.
+- `docs/CARD-DIMENSIONS.md` §3 rewritten for the computed option rule.

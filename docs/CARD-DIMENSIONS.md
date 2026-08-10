@@ -74,16 +74,30 @@ Prompt type is a **fixed 40px**, not a clamp: the width was chosen so it fits.
 
 ## 3. Answer options
 
-`.choices`, via `wide` / `wider` classes.
+`.choices`, sized once per session by `sizeOptionsForSession()` — the same rule
+as the card, for the same reason.
 
-| Class | Column width | Tile | Applies to |
-|---|---|---|---|
-| *(none)* | clamp 84–104px | square | kana — the answer is `kya` |
-| `wide` | clamp 150–196px | ≥ 116px, not square | kanji — the answer is `world/generation`, plus a reading line |
-| `wider` | clamp 190–250px | ≥ 74px (84 for phrases) | words and phrases — `please speak slowly` |
+```js
+const OPTION_CHAR_PX = 8.4;        // a Latin character at the option's type size
+const OPTION_SIDE_PAD = 44;
+const width = min(300, max(96, ceil(longestAnswer * OPTION_CHAR_PX) + OPTION_SIDE_PAD));
+```
 
-Kanji options carry a second register: the reading of the character the option
-stands for. That is display only — grading still compares the option text.
+| Longest answer in the session | Column | Example |
+|---|---:|---|
+| `kya` · `sun` | 96px, square tiles | any kana deck |
+| `Wednesday` | 120px | words |
+| `world/generation` | 178px | kanji |
+| `please speak slowly` | 204px | phrases |
+| `I'm fine, thanks / no need` | 262px | the convenience-store set |
+
+Sizing these by *script* meant every kanji deck got the same column whether its
+answers read `sun` or `world/generation`, and every phrase deck the same whether
+they read `let's go` or `please speak slowly`.
+
+Kanji options carry a second register — the reading of the character the option
+stands for — so they get a taller minimum. That is display only; grading still
+compares the option text.
 
 ---
 

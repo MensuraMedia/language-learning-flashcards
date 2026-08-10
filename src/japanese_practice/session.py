@@ -56,6 +56,11 @@ async def build_deck(
             character = await get_character(db, cid)
             if character is not None:
                 cards.append(character)
+        # The drill path returns early, so it has to honour `shuffle` itself —
+        # otherwise "Practice again" on a weak-character drill deals the same
+        # order every time, which is the case it matters most for.
+        if shuffle:
+            random.shuffle(cards)
         return cards
 
     pool = await characters_for_difficulty(db, difficulty)

@@ -180,6 +180,18 @@
             <span class="switch-knob"></span>
           </button>
         </div>
+        <div class="set-row" style="margin-top:14px">
+          <label class="set-label" for="vol-range">
+            <span class="set-label-t">Volume</span>
+            <span class="set-label-d">Applies to both the character pronunciation
+              and the correct-answer cue.</span>
+          </label>
+          <input class="vol-range" id="vol-range" type="range"
+                 min="0" max="100" step="5" value="100"
+                 aria-label="Volume">
+          <span class="vol-read" id="vol-read">100%</span>
+        </div>
+
         <div class="cue-pick" id="cue-pick" role="radiogroup"
              aria-label="Correct-answer sound"></div>
         <div class="set-actions" style="margin-top:10px">

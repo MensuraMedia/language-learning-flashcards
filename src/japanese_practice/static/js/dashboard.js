@@ -1,7 +1,7 @@
 // Dashboard: renders the full analytics surface from /api/summary.
 // Charts are inline SVG built here — no library, no external request.
 
-import { prefsReady } from "./prefs.js";
+import { prefsReady, readPref, writePref } from "./prefs.js";
 import {
   CUES,
   currentCue,
@@ -731,6 +731,37 @@ function initCuePicker() {
   });
 }
 
+// One control for both. The cue and the pronunciation already read jp.volume —
+// until now it could only be changed with the arrow keys inside the study view,
+// which is not where anyone looks for a volume control.
+function initVolume() {
+  const range = $("vol-range");
+  const read = $("vol-read");
+  if (!range) return;
+
+  const paint = () => {
+    const stored = parseFloat(readPref("jp.volume") ?? "1");
+    const v = Number.isFinite(stored) ? Math.min(1, Math.max(0, stored)) : 1;
+    range.value = String(Math.round(v * 100));
+    if (read) read.textContent = `${Math.round(v * 100)}%`;
+  };
+  paint();
+  prefsReady.then(paint);
+
+  range.addEventListener("input", () => {
+    const v = Number(range.value) / 100;
+    writePref("jp.volume", String(v));
+    // Moving the slider off zero is an unmute: leaving jp.muted set would make
+    // the control look broken.
+    if (v > 0) writePref("jp.muted", "0");
+    if (read) read.textContent = `${range.value}%`;
+  });
+  // Preview on release rather than on every step of a drag.
+  range.addEventListener("change", () => {
+    if (Number(range.value) > 0) playCorrect();
+  });
+}
+
 function initSoundToggle() {
   const toggle = $("snd-toggle");
   if (!toggle) return;
@@ -746,6 +777,7 @@ function initSoundToggle() {
     if (on) playCorrect();
   });
 
+  initVolume();
   initCuePicker();
 
   // A cue that cannot be heard should be able to say why, rather than leaving

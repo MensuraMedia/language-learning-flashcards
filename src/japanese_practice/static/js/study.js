@@ -470,6 +470,16 @@ function effectiveVolume() {
   return state.muted ? 0 : state.volume;
 }
 
+// The inline slider mirrors state; the transient bar stays for the arrow keys,
+// which give no other feedback.
+function paintVolumeSlider() {
+  const range = $("volume-range");
+  const name = $("volume-name");
+  const pct = state.muted ? 0 : Math.round(state.volume * 100);
+  if (range) range.value = String(pct);
+  if (name) name.textContent = state.muted ? "muted" : `${pct}%`;
+}
+
 function showVolume() {
   const level = Math.round(state.volume * 100);
   $("volume-fill").style.width = `${state.muted ? 0 : level}%`;
@@ -488,6 +498,7 @@ function changeVolume(delta) {
   storageSet(VOLUME_KEY, String(state.volume));
   storageSet(MUTED_KEY, state.muted ? "1" : "0");
   if (state.audio) state.audio.volume = effectiveVolume();
+  paintVolumeSlider();
   showVolume();
 }
 
@@ -507,7 +518,9 @@ function toggleVoice() {
 function toggleMute() {
   state.muted = !state.muted;
   storageSet(MUTED_KEY, state.muted ? "1" : "0");
+  paintVolumeSlider();
   if (state.audio) state.audio.volume = effectiveVolume();
+  paintVolumeSlider();
   showVolume();
 }
 
@@ -617,6 +630,27 @@ const CARD_GLYPH_PX = 46;
 const CARD_SIDE_PAD = 40;          // each side
 const CARD_MAX_PX = 700;
 
+// Options follow the card's rule: one width for the session, wide enough for the
+// longest answer it will offer. Sizing them by script instead meant every kanji
+// deck got the same column whether its answers read "sun" or "world/generation",
+// and every phrase deck the same whether they read "let's go" or "please speak
+// slowly".
+const OPTION_CHAR_PX = 8.4;        // a Latin character at the option's type size
+const OPTION_SIDE_PAD = 44;
+
+function sizeOptionsForSession() {
+  const cards = state.cards || [];
+  const longest = cards.reduce(
+    (n, c) => Math.max(n, ...(c.choices || []).map((o) => String(o).length)),
+    1
+  );
+  const width = Math.min(300, Math.max(96, Math.ceil(longest * OPTION_CHAR_PX) + OPTION_SIDE_PAD));
+  const host = $("choices");
+  if (host) host.style.setProperty("--option-w", `${width}px`);
+  // Squares suit a three-letter romaji and nothing else.
+  document.body.dataset.optionSize = longest <= 4 ? "tight" : "roomy";
+}
+
 function sizeCardsForSession() {
   const cards = state.cards || [];
   if (!cards.length) return;
@@ -629,6 +663,7 @@ function sizeCardsForSession() {
   // the content and the app's whole visual identity.
   if (longestGlyph <= 2 && !anyNote) {
     document.body.dataset.cardSize = "glyph";
+    sizeOptionsForSession();
     return;
   }
 
@@ -640,6 +675,8 @@ function sizeCardsForSession() {
 
   // Height holds prompt + reading + meaning, plus the note when the set has one.
   const height = anyNote ? 430 : 372;
+
+  sizeOptionsForSession();
 
   document.body.dataset.cardSize = "text";
   document.body.style.setProperty("--card-w", `${width}px`);
@@ -688,6 +725,20 @@ on("back", "click", goPrevious);
 on("next", "click", goNext);
 on("voice-toggle", "click", toggleVoice);
 on("pace", "input", (event) => applyPace(Number(event.target.value), { announce: false }));
+on("volume-range", "input", (event) => {
+  state.volume = Number(event.target.value) / 100;
+  // Dragging off zero is an unmute — leaving M set would make the slider look
+  // broken, since it would move and nothing would sound.
+  state.muted = state.volume === 0;
+  storageSet(VOLUME_KEY, String(state.volume));
+  storageSet(MUTED_KEY, state.muted ? "1" : "0");
+  if (state.audio) state.audio.volume = effectiveVolume();
+  paintVolumeSlider();
+});
+// Preview on release, not on every step of a drag.
+on("volume-range", "change", () => {
+  if (!state.muted) playCorrect();
+});
 $("speaker").addEventListener("click", (event) => {
   event.stopPropagation();
   playAudio();
@@ -712,6 +763,7 @@ prefsReady.then(() => {
   state.voice = readPref("jp.voice") === "male" ? "male" : "female";
   applyPace(state.pace, { announce: false });
   paintVoice();
+  paintVolumeSlider();
   primeCue();
   start();
 });
