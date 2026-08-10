@@ -56,6 +56,26 @@ one scores automatically and flips the card, so a wrong answer still teaches.
 | **Kanji reading reference** | Card backs and options carry romaji — see [Kanji cards](#kanji-cards) |
 | **Per-script accent** | Kanji surfaces use a green accent, kana amber, so the script is never in doubt |
 
+### Card size follows content
+
+The face is sized by **what is on it**, not by which script it belongs to.
+
+| Bucket | Face | Used by |
+|---|---|---:|
+| `sm` | 336 × 470 (5:7) | one or two glyphs — 1,545 cards |
+| `md` | 350 × 378 | short words, or anything carrying a note — 94 |
+| `lg` | 410 × 385 | phrases — 15 |
+| `xl` | 460 × 405 | long phrases — 4 |
+
+Each step up widens **and shortens**, because extra text runs across the face
+rather than down it. 5:7 is a playing-card portrait and it is right for a single
+glyph that fills the face; text does not fill it.
+
+Sizing by script produced the fault this replaced: 頭悪い — three characters —
+got the same 520 × 728 face as ゆっくり話してください, and sat in the middle of a
+mostly empty card. Single-glyph cards are unchanged, so the classic look of the
+kana decks is intact.
+
 ### Pace
 
 The default holds suit someone meeting a character for the first time. A learner

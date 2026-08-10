@@ -153,6 +153,18 @@ function render() {
   const isKanji = card.script === "kanji";
   const isWord = card.script === "vocab";
   const isPhrase = card.script === "phrase";
+
+  // The *card* is sized by its content, not by its script. Sizing by script gave
+  // 頭悪い — three characters — the same 520x728 face as ゆっくり話してください,
+  // and the card was then mostly empty. What the face has to hold is the prompt,
+  // its reading, the meaning and, when there is one, the note.
+  const glyphLength = [...card.glyph].length;
+  const hasNote = Boolean(card.note);
+  let cardSize = "sm";
+  if (glyphLength > 9) cardSize = "xl";
+  else if (glyphLength > 7 || (hasNote && glyphLength > 4)) cardSize = "lg";
+  else if (glyphLength > 2 || hasNote) cardSize = "md";
+  document.body.dataset.cardSize = cardSize;
   $("choices").classList.toggle("wide", isKanji || isWord || isPhrase);
   $("choices").classList.toggle("wider", isWord || isPhrase);
   document.body.classList.toggle("theme-kanji", isKanji);

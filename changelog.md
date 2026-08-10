@@ -485,3 +485,17 @@ suspends it when the window loses focus.
 - Fixed a placeholder that slipped into the describing set before it shipped.
 - Tests 330 → 341, including one asserting every card in a context set has a
   note of real length.
+
+## 2026-08-10T00:30:00Z — Card size follows content, not script
+- **Fixed: phrase cards were enormously oversized.** `.deck3d` is a 5:7
+  playing-card portrait, which is right for a single glyph that fills the face
+  and wrong for text. Combined with a script-driven width, every phrase card got
+  520 × 728 — so 頭悪い, three characters, sat in the middle of a mostly empty
+  face.
+- The card now picks one of four sizes from its **content**: the prompt's length
+  and whether it carries a note. Each step up widens and shortens, because extra
+  text runs across the face rather than down it.
+- 336 × 470 (unchanged, 1,545 single-glyph cards) · 350 × 378 (94) ·
+  410 × 385 (15) · 460 × 405 (4). Type scales with the face rather than the
+  script, so a short phrase is not set at the size a long one needs.
+- Kana and kanji cards are untouched — the classic playing-card look is intact.

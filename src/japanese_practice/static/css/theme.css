@@ -3360,7 +3360,7 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
 /* The prompt is 月曜日, not あ, and the answer is "Wednesday", not "a". The card
    widens, the glyph shrinks to fit its longer string, and the options get a
    second register for the reading. */
-.mode-word .deck3d { width: clamp(300px, 34vw, 430px); }
+
 .mode-word #glyph,
 .mode-word #back-glyph {
   font-size: clamp(30px, 4.6vw, 58px);
@@ -3445,7 +3445,7 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
 .shelf-wrap .deck-phrase .deck-glyphs span { font-size: clamp(15px, 1.7vw, 21px); }
 .deck-phrase .deck-glyphs { gap: 4px; flex-wrap: wrap; line-height: 1.35; }
 
-.mode-phrase .deck3d { width: clamp(340px, 40vw, 520px); }
+
 .mode-phrase #glyph,
 .mode-phrase #back-glyph {
   font-size: clamp(22px, 3.1vw, 40px);
@@ -3470,3 +3470,35 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
 }
 .back-note[hidden] { display: none; }
 .mode-phrase .back-note { max-width: 34ch; font-size: 12px; }
+
+/* ── card size follows content, not script ───────────────────────────────
+   5 / 7 is a playing-card portrait, and it is right for a single glyph that
+   fills the face. Text does not fill it: a three-character phrase in a 520x728
+   card leaves most of the face empty, which is what sizing by script produced.
+   Each step up widens *and* shortens, because extra text runs across rather
+   than down. The card only grows when its content actually needs the room. */
+body[data-card-size="sm"] .deck3d {          /* one or two glyphs — unchanged */
+  width: clamp(240px, 25vw, 336px);
+  aspect-ratio: 5 / 7;
+}
+body[data-card-size="md"] .deck3d {          /* a short word, or anything with a note */
+  width: clamp(250px, 26vw, 350px);
+  aspect-ratio: 1 / 1.08;
+}
+body[data-card-size="lg"] .deck3d {          /* a phrase */
+  width: clamp(290px, 30vw, 410px);
+  aspect-ratio: 1 / 0.94;
+}
+body[data-card-size="xl"] .deck3d {          /* a long phrase */
+  width: clamp(320px, 34vw, 460px);
+  aspect-ratio: 1 / 0.88;
+}
+
+/* Type scales with the face rather than the script, so a short phrase on a
+   smaller card is not set at the size a long one needs. */
+body[data-card-size="md"] #glyph,
+body[data-card-size="md"] #back-glyph { font-size: clamp(30px, 3.8vw, 46px); }
+body[data-card-size="lg"] #glyph,
+body[data-card-size="lg"] #back-glyph { font-size: clamp(24px, 3.1vw, 38px); }
+body[data-card-size="xl"] #glyph,
+body[data-card-size="xl"] #back-glyph { font-size: clamp(20px, 2.5vw, 31px); }
