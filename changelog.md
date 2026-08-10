@@ -587,3 +587,16 @@ suspends it when the window loses focus.
   break randomly, and Practice again passes `shuffle` so the whole deck is
   reordered. Verified: three repeats, three different orders, same card set.
 - `docs/CARD-DIMENSIONS.md` rewritten for the computed rule.
+
+## 2026-08-10T10:00:00Z — Every session after the first dealt half a deck
+- **Fixed while demonstrating Practice again.** `build_deck` reserved half the
+  deck for the weakest cards and the rest for ones not yet met — but once a deck
+  has been studied through, *nothing* is unseen, so the expression truncated to
+  `limit // 2`. Asking for 8 cards returned 4, on every session after the first,
+  for every deck in the app.
+- It has been there since the deck builder was written and was invisible because
+  the card counter reads `1 / 4` just as happily as `1 / 8`.
+- Now tops up from the remaining weak cards rather than shipping a short deck.
+- Regression test: record an attempt on every card, then assert a repeat still
+  deals the full 8, with and without `shuffle`.
+- Verified in the running app: four repeats, 8 cards each, four distinct orders.

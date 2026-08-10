@@ -82,7 +82,15 @@ async def build_deck(
     # that `ordered` has already copied from, so it was a no-op and every
     # session dealt あ い う え お in id order.
     random.shuffle(unseen)
-    ordered = seen[: max(1, limit // 2)] + unseen
+    # Half the deck is reserved for the weakest cards and the rest for ones not
+    # yet met. Once a deck has been studied through, though, *nothing* is unseen
+    # — so this truncated to half the requested size and every session after the
+    # first dealt 4 cards where 8 were asked for. Top up from the remaining weak
+    # cards rather than shipping a half-length deck.
+    half = max(1, limit // 2) if limit else len(seen)
+    ordered = seen[:half] + unseen
+    if limit and len(ordered) < limit:
+        ordered += seen[half:]
     if challenge == "mixed" or shuffle:
         random.shuffle(ordered)
     return ordered[:limit] if limit else ordered

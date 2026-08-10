@@ -857,3 +857,26 @@ async def test_repeating_an_exercise_deals_a_different_order(client):
     assert any(r != order for r in repeats), "every repeat dealt the same order"
     for r in repeats:
         assert sorted(r) == sorted(order), "a repeat changed which cards are in the deck"
+
+
+async def test_a_studied_deck_still_deals_a_full_session(client):
+    """Every card being seen must not halve the deck.
+
+    Half the deck is reserved for weak cards and the rest for unseen ones — but
+    after one pass nothing is unseen, so this truncated to `limit // 2` and every
+    session after the first dealt half the cards asked for.
+    """
+    body = {"difficulty": "phrase:requests", "challenge": "recall", "limit": 8}
+    first = await (await client.post("/api/session", json=body)).get_json()
+    assert len(first["cards"]) == 8
+
+    # Record an attempt on every card, so none are unseen any more.
+    for card in first["cards"]:
+        await client.post(
+            f"/api/session/{first['session_id']}/attempt",
+            json={"character_id": card["id"], "correct": False, "latency_ms": 900},
+        )
+
+    for extra in ({}, {"shuffle": True}):
+        again = await (await client.post("/api/session", json={**body, **extra})).get_json()
+        assert len(again["cards"]) == 8, f"dealt {len(again['cards'])} of 8 with {extra}"
