@@ -529,3 +529,17 @@ suspends it when the window loses focus.
 - Every figure quoted was checked against the tree before committing: 1,658
   cards, 33 decks, 106 words, 93 phrases, 45 notes, 8,635 Python lines, 2,378
   frontend lines, 36 modules, 27 endpoints, 7 cues.
+
+## 2026-08-10T07:10:00Z — Local backup retaken
+- New set `20260810-0704`: bundle 12.0 MB (44 commits), worktree 26.2 MB
+  (including git-ignored files), userdata 0.1 MB (`practice.db` 291 KB).
+- **Verified by restoring, not inspecting**: cloned to a scratch directory and
+  ran the suite from the restored tree — 341/341, clean tree, 638 audio files,
+  13 screenshots, 15 content modules.
+- `build/` added to the worktree exclusions. setuptools leaves it behind, it
+  contains nothing that is not rebuilt, and it is the same directory that once
+  shipped a deleted file into a wheel.
+- Credential scan across all three artefacts: clean.
+- `RESTORE.md` and HANDOFF §10 updated; older sets now list what each predates,
+  so nobody restores `20260807-0540` expecting study history and finds an empty
+  directory.

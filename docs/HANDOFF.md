@@ -458,25 +458,31 @@ Local backup set at `/home/user/projects/backups/japanese_practice/`, with
 
 The bundle omits ignored files; the tarball omits history. Keep both.
 
-### Current set — `20260808-0015`
+### Current set — `20260810-0704`
 
-**Verified 2026-08-08 by restoring it**, not by inspecting it: cloned the bundle
-into a scratch directory → 29 commits, clean tree, 630 audio clips, 13
-screenshots, five kanji seed modules, and **290/290 tests passed from the
-restored tree**.
+**Verified 2026-08-10 by restoring it**, not by inspecting it: cloned the bundle
+into a scratch directory → **44 commits**, clean tree, 638 audio files, 13
+screenshots, 15 content modules, and **341/341 tests passed from the restored
+tree**.
 
 | Check | Result |
 |---|---|
-| `git bundle verify` | okay · records a complete history at `ec3410e` |
-| `sha256sum -c SHA256SUMS.txt` | all 6 artefacts OK |
-| Git-ignored files present in worktree tarball | `docs/REPO-ACCESS.md` ✓ · `.claude/settings.local.json` ✓ |
-| Private/derived content excluded | `universal-instruction-set-main` 0 · `.venv` 0 · `__pycache__` 0 |
-| Credential scan across all three artefacts | clean — the live token values appear in none of them |
+| `git bundle verify` | okay · complete history at `cf01e96` |
+| `sha256sum -c SHA256SUMS.txt` | all 9 artefacts OK |
+| Git-ignored files in the worktree tarball | `docs/REPO-ACCESS.md` ✓ · `.claude/settings.local.json` ✓ |
+| Private/derived content excluded | `universal-instruction-set-main` 0 · `.venv` 0 · `__pycache__` 0 · `build/` 0 |
+| Credential scan across all three artefacts | clean |
+| Userdata carries a real database | `practice.db` 291 KB · `active-profile` |
 
-The `20260807-0540` set is kept as a rollback point only. It predates 1,144
-characters, profiles, save/load, the licence rewrite and the screenshots — and
-**its userdata tarball is 121 bytes, an empty directory**, because no study
-database existed when it was taken.
+Sizes: bundle 12.0 MB · worktree 26.2 MB · userdata 0.1 MB.
+
+`build/` joined the worktree exclusions this run. setuptools leaves it behind,
+nothing in it is not rebuilt, and it is the same directory that once shipped a
+deleted file into a wheel.
+
+The two older sets are rollback points only — `20260808-0015` predates words,
+phrases, sound and the desktop install; `20260807-0540` predates the kanji
+expansion **and its userdata tarball is an empty directory**.
 
 ### Two traps in the procedure itself
 
