@@ -1456,7 +1456,12 @@ td .jp { font-family: var(--jp); font-size: 16px; color: var(--ink); line-height
   position: relative;
   z-index: 2;
   display: flex;
-  align-items: center;
+  /* Top-aligned, not centred. The card and the options are different heights,
+     and they change independently — the card by its content, the options by how
+     long the answers are — so centring made the two tops drift apart in either
+     direction depending on which was taller. Aligning the tops is the thing that
+     stays true whatever either column does. */
+  align-items: flex-start;
   justify-content: center;
   padding: 22px 0 8px;
   perspective: 1700px;          /* perspective on the parent, per spec */
@@ -1468,6 +1473,11 @@ td .jp { font-family: var(--jp); font-size: 16px; color: var(--ink); line-height
   width: clamp(240px, 25vw, 336px);
   aspect-ratio: 5 / 7;
   transform-style: preserve-3d;
+  /* Pivot on the top edge, not the centre. Rotating about the centre pushes the
+     top edge down by an amount that scales with the card's height, so the card
+     and the options drifted apart by a different distance for every card size.
+     With the top edge as the pivot it cannot move at all. */
+  transform-origin: 50% 0%;
   transform: rotateX(7deg);
 }
 

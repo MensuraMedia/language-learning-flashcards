@@ -56,6 +56,20 @@ one scores automatically and flips the card, so a wrong answer still teaches.
 | **Kanji reading reference** | Card backs and options carry romaji — see [Kanji cards](#kanji-cards) |
 | **Per-script accent** | Kanji surfaces use a green accent, kana amber, so the script is never in doubt |
 
+### Card and options are top-aligned
+
+The top edge of the card and the top edge of the first option sit on the same
+line, at every card size.
+
+Two things had to change for that to hold. The stage was centring its two
+columns, so whichever was taller pushed the other's top out of line — and which
+one is taller varies, since the card is sized by its content and the options by
+how long the answers are. And `.deck3d` rotated about its centre, which moves
+the top edge down by an amount proportional to the card's height, so the drift
+differed for every size. The card now pivots on its **top edge**, which cannot
+move, and the stage aligns to the start. Measured at 0 px on both a kana card
+and a phrase card.
+
 ### Card size follows content
 
 The face is sized by **what is on it**, not by which script it belongs to.

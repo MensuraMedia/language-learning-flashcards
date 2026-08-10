@@ -499,3 +499,13 @@ suspends it when the window loses focus.
   410 × 385 (15) · 460 × 405 (4). Type scales with the face rather than the
   script, so a short phrase is not set at the size a long one needs.
 - Kana and kanji cards are untouched — the classic playing-card look is intact.
+
+## 2026-08-10T01:05:00Z — Card and options top-aligned
+- The stage centred its two columns, so whichever was taller pushed the other's
+  top out of line — and which is taller varies, since the card is sized by its
+  content and the options by the length of the answers. A kana card sat 23 px
+  above the options; a phrase card sat 27 px below them.
+- `.deck3d` also rotated about its centre, which moves the top edge down by an
+  amount proportional to card height, so the drift differed per size. It now
+  pivots on `transform-origin: 50% 0%` — the top edge, which cannot move.
+- Measured at **0 px** on both a kana card and a phrase card.
