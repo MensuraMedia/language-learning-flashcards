@@ -34,7 +34,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
-from . import tts_elevenlabs, tts_voicevox
+from . import audio_library, tts_elevenlabs, tts_voicevox
 from .config import Config
 from .db import SCRIPTS
 from .models import Character
@@ -340,6 +340,13 @@ async def _load_bundled(character: Character, gender: str = "female") -> tuple[b
 
     Clips live at ``static/audio/<script>/<voice>/<glyph>.<ext>`` — the layout
     mirrors how audio is selected, so a missing set is visible in a listing.
+
+    "Validated" was, for a long time, only a claim this docstring made: the
+    function checked that the file existed and returned its bytes. It shipped
+    あ.mp3 — the first character a learner meets — at peak 0.0009, and returning
+    silence is the one outcome nothing downstream can recover from, because a
+    clip that *exists* stops the fallback chain dead. A rejected clip must be
+    treated exactly like an absent one so synthesis takes over.
     """
     if character.script not in _VALID_SCRIPTS:
         return None
@@ -349,11 +356,31 @@ async def _load_bundled(character: Character, gender: str = "female") -> tuple[b
         return None
     voice = gender if gender in ("female", "male") else "female"
     directory = BUNDLED_AUDIO_DIR / character.script / voice
+    rejected = _rejected_clips()
     for suffix, mimetype in _BUNDLED_FORMATS:
-        data = await _read_bytes(directory / f"{glyph}{suffix}")
+        path = directory / f"{glyph}{suffix}"
+        if f"{character.script}/{voice}/{glyph}{suffix}" in rejected:
+            logger.debug("skipping rejected bundled clip %s", path)
+            continue
+        data = await _read_bytes(path)
         if data:
             return data, mimetype
     return None
+
+
+@lru_cache(maxsize=1)
+def _rejected_clips() -> frozenset[str]:
+    """Manifest-relative paths that failed validation, read once.
+
+    Fail-open by design: a missing or unreadable manifest yields an empty set,
+    which restores the previous behaviour rather than muting the whole library.
+    A bad manifest should not be able to take the audio down.
+    """
+    try:
+        return frozenset(entry["path"] for entry in audio_library.read_manifest()["rejected"])
+    except Exception:  # pragma: no cover - defensive; audio must never raise
+        logger.warning("could not read the clip manifest; serving clips unfiltered", exc_info=True)
+        return frozenset()
 
 
 # --------------------------------------------------------------------------

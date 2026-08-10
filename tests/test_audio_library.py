@@ -9,6 +9,7 @@ rejection reason explicitly.
 from __future__ import annotations
 
 import struct
+import subprocess
 import wave
 
 import pytest
@@ -243,6 +244,13 @@ def test_every_cue_is_audible_prompt_and_short(cue_id):
       the file, attenuated in code.
     * **prompt** — leading silence is latency between the click and the sound.
     * **short** — see ``MAX_CUE_SECONDS``.
+
+    The peak band is deliberately wide. Peak is checked here only as a sanity
+    floor and a clipping ceiling; **loudness** is the property that had to match
+    speech, and it is asserted in
+    ``test_cues_are_loudness_matched_to_each_other``. Peak-normalising these to
+    a fixed -0.4 dBFS is precisely the bug that put them +10 dB above the
+    narration, so this must not be tightened back into a peak target.
     """
     import shutil
     import struct
@@ -268,7 +276,7 @@ def test_every_cue_is_audible_prompt_and_short(cue_id):
     samples = struct.unpack(f"<{count}h", raw[: count * 2])
     peak = max(abs(s) for s in samples) / 32768
 
-    assert peak > 0.80, f"cue-{cue_id} is too quiet to hear (peak {peak:.3f})"
+    assert peak > 0.35, f"cue-{cue_id} is too quiet to hear (peak {peak:.3f})"
     assert peak <= 0.99, f"cue-{cue_id} is clipping (peak {peak:.3f})"
 
     duration = count / 44100
@@ -298,3 +306,92 @@ def test_the_cue_set_offers_real_variety():
         late = sum(abs(v) for v in data[frames // 2 :])
         signatures.add((round(frames / 44100, 2), round(late / early, 1)))
     assert len(signatures) >= 5, f"cues are too alike: {signatures}"
+
+
+def test_cues_are_loudness_matched_to_each_other():
+    """Peak-matched is not loudness-matched.
+
+    Peak-normalising left the set 1.7 dB apart in perceived level, because a
+    long-decaying bell and a short blip reach the same peak with very different
+    average energy. RMS over the audible part is the figure that matters.
+    """
+    import math
+    import shutil
+    import struct
+    import subprocess
+    from pathlib import Path
+
+    if shutil.which("ffmpeg") is None:
+        pytest.skip("ffmpeg unavailable")
+
+    root = Path(__file__).resolve().parent.parent / "src/japanese_practice/static/audio/sounds"
+    levels = {}
+    for cue_id in CUE_IDS:
+        raw = subprocess.run(
+            [
+                "ffmpeg",
+                "-v",
+                "quiet",
+                "-i",
+                str(root / f"cue-{cue_id}.wav"),
+                "-f",
+                "s16le",
+                "-ac",
+                "1",
+                "-ar",
+                "44100",
+                "-",
+            ],
+            capture_output=True,
+            check=True,
+        ).stdout
+        count = len(raw) // 2
+        samples = struct.unpack(f"<{count}h", raw[: count * 2])
+        peak = max(abs(s) for s in samples)
+        live = [s for s in samples if abs(s) > peak * 0.05]
+        levels[cue_id] = 20 * math.log10(math.sqrt(sum(s * s for s in live) / len(live)) / 32768)
+
+    spread = max(levels.values()) - min(levels.values())
+    assert spread < 1.0, f"cues differ by {spread:.1f} dB in loudness: {levels}"
+
+    # And they sit near the target the app's CUE_GAIN is calibrated against.
+    for cue_id, level in levels.items():
+        assert -15.5 < level < -12.5, f"cue-{cue_id} is {level:.1f} dB RMS, expected ~-14"
+
+
+def test_mp3_clips_are_decoded_not_merely_sniffed(tmp_path, monkeypatch):
+    """The silence gate must cover the format the library is actually in.
+
+    Every shipped clip is MP3, and the MP3 branch checked only the magic bytes
+    — so the gate this module exists to enforce had never run on a single one
+    of them. あ.mp3 shipped at peak 0.0009 and was listed as validated.
+    """
+    import shutil as _shutil
+
+    if _shutil.which("ffmpeg") is None:
+        pytest.skip("ffmpeg unavailable; MP3 measurement is skipped by design")
+
+    monkeypatch.setattr(lib, "LIBRARY_ROOT", tmp_path)
+    src = write_silence(tmp_path / "silent.wav", seconds=1.0)
+    quiet_mp3 = tmp_path / "hiragana" / "female" / "あ.mp3"
+    quiet_mp3.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        ["ffmpeg", "-v", "quiet", "-y", "-i", str(src), "-codec:a", "libmp3lame", str(quiet_mp3)],
+        check=True,
+    )
+
+    report = lib.validate_clip(quiet_mp3)
+    assert not report.ok, "a silent MP3 passed validation"
+    assert "silent" in report.reason
+
+
+def test_the_shipped_library_has_no_silent_clips():
+    """Guards the real library, not a fixture — this is where the bug lived."""
+    import shutil as _shutil
+
+    if _shutil.which("ffmpeg") is None:
+        pytest.skip("ffmpeg unavailable")
+
+    manifest = lib.read_manifest()
+    silent = [r for r in manifest["rejected"] if "silent" in r.get("reason", "")]
+    assert silent == [], f"silent clips are still shipped: {[r['path'] for r in silent]}"

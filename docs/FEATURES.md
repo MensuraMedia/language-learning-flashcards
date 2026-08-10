@@ -747,7 +747,8 @@ board pairs a match — the same event to a learner, so the same feedback.
 | **API** | Web Audio, not `HTMLAudioElement`. Decoded once into an `AudioBuffer`; each cue is a fresh `BufferSourceNode` through a `GainNode` — sub-millisecond, overlapping safely, with an explicit level |
 | **Autoplay** | The `AudioContext` is unlocked on the first pointer/key/touch event and re-resumed per cue, since the engine suspends it when the window loses focus |
 | **Timing** | Fired *before* the attempt is posted. The cue is feedback on the click; waiting on the round trip put it audibly late |
-| **Level** | Assets peak-normalised to ≈ −0.4 dBFS and attenuated in code. Measured at the speakers: −1.4 dBFS |
+| **Level** | Assets **loudness**-normalised to −14 dBFS RMS — identical across all seven — and attenuated in code by `CUE_GAIN = 0.507`. Peak-matching them instead left the cue +10.1 dB above speech, because speech has a far higher crest factor |
+| **Matched to speech** | Cue and pronunciation land within **0.2 dB** of each other (−19.9 vs −19.7 dBFS RMS at volume 1.0), so the one volume slider governs both convincingly across its whole range |
 | **Master switch** | Settings → Audio → Sound. Off silences cues *and* pronunciation everywhere. Composes with the study view's `M` mute and volume |
 | **Diagnostics** | `window.jpSound.soundStatus` reports support, context state, decode state, play count, last error and storage availability. **Test sound** in Settings reports which of those is the problem |
 

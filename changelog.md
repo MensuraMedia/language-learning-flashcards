@@ -621,3 +621,12 @@ Answering "is this applied universally?" honestly turned up two places it was no
 - Dragging off zero un-mutes: leaving `jp.muted` set would move the slider and
   produce no sound, which reads as broken.
 - `docs/CARD-DIMENSIONS.md` §3 rewritten for the computed option rule.
+| 2026-08-10T00:10:00 | Cue assets switched from peak to **loudness** normalisation (RMS over the audible part) — tools/make_cues.py; all seven now −14 dBFS RMS with 0.0 dB spread, was 1.7 dB |
+| 2026-08-10T00:12:00 | CUE_GAIN 0.9 → 0.507 in sound.js, matching the cue to the narration median. Cue-to-speech gap: +10.1 dB → −0.2 dB |
+| 2026-08-10T00:14:00 | cue-ding.wav regenerated from _source at the new target; the fixed volume=2.43 peak-matching constant dropped |
+| 2026-08-10T00:20:00 | **Defect**: validate_clip's duration and silence gates applied to WAV only; the entire shipped library is MP3, so the silence gate had never run on a single shipped clip |
+| 2026-08-10T00:22:00 | validate_clip now decodes MP3s via ffmpeg and applies the same gates; degrades to a format sniff when ffmpeg is absent, recording peak=None so unmeasured is distinguishable from measured |
+| 2026-08-10T00:25:00 | audio._load_bundled now honours the manifest's rejected list, so a bad clip falls through to synthesis instead of stopping the chain with silence. Fail-open on an unreadable manifest |
+| 2026-08-10T00:28:00 | hiragana/female/あ.mp3 was shipping at peak 0.0009 (inaudible) and listed as validated; re-rendered at peak 0.4864. Cause: ElevenLabs renders a bare vowel as near-silence ~1 in 3, unnoticed because MP3s were never measured |
+| 2026-08-10T00:31:00 | Tests: cue loudness-match assertion; MP3 silence-gate regression; a shipped-library guard. test_voicelab's MP3 stub replaced with genuine audio — its ID3+zeroes stub only passed because of the same hole. 347 passing |
+| 2026-08-10T00:34:00 | Docs updated: INTERFACE-SOUND.md §4 (peak vs loudness, crest factor), AUDIO.md (the gate that was not running), FEATURES.md, sounds/README.md |

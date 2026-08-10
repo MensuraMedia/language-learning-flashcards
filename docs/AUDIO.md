@@ -241,6 +241,35 @@ Duration is derived from the bytes actually present, not the WAV header:
 streaming writers such as espeak-ng emit a placeholder length, and trusting it
 reported durations of 48,695,681 ms.
 
+### The gate that was not running (fixed 2026-08-10)
+
+The duration and amplitude gates above applied to **WAV only**. The MP3 branch
+checked the magic bytes and stopped, with a comment noting that measuring one
+needed a decoder. Every clip in the shipped library is MP3 — so the silence
+gate, the reason this module exists, had never run on a single clip it ships.
+
+It cost exactly what it was built to prevent. `hiragana/female/あ.mp3` shipped
+at **peak 0.0009** — inaudible — listed in the manifest as validated. The first
+character of the first deck a beginner opens.
+
+Two things were wrong, and both are fixed:
+
+| | Before | Now |
+|---|---|---|
+| `validate_clip` on an MP3 | Format sniff only; `peak=None` | Decoded via ffmpeg and measured, same gates as WAV. Absent ffmpeg it degrades to the sniff and records `peak=None`, so unmeasured is never mistaken for measured |
+| `_load_bundled` in `audio.py` | Docstring said "validated"; checked only that the file existed | Consults the manifest's rejected list and skips those, so a bad clip falls through to synthesis. Fail-open: an unreadable manifest serves clips unfiltered rather than muting the library |
+
+A rejected clip must be treated as **absent**, not served: a missing clip falls
+through to VOICEVOX or ElevenLabs and the learner hears the character, whereas a
+silent clip that exists stops the fallback chain dead. Present-but-silent is
+strictly worse than missing, which is why it is the one gate that must not be
+skipped.
+
+The clip itself was re-rendered and is now peak 0.4864. The cause was not
+corruption — ElevenLabs renders a bare single vowel as near-silence perhaps one
+time in three, and unmeasured validation had no way to notice. `voicelab`
+re-renders on a failed report, so with the gate live this now self-corrects.
+
 ### Commands
 
 ```python

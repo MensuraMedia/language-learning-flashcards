@@ -64,7 +64,8 @@ Every cue meets the same four constraints, each asserted per-cue by the suite.
 | **Format** | mono 44.1 kHz 16-bit WAV | Decoded once into memory; MP3's encoder delay left ~14 ms of lag even after trimming silence out |
 | **Onset** | < 20 ms | Leading silence *is* latency between the click and the sound. The supplied MP3 had **64 ms** of it |
 | **Duration** | ≤ 380 ms | The study view advances 380 ms after a correct answer at its fastest pace. Anything longer rings over the next card |
-| **Peak** | 0.80–0.99 (≈ −0.4 dBFS) | Loud in the file, attenuated in code — see §4 |
+| **Loudness** | −14 dBFS RMS, ±0 dB across the set | Peak is not loudness. Matching RMS is what lets one volume control govern cues and speech together — see §4 |
+| **Peak** | 0.35–0.99, capped at −1 dBFS | A sanity floor and a clipping ceiling only. Deliberately *not* a target |
 
 ```bash
 python tools/make_cues.py       # regenerate all six synthesised cues
@@ -130,8 +131,52 @@ app gain:
 ```
 
 Which is inaudible over anything, and was the entire reason the cue "did not
-work". Assets are now peak-normalised to ≈ −0.4 dBFS with the app gain at 0.9.
-Measured at the speaker monitor: **−1.4 dBFS**.
+work". The fix was to normalise the assets loud and attenuate in code.
+
+### Peak is not loudness
+
+Normalising them loud was right; normalising them to a **peak** was not. Every
+cue went to −0.4 dBFS peak, which sounds like it should match a pronunciation
+clip at −8.3 dBFS peak reasonably closely. It did not — the cue was **+10.1 dB
+louder to the ear**, and one volume control governing both felt broken, because
+turning it down to suit the cue made the speech inaudible.
+
+The reason is crest factor. Speech is mostly quiet: consonants, gaps and decays
+sit far below the one vowel peak that sets the file's maximum. A short bright
+tone spends nearly all of its length near its own peak. Two files with identical
+peaks therefore carry very different *average* energy, and average energy is
+what the ear integrates.
+
+| | Peak | RMS over the audible part |
+|---|---:|---:|
+| Cue, peak-normalised | −0.4 dBFS | −11.6 dBFS |
+| Pronunciation clip | −8.3 dBFS | −19.7 dBFS |
+
+So the cues are now **loudness**-normalised: RMS measured over the audible part
+of the file — samples above 5% of peak, which excludes the long decay tails that
+would otherwise make a ringing bell read as quieter than a short blip that is
+actually just as loud. All seven land at −14 dBFS RMS with **0.0 dB** of spread
+between them, where peak normalisation had left them 1.7 dB apart.
+
+`CUE_GAIN = 0.507` then closes the remaining 5.9 dB to the narration median:
+
+```
+  -14.0 dBFS   cue asset, RMS
+ ×  0.507      CUE_GAIN
+ =  -19.9 dBFS at volume 1.0
+```
+
+Measured against 60 clips sampled from the library: speech median **−19.7 dBFS**,
+10th–90th percentile −21.9 to −17.3. The cue sits **0.2 dB** below that median —
+comfortably inside the spread of the narration against itself, which is the
+tightest match that means anything.
+
+Both paths then scale linearly from the same `jp.volume` value — `gain.value` on
+the Web Audio node, `.volume` on the `HTMLAudioElement` — so they track together
+across the whole range of the slider rather than only at one setting.
+
+> **Do not re-tighten the peak assertion into a peak target.** That is the exact
+> change that caused this, and the test carries a comment saying so.
 
 Three preferences compose to the final level:
 
@@ -217,6 +262,7 @@ parecord --device="${SINK}.monitor" --rate=44100 --channels=1 --format=s16le out
 | Question | Evidence |
 |---|---|
 | Does it sound at all? | Bursts of 0.32 s at −1.4 dBFS on correct answers |
+| Is it level with the speech? | Cue and narration measured the same way: −19.9 vs −19.7 dBFS RMS at volume 1.0, a 0.2 dB gap. Previously +10.1 dB |
 | Does the master switch work? | Six recorded steps: on → sound, off → silence for both the picker and Test sound, back on → sound. Six for six |
 | **Does the selected cue actually apply?** | Selected *marimba*, navigated into a session, answered: recorded 0.23 s at 1070 Hz. Marimba is 0.26 s / 1116 Hz; ding is 0.32 s / 625 Hz. The fingerprint identifies it |
 

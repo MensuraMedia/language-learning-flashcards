@@ -2,6 +2,17 @@
 
 Architectural and design decisions with rationale. Newest first.
 
+## 2026-08-10: Interface audio is matched by loudness (RMS), not by peak
+- **Reason:** One volume control governs both the correct-answer cue and the pronunciation clips, so they have to be *perceptually* level. Peak-normalising both to the same figure left the cue +10.1 dB louder to the ear, because speech has a far higher crest factor than a short tone.
+- **Decision:** Cue assets are normalised to −14 dBFS **RMS over the audible part** (samples above 5% of peak, excluding decay tails), with peak demoted to a −1 dBFS clipping ceiling and a 0.35 sanity floor. `CUE_GAIN = 0.507` then aligns the cue to the narration median.
+- **Alternatives considered:** Full EBU R128 / LUFS loudness (correct, but needs a gating implementation and a dependency for seven short files where windowed RMS is within a fraction of a dB); attenuating the cue by ear (unverifiable, and drifts every time an asset changes).
+- **Impact:** Cue-to-speech gap −0.2 dB; spread across the seven cues 0.0 dB. Asserted by tests. **Peak must not be reinstated as a target** — the test carries a comment saying so, because that change is what caused the fault.
+
+## 2026-08-10: A rejected clip is treated as absent, and validation measures the format actually shipped
+- **Reason:** `validate_clip` gated duration and silence on WAV only while the entire shipped library is MP3, so the silence gate had never run on a single shipped clip. It shipped an inaudible あ.mp3 marked as validated.
+- **Decision:** MP3s are decoded and measured like WAVs. Where ffmpeg is unavailable, validation degrades to the format sniff and records `peak=None`, so unmeasured is distinguishable from measured rather than silently passing. `_load_bundled` consults the manifest's rejected list, **fail-open** — an unreadable manifest serves clips unfiltered rather than muting the library.
+- **Impact:** A bad clip now falls through to synthesis instead of stopping the resolution chain with silence. Present-but-silent is strictly worse than missing, because only the missing case recovers.
+
 ## 2026-08-06: Universal standards adopted from `universal-instruction-set` @ 6099a45
 - **Reason:** Mandated by the Core Mandate — every project under `/home/user/projects/` must copy and adapt all six universal standards.
 - **Source:** Local extraction of `universal-instruction-set-main.zip`, verified byte-identical to private repo HEAD `6099a45`.

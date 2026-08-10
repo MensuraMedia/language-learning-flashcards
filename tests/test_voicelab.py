@@ -66,11 +66,37 @@ def test_every_planned_job_has_something_to_say():
 
 
 def write_mp3_stub(path):
-    """A file that passes the .mp3 gates: ID3 magic and comfortably over the
-    size floor. Clip paths are .mp3, so a WAV body would be rejected — which is
-    the validator behaving correctly."""
+    """A clip that genuinely validates: real, audible, correctly-lengthed MP3.
+
+    This used to be an ID3 header followed by 4 KB of zeroes, which passed
+    because the validator sniffed the format and never decoded it. That is
+    exactly the hole that let a silent あ.mp3 ship, so the stub now has to be
+    real audio — if this helper cannot produce one, the test must skip rather
+    than assert against a fake.
+    """
+    import shutil
+    import subprocess
+
+    if shutil.which("ffmpeg") is None:
+        pytest.skip("ffmpeg unavailable; cannot build a genuinely valid MP3")
+
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(b"ID3\x04\x00\x00\x00\x00\x00\x00" + b"\x00" * 4096)
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-v",
+            "quiet",
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            "sine=frequency=440:duration=0.8",
+            "-codec:a",
+            "libmp3lame",
+            str(path),
+        ],
+        check=True,
+    )
     return path
 
 

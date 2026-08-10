@@ -52,11 +52,17 @@ const CUE_KEY = "jp.cue";
 const MUTED_KEY = "jp.muted";
 const VOLUME_KEY = "jp.volume";
 
-// The asset is peak-normalised to −0.4 dBFS, so the file is loud and the code
-// decides how loud it should actually be. The previous arrangement — a quiet
-// file attenuated further in code — reached the speakers at about −19 dBFS,
-// which is why it could not be heard.
-const CUE_GAIN = 0.9;
+// Set so a cue lands at the same loudness as a pronunciation clip, because one
+// volume control governs both and they must move together.
+//
+// The cues are loudness-normalised to −14 dBFS RMS by tools/make_cues.py; the
+// 630 narration clips measure −19.9 dBFS RMS (median, 10th–90th percentile
+// −22.0 to −17.7). −5.9 dB closes that gap, which is 0.507.
+//
+// Peak normalisation was the earlier mistake and it is worth naming: at equal
+// *peak* a short bright cue sat **+10 dB above** speech, because speech has a
+// far higher peak-to-average ratio. Peak is not what an ear hears.
+const CUE_GAIN = 0.507;
 
 // Backed by prefs.js, which keeps the authority in memory. A write that cannot
 // reach localStorage still takes effect for this session — the audio toggle

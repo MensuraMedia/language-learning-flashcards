@@ -33,9 +33,12 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import shutil
 import struct
+import subprocess
 import wave
 from dataclasses import asdict, dataclass
+from functools import lru_cache
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -129,6 +132,51 @@ def _wav_stats(path: Path) -> tuple[int, float]:
     return duration_ms, peak
 
 
+@lru_cache(maxsize=1)
+def _decoder() -> str | None:
+    """Path to ffmpeg, or ``None``. Cached — this is called once per clip."""
+    return shutil.which("ffmpeg")
+
+
+def _mp3_stats(path: Path) -> tuple[int, float] | None:
+    """``(duration_ms, peak)`` for an MP3, or ``None`` if it cannot be decoded.
+
+    Returning ``None`` rather than raising keeps ffmpeg an *enhancement*: on a
+    machine without it, validation degrades to the format sniff it did before
+    instead of rejecting the entire library. The manifest records ``peak=None``
+    for those, so an unmeasured clip is never mistaken for a measured one.
+    """
+    ffmpeg = _decoder()
+    if ffmpeg is None:
+        return None
+    try:
+        raw = subprocess.run(
+            [
+                ffmpeg,
+                "-v",
+                "quiet",
+                "-i",
+                str(path),
+                "-f",
+                "s16le",
+                "-ac",
+                "1",
+                "-ar",
+                "22050",
+                "-",
+            ],
+            capture_output=True,
+            timeout=30,
+        ).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    count = len(raw) // 2
+    if count == 0:
+        return 0, 0.0
+    samples = struct.unpack(f"<{count}h", raw[: count * 2])
+    return int(count * 1000 / 22050), max(abs(s) for s in samples) / 32768.0
+
+
 def validate_clip(path: Path) -> ClipReport:
     """Check one clip. Never raises — a bad file yields a failing report."""
     label = str(path.relative_to(LIBRARY_ROOT)) if LIBRARY_ROOT in path.parents else str(path)
@@ -169,8 +217,33 @@ def validate_clip(path: Path) -> ClipReport:
         elif path.suffix == ".mp3":
             if not any(head.startswith(magic) for magic in _MP3_MAGIC):
                 return ClipReport(label, False, "not an MP3 stream", bytes=size)
-            # Duration and amplitude need a decoder; size is the only gate we
-            # can apply without one. Recorded here so the limitation is visible.
+            # Decoded, not just sniffed. Checking only the magic bytes meant the
+            # silence gate — this module's entire stated purpose — never ran on a
+            # single shipped clip, because the whole library is MP3. It shipped
+            # あ.mp3 at peak 0.0009: present, listed as validated, and inaudible.
+            # A missing clip at least falls through to synthesis; a silent one
+            # that passes validation is strictly worse, because nothing recovers.
+            measured = _mp3_stats(path)
+            if measured is not None:
+                duration_ms, peak = measured
+                if not MIN_DURATION_MS <= duration_ms <= MAX_DURATION_MS:
+                    return ClipReport(
+                        label,
+                        False,
+                        f"duration {duration_ms}ms outside bounds",
+                        bytes=size,
+                        duration_ms=duration_ms,
+                        peak=peak,
+                    )
+                if peak < MIN_PEAK_AMPLITUDE:
+                    return ClipReport(
+                        label,
+                        False,
+                        f"effectively silent (peak {peak:.4f})",
+                        bytes=size,
+                        duration_ms=duration_ms,
+                        peak=peak,
+                    )
         else:
             return ClipReport(label, False, f"unsupported format {path.suffix!r}", bytes=size)
 

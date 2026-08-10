@@ -27,17 +27,29 @@ asserted by `tests/test_audio_library.py`.
 | Format | mono 44.1 kHz 16-bit WAV | Web Audio decodes once into memory; MP3's encoder delay left ~14 ms of lag even after trimming silence |
 | Onset | < 20 ms | Leading silence is latency between the click and the sound. The supplied MP3 had **64 ms** of it |
 | Duration | ≤ 380 ms | The study view advances 380 ms after a correct answer at its fastest pace; anything longer rings over the next card |
-| Peak | 0.80–0.99 (≈ −0.4 dBFS) | Loud in the file, attenuated in code |
+| Loudness | −14 dBFS RMS, identical across the set | Peak is not loudness — see below |
+| Peak | 0.35–0.99, capped at −1 dBFS | A floor and a clipping ceiling, not a target |
 
-## Why they are normalised loud
+## Why they are normalised loud — and by loudness, not peak
 
 The first version kept the source's −8.2 dBFS peak and multiplied it by an 0.55
 app gain. At 51% system volume that arrived at the speakers around **−19 dBFS**,
 which is inaudible over anything — the reason the cue could not be heard at all.
 Loud asset, quiet code. Never the reverse.
 
+The correction over-shot. Peak-normalising every cue to −0.4 dBFS left them
+**+10.1 dB louder than the pronunciation clips**, because speech has a far
+higher crest factor: it is mostly quiet, with one vowel peak setting the
+maximum, while a short tone sits near its peak throughout. Equal peaks, very
+unequal loudness — and a single volume control over both then feels broken.
+
+They are now normalised by **RMS over the audible part** (samples above 5% of
+peak, so a long decay tail does not read as quietness): −14 dBFS for all seven,
+with `CUE_GAIN = 0.507` in `sound.js` bringing that to −19.9 dBFS at volume 1.0
+against a narration median of −19.7.
+
 Verified by recording the speaker monitor while answering: bursts of 0.32 s at
-−1.4 dBFS.
+−1.4 dBFS peak, and a cue-to-speech gap of 0.2 dB.
 
 ## Regenerating
 
@@ -49,9 +61,13 @@ python tools/make_cues.py          # all seven, straight into this directory
 
 ```bash
 ffmpeg -i _source/ding-original.mp3 \
-  -af "atrim=start=0.064,asetpts=PTS-STARTPTS,afade=t=out:st=0.24:d=0.08,volume=2.43" \
+  -af "atrim=start=0.064,asetpts=PTS-STARTPTS,afade=t=out:st=0.24:d=0.08" \
   -t 0.32 -ac 1 -ar 44100 -c:a pcm_s16le cue-ding.wav
 ```
+
+then scaled to the same −14 dBFS RMS as the synthesised six. The fixed
+`volume=2.43` that used to appear here was a peak-matching constant and is
+exactly what left the set uneven.
 
 **Never judge an audio file by its size.** A silent stub of exactly the right
 length once passed for working synthesis in this project, which is why the tests

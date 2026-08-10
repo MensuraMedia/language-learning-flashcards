@@ -10,7 +10,14 @@ contract, because the study view fires them several times a minute:
                 latency between the click and the sound
     duration    <= 320 ms, shorter than the fastest verdict hold (380 ms), so a
                 cue is never still ringing over the next card
-    level       peak-normalised to -0.4 dBFS
+    level       **loudness**-normalised to -14 dBFS RMS, peak capped at -1 dBFS
+
+**Loudness, not peak.** These were peak-normalised first, and peak is not what an
+ear hears: a short bright tone at -0.4 dBFS peak sat **+10 dB above** the
+pronunciation clips at the same volume setting, because speech has a far higher
+peak-to-average ratio. Matching RMS is what makes one volume control govern both
+convincingly. The measured median for the 630 narration clips is -19.9 dBFS RMS,
+and CUE_GAIN in sound.js closes the remaining gap.
 
 Loud in the file, attenuated in code. The reverse — a quiet asset multiplied by
 an app gain and then by system volume — put the first version at about -19 dBFS
@@ -33,7 +40,9 @@ from pathlib import Path
 
 SAMPLE_RATE = 44100
 MAX_SECONDS = 0.32
-TARGET_PEAK = 0.955  # -0.4 dBFS
+#: RMS over the audible part, not peak — see the module docstring.
+TARGET_RMS = 0.1995  # -14 dBFS
+PEAK_CEILING = 0.891  # -1 dBFS, so normalising can never clip
 
 #: Equal-tempered frequencies, so the multi-note cues are actually in tune.
 NOTE = {
@@ -110,10 +119,25 @@ def fade_tail(samples: list[float], seconds: float = 0.03) -> list[float]:
 
 
 def normalise(samples: list[float]) -> list[float]:
+    """Scale to a target RMS, backing off if that would clip.
+
+    RMS is measured over the audible part only: these cues are mostly decay, and
+    including the tail would make a long-decaying bell read as quieter than a
+    short blip that is actually the same loudness.
+    """
     peak = max((abs(v) for v in samples), default=0.0)
     if peak == 0:
         return samples
-    scale = TARGET_PEAK / peak
+    floor = peak * 0.05
+    live = [v for v in samples if abs(v) > floor]
+    if not live:
+        return samples
+    rms = math.sqrt(sum(v * v for v in live) / len(live))
+    if rms == 0:
+        return samples
+    scale = TARGET_RMS / rms
+    if peak * scale > PEAK_CEILING:
+        scale = PEAK_CEILING / peak
     return [v * scale for v in samples]
 
 
