@@ -154,17 +154,8 @@ function render() {
   const isWord = card.script === "vocab";
   const isPhrase = card.script === "phrase";
 
-  // The *card* is sized by its content, not by its script. Sizing by script gave
-  // 頭悪い — three characters — the same 520x728 face as ゆっくり話してください,
-  // and the card was then mostly empty. What the face has to hold is the prompt,
-  // its reading, the meaning and, when there is one, the note.
-  const glyphLength = [...card.glyph].length;
-  const hasNote = Boolean(card.note);
-  let cardSize = "sm";
-  if (glyphLength > 9) cardSize = "xl";
-  else if (glyphLength > 7 || (hasNote && glyphLength > 4)) cardSize = "lg";
-  else if (glyphLength > 2 || hasNote) cardSize = "md";
-  document.body.dataset.cardSize = cardSize;
+  // Card width is fixed for the whole session by sizeCardsForSession(); nothing
+  // per-card, so the face does not resize between cards.
   $("choices").classList.toggle("wide", isKanji || isWord || isPhrase);
   $("choices").classList.toggle("wider", isWord || isPhrase);
   document.body.classList.toggle("theme-kanji", isKanji);
@@ -412,13 +403,26 @@ function renderRecapCards() {
   // character. 高い wrapped to two lines and "beautiful / clean" to two more,
   // inside a square built for あ — the same fault the study card had, in the one
   // place a learner reads every card at once.
-  const widest = seen.reduce((n, i) => {
-    const o = state.outcomes.get(i);
-    return Math.max(n, [...(o.glyph || "")].length, Math.ceil((o.answer || "").length / 2.4));
-  }, 1);
-  host.classList.toggle("is-wide", widest > 2 && widest <= 5);
-  host.classList.toggle("is-wider", widest > 5 && widest <= 8);
-  host.classList.toggle("is-widest", widest > 8);
+  // Same rule as the card: one tile width for the whole grid, wide enough for
+  // the longest item in it, with the type left alone.
+  const longestGlyph = seen.reduce(
+    (n, i) => Math.max(n, [...(state.outcomes.get(i).glyph || "")].length), 1);
+  const longestAnswer = seen.reduce(
+    (n, i) => Math.max(n, (state.outcomes.get(i).answer || "").length), 1);
+
+  if (longestGlyph <= 2) {
+    host.classList.remove("is-text");
+    host.style.removeProperty("--tile-w");
+  } else {
+    const RECAP_GLYPH_PX = 26;
+    const width = Math.min(
+      360,
+      Math.max(140, Math.ceil(Math.max(longestGlyph * RECAP_GLYPH_PX,
+                                       longestAnswer * RECAP_GLYPH_PX * 0.46))) + 44
+    );
+    host.classList.add("is-text");
+    host.style.setProperty("--tile-w", `${width}px`);
+  }
 
   seen.forEach((index) => {
     const o = state.outcomes.get(index);
@@ -437,6 +441,17 @@ function renderRecapCards() {
     ? `${missed} of ${seen.length} to revisit`
     : `all ${seen.length} correct`;
 }
+
+// Re-run the same exercise. `shuffle` makes the server deal a different order —
+// without it a repeat is the same sequence, because after one session every card
+// has a miss rate and the weakest-first sort is deterministic.
+function practiceAgain() {
+  const params = new URLSearchParams(location.search);
+  params.set("shuffle", "1");
+  location.href = `${location.pathname}?${params}`;
+}
+
+on("recap-again", "click", practiceAgain);
 
 function skipCard() {
   if (state.locked) return advanceAfterGrade();
@@ -582,22 +597,80 @@ document.addEventListener("keydown", (event) => {
   handler();
 });
 
+// ── card geometry ────────────────────────────────────────────────────────────
+//
+// One width for the whole session, wide enough for the *longest* prompt in it to
+// sit on a single line at full size. Two rules drive this:
+//
+//   * **Do not shrink the type to fit.** A phrase set at 24px to avoid a wrap is
+//     harder to read than the same phrase wrapped, and the point of the card is
+//     to be read.
+//   * **Do not resize between cards.** A face that changes width as you answer
+//     is distracting, and the eye has to reacquire the prompt each time.
+//
+// So the width is computed once from the widest thing the session will show, and
+// every card in that session uses it.
+
+// The glyph size we refuse to go below, and roughly the width one CJK glyph
+// occupies at it. Latin readings are far narrower, so the glyph count dominates.
+const CARD_GLYPH_PX = 46;
+const CARD_SIDE_PAD = 40;          // each side
+const CARD_MAX_PX = 700;
+
+function sizeCardsForSession() {
+  const cards = state.cards || [];
+  if (!cards.length) return;
+
+  const longestGlyph = cards.reduce((n, c) => Math.max(n, [...(c.glyph || "")].length), 1);
+  const longestAnswer = cards.reduce((n, c) => Math.max(n, (c.answer || "").length), 1);
+  const anyNote = cards.some((c) => c.note);
+
+  // A deck of single characters keeps the 5:7 playing-card face — it is 93% of
+  // the content and the app's whole visual identity.
+  if (longestGlyph <= 2 && !anyNote) {
+    document.body.dataset.cardSize = "glyph";
+    return;
+  }
+
+  // Width: the longest prompt on one line, or the longest answer, whichever needs
+  // more. The answer is Latin, so roughly half the width per character.
+  const forGlyphs = longestGlyph * CARD_GLYPH_PX;
+  const forAnswer = longestAnswer * (CARD_GLYPH_PX * 0.42);
+  const width = Math.min(CARD_MAX_PX, Math.max(340, Math.ceil(Math.max(forGlyphs, forAnswer))) + CARD_SIDE_PAD * 2);
+
+  // Height holds prompt + reading + meaning, plus the note when the set has one.
+  const height = anyNote ? 430 : 372;
+
+  document.body.dataset.cardSize = "text";
+  document.body.style.setProperty("--card-w", `${width}px`);
+  document.body.style.setProperty("--card-h", `${height}px`);
+}
+
 // ── boot ─────────────────────────────────────────────────────────────────────
 
 async function start() {
   const drill = params.get("characters");
+  // Set by "Practice again" — the server then deals a different order.
+  const shuffle = params.get("shuffle") === "1";
   const body = drill
-    ? { character_ids: drill.split(",").map(Number), challenge: "recognition", scoring: "accuracy" }
+    ? {
+        character_ids: drill.split(",").map(Number),
+        challenge: "recognition",
+        scoring: "accuracy",
+        shuffle,
+      }
     : {
         difficulty: params.get("difficulty") || "hiragana:gojuon",
         challenge: params.get("challenge") || "recognition",
         scoring: params.get("scoring") || "accuracy",
+        shuffle,
       };
   try {
     const res = await post("/api/session", body);
     state.sessionId = res.session_id;
     state.cards = res.cards;
     state.scheme = res.scoring;
+    sizeCardsForSession();
     $("breadcrumb").textContent = drill
       ? `Drill · ${res.cards.length} weak characters`
       : `${res.difficulty} · ${res.challenge}`;

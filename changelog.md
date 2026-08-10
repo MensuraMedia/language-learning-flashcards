@@ -563,3 +563,27 @@ suspends it when the window loses focus.
   ゆっくり話してください at 11 glyphs, and one more bucket would be needed at
   roughly 15.
 - Every threshold in the document was checked against the code before commit.
+
+## 2026-08-10T09:00:00Z — One card width per session, and Practice again
+- **Card sizing replaced.** The four per-card buckets are gone. Width is now
+  computed **once per session** from the longest prompt it will show, wide
+  enough for that prompt to sit on **one line at full size** — 420px for
+  教えてください, 586px for ゆっくり話してください, capped at 700px. Type is a
+  fixed 40px rather than a clamp: the width was chosen so it fits.
+  Two rules behind it: never shrink the type to avoid a wrap, and never resize
+  the face between cards.
+- A deck of single glyphs keeps the 336 × 470 playing-card face — 93% of the
+  content, and the app's visual identity.
+- **The recap follows the same rule**: one computed tile width for the grid, 26px
+  type left alone, 22px side padding.
+- **Side padding everywhere text sits**: 40px on the card face, 16–22px on
+  options, 22px on recap tiles, 18px on the note. Text running to an edge reads
+  as cramped even when it fits.
+- **New "Practice again" button** in the session review, beside Back to
+  dashboard.
+- **Fixed: a repeat dealt the identical order.** After one session every card has
+  a miss rate, and the weakest-first sort was fully deterministic — so the
+  learner rehearsed the order rather than the characters. Miss-rate ties now
+  break randomly, and Practice again passes `shuffle` so the whole deck is
+  reordered. Verified: three repeats, three different orders, same card set.
+- `docs/CARD-DIMENSIONS.md` rewritten for the computed rule.

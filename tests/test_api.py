@@ -836,3 +836,24 @@ async def test_a_note_survives_the_round_trip_to_the_card(client):
     # The note is what stops 強がり being read as "a strong person".
     assert "bluffing" in tsuyogari["note"]
     assert tsuyogari["romaji"] == "tsuyogari"
+
+
+async def test_repeating_an_exercise_deals_a_different_order(client):
+    """Practice again must reshuffle.
+
+    After one session every card has a miss rate, and the weakest-first sort is
+    deterministic — so a repeat dealt the identical sequence and the learner
+    rehearsed the order rather than the characters.
+    """
+    body = {"difficulty": "phrase:requests", "challenge": "recall", "limit": 8}
+    first = await (await client.post("/api/session", json=body)).get_json()
+    order = [c["glyph"] for c in first["cards"]]
+
+    repeats = []
+    for _ in range(5):
+        again = await (await client.post("/api/session", json={**body, "shuffle": True})).get_json()
+        repeats.append([c["glyph"] for c in again["cards"]])
+
+    assert any(r != order for r in repeats), "every repeat dealt the same order"
+    for r in repeats:
+        assert sorted(r) == sorted(order), "a repeat changed which cards are in the deck"

@@ -3481,67 +3481,59 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
 .back-note[hidden] { display: none; }
 .mode-phrase .back-note { max-width: 34ch; font-size: 12px; }
 
-/* ── card size follows content, not script ───────────────────────────────
-   5 / 7 is a playing-card portrait, and it is right for a single glyph that
-   fills the face. Text does not fill it: a three-character phrase in a 520x728
-   card leaves most of the face empty, which is what sizing by script produced.
-   Each step up widens *and* shortens, because extra text runs across rather
-   than down. The card only grows when its content actually needs the room. */
-body[data-card-size="sm"] .deck3d {          /* one or two glyphs — unchanged */
+
+
+/* ── breathing room around text on every surface ─────────────────────────
+   Text running to the edge of a card reads as cramped even when it fits, and a
+   phrase that breaks one character before its end looks like a defect rather
+   than a wrap. Each surface gets side padding, and the widths above already
+   include it, so the *text column* is what the sizing buckets actually size. */
+.mode-word #glyph,
+.mode-word #back-glyph { padding: 0 26px; }
+.mode-phrase #glyph,
+.mode-phrase #back-glyph { padding: 0 32px; }
+
+/* Options hold whole English phrases at the wider sizes. */
+.choices.wide .choice { padding: 10px 16px; }
+.choices.wider .choice { padding: 12px 20px; }
+.mode-phrase .choices.wider .choice { padding: 14px 22px; }
+
+/* The note is prose and takes the most. */
+.back-note { padding: 0 18px; }
+
+/* ── one card width per session ──────────────────────────────────────────
+   Set by sizeCardsForSession() in study.js from the longest prompt the session
+   will show, so every card in a session is the same width and the type is never
+   shrunk to avoid a wrap. A deck of single characters keeps the 5:7 face. */
+body[data-card-size="glyph"] .deck3d {
   width: clamp(240px, 25vw, 336px);
   aspect-ratio: 5 / 7;
 }
-body[data-card-size="md"] .deck3d {          /* a short word, or anything with a note */
-  width: clamp(250px, 26vw, 350px);
-  aspect-ratio: 1 / 1.08;
-}
-body[data-card-size="lg"] .deck3d {          /* a phrase */
-  width: clamp(290px, 30vw, 410px);
-  aspect-ratio: 1 / 0.94;
-}
-body[data-card-size="xl"] .deck3d {          /* a long phrase */
-  width: clamp(320px, 34vw, 460px);
-  aspect-ratio: 1 / 0.88;
-}
-
-/* Type scales with the face rather than the script, so a short phrase on a
-   smaller card is not set at the size a long one needs. */
-body[data-card-size="md"] #glyph,
-body[data-card-size="md"] #back-glyph { font-size: clamp(30px, 3.8vw, 46px); }
-body[data-card-size="lg"] #glyph,
-body[data-card-size="lg"] #back-glyph { font-size: clamp(24px, 3.1vw, 38px); }
-body[data-card-size="xl"] #glyph,
-body[data-card-size="xl"] #back-glyph { font-size: clamp(20px, 2.5vw, 31px); }
-
-/* ── recap tiles size to the session's widest card ───────────────────────
-   A square built for あ makes 高い wrap to two lines and "beautiful / clean" to
-   two more. The recap is the one place a learner reads every card at once, so
-   it is the worst place for the text not to fit. Width is driven by the widest
-   glyph *and* the longest answer in the session; the square is dropped for a
-   minimum height, so a tile grows only downward if it must. */
-.recap-cards.is-wide {
-  grid-template-columns: repeat(auto-fill, minmax(122px, 1fr));
-}
-.recap-cards.is-wider {
-  grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
-}
-.recap-cards.is-widest {
-  grid-template-columns: repeat(auto-fill, minmax(206px, 1fr));
-}
-.recap-cards.is-wide .recap-card-tile,
-.recap-cards.is-wider .recap-card-tile,
-.recap-cards.is-widest .recap-card-tile {
+body[data-card-size="text"] .deck3d {
+  width: min(var(--card-w, 420px), 46vw);
+  height: var(--card-h, 380px);
   aspect-ratio: auto;
-  min-height: 96px;
-  padding: 10px 8px;
 }
-.recap-cards.is-wide .rc-glyph { font-size: 26px; line-height: 1.15; }
-.recap-cards.is-wider .rc-glyph { font-size: 23px; line-height: 1.2; }
-.recap-cards.is-widest .rc-glyph { font-size: 21px; line-height: 1.25; }
-.recap-cards.is-wide .rc-reading,
-.recap-cards.is-wider .rc-reading,
-.recap-cards.is-widest .rc-reading {
-  white-space: normal;
+/* Fixed size, not a clamp: the width was chosen so this fits on one line. */
+body[data-card-size="text"] #glyph,
+body[data-card-size="text"] #back-glyph {
+  font-size: 40px;
   line-height: 1.35;
-  max-width: 100%;
+  padding: 0 6px;               /* the face already carries the side padding */
 }
+body[data-card-size="text"] #back-sound { font-size: 19px; }
+
+/* ── recap tiles: one computed width, type untouched ─────────────────────
+   The recap is the one place a learner reads every card at once, so it follows
+   the card's rule exactly: a single width for the whole grid, wide enough for
+   the longest item, and no shrinking the text to make it fit. */
+.recap-cards.is-text {
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-w, 200px), 1fr));
+}
+.recap-cards.is-text .recap-card-tile {
+  aspect-ratio: auto;
+  min-height: 92px;
+  padding: 14px 22px;
+}
+.recap-cards.is-text .rc-glyph { font-size: 26px; line-height: 1.3; }
+.recap-cards.is-text .rc-reading { white-space: normal; line-height: 1.4; max-width: 100%; }

@@ -124,6 +124,8 @@ async def create_session() -> Any:
             challenge,
             limit=int(body.get("limit", session_engine.DEFAULT_DECK_LIMIT)),
             character_ids=character_ids,
+            # Set by "Practice again", so a repeat is not the same sequence.
+            shuffle=bool(body.get("shuffle")),
         )
     except ValueError as exc:
         return _error("invalid_request", str(exc), 400)

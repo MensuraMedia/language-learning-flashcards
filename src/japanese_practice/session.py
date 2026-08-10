@@ -41,6 +41,7 @@ async def build_deck(
     challenge: str,
     limit: int = DEFAULT_DECK_LIMIT,
     character_ids: list[int] | None = None,
+    shuffle: bool = False,
 ) -> list[Character]:
     """Select and order the cards for a session.
 
@@ -68,14 +69,21 @@ async def build_deck(
             FROM attempts GROUP BY character_id
             """)}
     unseen = [c for c in pool if c.id not in weak]
-    seen = sorted((c for c in pool if c.id in weak), key=lambda c: -weak[c.id])
+    # Random tie-break inside each miss-rate band. Without it the order is fully
+    # deterministic once every card has been attempted — which is after the very
+    # first session — so running a deck again dealt an identical sequence, and
+    # the learner rehearses the order rather than the characters.
+    seen = sorted(
+        (c for c in pool if c.id in weak),
+        key=lambda c: (-weak[c.id], random.random()),
+    )
 
     # Shuffle BEFORE concatenating: shuffling `unseen` afterwards mutates a list
     # that `ordered` has already copied from, so it was a no-op and every
     # session dealt あ い う え お in id order.
     random.shuffle(unseen)
     ordered = seen[: max(1, limit // 2)] + unseen
-    if challenge == "mixed":
+    if challenge == "mixed" or shuffle:
         random.shuffle(ordered)
     return ordered[:limit] if limit else ordered
 

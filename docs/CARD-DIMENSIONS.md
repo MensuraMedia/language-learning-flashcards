@@ -9,7 +9,7 @@ fine on the content that existed when it was written, and broke as soon as
 longer content arrived. This document exists so the fifth surface does not
 repeat it.
 
-- **Current as of** 2026-08-10 · 341 tests passing
+- **Current as of** 2026-08-10 · 342 tests passing
 - **Applies to** the study card, its answer options, the session recap tiles,
   the deck faces on a shelf, and the memory-game board tiles
 
@@ -18,18 +18,24 @@ repeat it.
 ## 1. The rule
 
 > **Size by what is on the surface, not by which category it belongs to.**
-> Grow only when the content requires it, and grow *width first*.
+> Grow *width* until the longest item fits on one line. Never shrink the type,
+> and use one width for the whole session.
 
-Three corollaries, each earned the hard way:
+Five corollaries, each earned the hard way:
 
 1. **A category is not a length.** "Kanji" tells you nothing about whether the
    answer is "sun" or "world/generation". "Phrase" does not distinguish 頭悪い
    from ゆっくり話してください.
-2. **Extra text runs across, not down.** Each step up should widen *and* shorten.
-   A taller card holds no more text; it just leaves more of itself empty.
+2. **Extra text runs across, not down.** Widening fits more; heightening does
+   not — it just leaves more of the face empty.
 3. **The reading is the thing that must fit.** A glyph wrapping to two lines is
    ugly. A meaning wrapping to two lines makes an option hard to scan while the
    clock is running.
+4. **Never shrink the type to avoid a wrap.** A phrase set small enough to fit
+   is harder to read than the same phrase wrapped, and being read is the card's
+   entire job. Widen instead.
+5. **One width per session, not per card.** A face that changes width as you
+   answer is distracting, and the eye has to reacquire the prompt each time.
 
 ### Why not just make everything big
 
@@ -41,31 +47,30 @@ suit 15 phrase cards would trade the look of the thing for an edge case.
 
 ## 2. Study card
 
-`.deck3d`, sized from `document.body.dataset.cardSize`, set in `study.js`.
+`.deck3d`, sized once per session by `sizeCardsForSession()` in `study.js`.
 
-The face must hold, on the back: the prompt, its reading, the meaning, and —
-where the set has one — the usage note.
+A deck whose prompts are all one or two glyphs keeps the **5 : 7 playing-card
+face at 336 × 470** — that is 93% of the content and the app's visual identity.
 
-| Bucket | Face | Prompt font | Applies when | Cards |
-|---|---|---|---|---:|
-| `sm` | 336 × 470 (5 : 7) | clamp 42–120px | ≤ 2 glyphs, no note | 1,545 |
-| `md` | 350 × 378 (1 : 1.08) | clamp 30–46px | 3–7 glyphs, **or any card with a note** | 94 |
-| `lg` | 410 × 385 (1 : 0.94) | clamp 24–38px | 8–9 glyphs, or 5+ with a note | 15 |
-| `xl` | 460 × 405 (1 : 0.88) | clamp 20–31px | 10+ glyphs | 4 |
+Anything longer gets a computed width, applied to every card in the session:
 
 ```js
-const glyphLength = [...card.glyph].length;   // code points, not UTF-16 units
-const hasNote = Boolean(card.note);
-let cardSize = "sm";
-if (glyphLength > 9) cardSize = "xl";
-else if (glyphLength > 7 || (hasNote && glyphLength > 4)) cardSize = "lg";
-else if (glyphLength > 2 || hasNote) cardSize = "md";
+const CARD_GLYPH_PX = 46;      // the size the type will not go below
+const CARD_SIDE_PAD = 40;      // each side
+const forGlyphs  = longestGlyph  * CARD_GLYPH_PX;
+const forAnswer  = longestAnswer * CARD_GLYPH_PX * 0.42;   // Latin is narrower
+const width  = min(700, max(340, ceil(max(forGlyphs, forAnswer))) + CARD_SIDE_PAD * 2);
+const height = anyNote ? 430 : 372;
 ```
 
-**A note counts as length.** It adds two or three lines to the back, so any card
-carrying one starts at `md` regardless of how short its prompt is.
+| Longest prompt in the session | Card width | Example |
+|---|---:|---|
+| ≤ 2 glyphs | 336 × 470 (5 : 7) | any kana or kanji deck |
+| 3–6 | 420px | 頭悪い · 教えてください |
+| 9 | 494px | レシートをください |
+| 11 | 586px | ゆっくり話してください |
 
----
+Prompt type is a **fixed 40px**, not a clamp: the width was chosen so it fits.
 
 ## 3. Answer options
 
@@ -84,36 +89,26 @@ stands for. That is display only — grading still compares the option text.
 
 ## 4. Session recap tiles
 
-`.recap-cards`, via `is-wide` / `is-wider` / `is-widest`.
+`.recap-cards`, via `is-text` and a computed `--tile-w`.
 
 The recap is the **one place a learner reads every card at once**, which makes
 it the worst place for text not to fit — and it is easy to forget, because it
 only appears after a session ends.
 
-Sized from the widest thing in *that session*, not from a per-card rule: a grid
-of mixed widths reads worse than a grid sized for its longest member.
+Same rule as the card: **one width for the whole grid**, computed from the
+longest item, type left alone at 26px.
 
-| Class | Column min | Glyph | Applies when |
-|---|---|---|---|
-| *(none)* | 84px, square | 30px | widest ≤ 2 |
-| `is-wide` | 122px | 26px | 3–5 |
-| `is-wider` | 158px | 23px | 6–8 |
-| `is-widest` | 206px | 21px | 9+ |
+| Longest item | Tile width |
+|---|---:|
+| ≤ 2 glyphs | 84px square |
+| otherwise | `min(360, max(140, max(glyphs × 26, answer × 12))) + 44` |
 
-```js
-const widest = seen.reduce((n, i) => {
-  const o = state.outcomes.get(i);
-  return Math.max(n, [...(o.glyph || "")].length,
-                  Math.ceil((o.answer || "").length / 2.4));
-}, 1);
-```
+**The answer counts toward the width**, scaled by 0.46 because Latin characters
+are narrower. Without that term the tiles fit 高い but not `expensive / tall`,
+which is what the reported defect looked like.
 
-**The answer counts toward the width**, divided by 2.4 to bring Latin characters
-onto roughly the same scale as Japanese ones. Without that term the tiles fit
-高い but not `expensive / tall`, which is what the reported defect looked like.
-
-Above the square bucket the tiles drop `aspect-ratio` for a `min-height`, so a
-tile grows downward only if it must.
+Side padding is **22px** — text running to the tile edge reads as cramped even
+when it technically fits.
 
 ---
 
@@ -144,7 +139,7 @@ Two things make that hold, and both are necessary:
   in opposite directions.
 - `.deck3d` uses `transform-origin: 50% 0%`. Rotating about the centre moves the
   top edge down by an amount **proportional to the card's height**, so any fixed
-  correction would be right for one bucket and wrong for the other three. The
+  correction would be right for one width and wrong for every other. The
   top edge is the pivot, so it cannot move.
 
 Verified at **0 px** on a kana card and a phrase card.
@@ -155,28 +150,22 @@ Verified at **0 px** on a kana card and a phrase card.
 
 When a new set arrives, check it against this list before shipping:
 
-1. **Measure the longest prompt and the longest answer in the set.** If either
-   exceeds the top bucket's comfortable capacity, add a bucket — do not stretch
-   the last one.
+1. **Measure the longest prompt and the longest answer in the set.** The width
+   is computed from them, so the only question is whether the result exceeds the
+   700px cap — see below.
 2. **Check the study card back**, not just the front. The back carries the most.
 3. **Play a session to the recap.** It is the surface most often missed, because
    it only appears at the end.
 4. **Check the deck face on the shelf.** Long titles wrap and make a rail ragged;
    phrase decks drop the script prefix for exactly this reason.
-5. **If the set has notes**, confirm the note is not clipped at the smallest
-   bucket that can carry one (`md`).
+5. **If the set has notes**, confirm the note is not clipped — a session
+   containing any note gets a 430px face instead of 372px.
 
-### Comfortable capacity, measured
+### Headroom
 
-At a 1920-wide window, roughly, before wrapping:
+The card width is computed, so there is no bucket to outgrow — it scales until
+it hits the **700px cap**, which is reached at roughly **14 glyphs**. The longest
+prompt in the content today is ゆっくり話してください at 11, giving 586px.
 
-| Bucket | Glyphs on one line | Answer characters |
-|---|---:|---:|
-| `sm` | 2 | — |
-| `md` | 7 | 24 |
-| `lg` | 10 | 30 |
-| `xl` | 14 | 34 |
-
-The longest prompt in the content today is ゆっくり話してください at 11 glyphs,
-which sits in `xl` and wraps to two lines in the recap only. That is the current
-headroom: **one more bucket would be needed at roughly 15 glyphs.**
+Past 14 glyphs the type would have to wrap, and that is the point at which a
+second line becomes the right answer rather than a wider card.
