@@ -348,6 +348,200 @@ destructive action that says nothing is indistinguishable from one that failed.
 
 ---
 
+## 2026-08-08 → 08-10 — Sound, ownership, and content beyond characters
+
+Eighteen commits. The cycle divides into four unrelated pieces of work: making
+the application ownable (licence, install, backup), giving it a voice (the sound
+cue and the preference layer it forced into existence), extending it past single
+characters (words, phrases, context), and fixing what that extension broke.
+
+### Headline numbers
+
+| Measure | Start of cycle | Now | Change |
+|---|---:|---:|---|
+| Cards seeded | 1,459 | **1,658** | +199 |
+| — of which words | 0 | **106** | new |
+| — of which phrases | 0 | **93** | new |
+| Study decks | 17 | **33** | +16 |
+| Shelves | 4 | **6** | +2 |
+| HTTP endpoints | 23 | **27** | +4 |
+| Python modules | 32 | **36** | +4 |
+| Python lines | 7,473 | **8,635** | +1,162 |
+| Frontend JS lines | 1,679 | **2,378** | +699 |
+| Tests | 290 | **341** | +51 |
+
+---
+
+### 1. Ownership: licence, install, backup
+
+**Attribution licence.** `LICENSE` §5 now requires anyone building a flash-card,
+spaced-repetition, character-drill or other language-learning application
+derived from this project to credit Mensura Media, somewhere an ordinary user of
+their app can find it. It covers ports, transpilation and model-assisted
+rewrites explicitly, because rewriting in another language is the obvious way to
+argue the obligation away.
+
+Two clauses were written deliberately and matter more than the rest:
+
+* **§5.4** — attribution grants no rights. Without it the natural reading is
+  "credit them and do as I like"; a derivative still needs consent under §4.
+* **§5.5** — the limits, stated plainly. The obligation binds a licensee, not
+  someone who built a flash-card app independently. No claim is made over spaced
+  repetition, multiple-choice drilling, the kana or kanji themselves, or the
+  JLPT levels. Nothing restricts discussing, reviewing or teaching about the
+  project.
+
+The mechanism is a **condition on the permission in §2** — contract, not
+copyright. That is real, and it is how source-available licences generally do
+this, but copyright does not protect ideas or methods and §5.5 says so rather
+than bluffing. A `NOTICE` file carries the verbatim text and ships in the
+distribution.
+
+**Desktop install.** `tools/install-desktop.sh` builds a wheel and installs it
+**non-editable** into its own virtualenv under `~/.local/opt`, links a launcher
+onto `PATH`, installs five icon sizes and writes a validated `.desktop` entry.
+Non-editable deliberately: an editable install breaks the moment the checkout
+moves, which is not what "installed" should mean. Verified by checking
+`/proc/<pid>/maps` on the running app — **zero mappings from the project tree**.
+
+`tools/uninstall-desktop.sh` **keeps study history by default**; deleting it
+requires `--purge` and typing `DELETE`. Removing an application should not throw
+away the practice done with it.
+
+**Backup retaken** as `20260808-0015`, and verified by *restoring* it rather
+than inspecting it: cloned to a scratch directory and ran the suite from the
+restored tree. The previous set's userdata tarball was **121 bytes** — an empty
+directory, because no database existed when it was taken.
+
+### 2. Sound
+
+Took four commits and three wrong turns, all of which are worth recording
+because none of the faults were visible from the source.
+
+**It was inaudible.** The cue kept its source peak of −8.2 dBFS and was then
+multiplied by an 0.55 app gain; at 51% system volume it arrived at roughly
+**−19 dBFS**. Loud asset, quiet code is the correct arrangement and this was the
+reverse. Assets are now peak-normalised to −0.4 dBFS. Measured at the speaker
+monitor: **−1.4 dBFS**.
+
+**It was on the wrong API.** `new Audio().play()` is for media playback. For a
+short cue it fails three ways: the autoplay policy rejects the returned promise
+until the page has been interacted with — and swallowing that rejection makes a
+blocked cue indistinguishable from a working one, which is what hid the fault;
+`currentTime = 0` restarts are not sample-accurate and cancel the cue already
+sounding; and every play crosses the media pipeline, adding variable latency.
+Rebuilt on the **Web Audio API**: decoded once into an `AudioBuffer`, each cue a
+fresh `BufferSourceNode` through a `GainNode`, with the context unlocked on the
+first gesture and re-resumed per cue.
+
+**The asset was wrong for the job.** The supplied MP3 had **64 ms of leading
+silence** — pure click-to-sound latency — and ran 1.056 s, still ringing when the
+next card arrived at the fastest pace. Trimmed to 0.320 s with a 2 ms onset, and
+moved to WAV because MP3's encoder delay left 14 ms even after trimming.
+
+**Seven cues** now ship, six synthesised by `tools/make_cues.py`, all to one
+contract: mono 44.1 kHz WAV, onset < 20 ms, ≤ 380 ms, peak ≈ −0.4 dBFS. Each is
+a different *character* of positive rather than a different pitch of one sound.
+
+### 3. Preferences moved to the server
+
+The audio toggle appeared inert. Three attempts:
+
+| Attempt | Approach | Failure |
+|---|---|---|
+| 1 | `localStorage` directly | This webview **accepts writes and drops them**. The write vanished, the next read returned the old value, the switch repainted itself back on, audio kept playing |
+| 2 | Authority in memory, storage as a mirror | Fixed the toggle *within a page*. But `/study` is a **full page navigation** — a fresh JS context with an empty cache — so a cue chosen on the dashboard never applied. Pace, voice and volume had been failing identically, unnoticed, because none of them visibly contradicts itself the way a toggle does |
+| 3 | **Server-side, per profile** | Works. Survives navigation *and* restarting the application |
+
+Preferences are rows in a `preferences` table. Because each profile is already
+its own database file, they are **per-profile without a profile column** —
+closing two roadmap items rather than working around them. The key set is closed
+and values are length-capped: an open key-value store reachable from the page is
+a way to fill someone's database.
+
+### 4. Content beyond single characters
+
+**Words** — 106 across six sets. Days, months, numbers and time were *extracted*
+from the reference worksheets. Demonstratives (こそあど) and particles were
+*authored*, because both are closed, rigidly structured systems every N5 course
+teaches identically.
+
+**Phrases** — 93 across ten sets, on their own shelf. Five are built on a shared
+pattern: 〜ましょう and 〜てください are mechanical, so learning the shape delivers
+the whole set. The convenience-store set is ordered the way the transaction
+actually happens.
+
+**Context** — five of those sets exist because the English gloss alone misleads,
+so a new `note` column carries a line of usage context, shown beneath the reading
+on the card back:
+
+| Set | Why the gloss is not enough |
+|---|---|
+| Praising someone | さすが assumes a track record; to a beginner it sounds sarcastic |
+| Encouraging someone | 頑張れ is the shouted form — fine from a friend, rough from a stranger |
+| Describing things | One word covers two English ones: きれい is beautiful *and* clean |
+| Rough language | ばか is mild in Osaka and sharp in Tokyo; 死ね is not banter in any register |
+| Personality — がり | 強がり is **not** "a strong person" — it is someone putting on a brave face |
+
+Rough language is included for **recognition, not production**. These appear
+constantly in manga and television whether or not a course admits it, and
+knowing that 死ね is said to wound is safety information. A test asserts every
+card in these five sets has a note of real length.
+
+**One supplied example was corrected rather than encoded.** "I'm a fan — *tsugi
+no wa*" is wrong; 次のは means "the next one". It ships as ファンです.
+
+**The catalogue.** Every shelf now ends with a **More…** deck opening `/decks`,
+which lists all 33 working decks plus eleven designed-but-unbuilt exercises,
+each carrying a status and **what is blocking it**. That last part is what stops
+it becoming a wish list implying work is imminent.
+
+### 5. What extending the content broke
+
+**A data-model error.** `characters` was unique on `glyph` alone, so seeding
+words *overwrote* 41 characters — the particle は replaced the hiragana は, the
+number 一 replaced the kanji 一 — and the Top 200 kanji deck quietly shrank to
+175. Caught by a test asserting that count. Uniqueness is now `(glyph, script)`;
+the migration rebuilds the table preserving ids, so existing attempt history
+still points at the same characters.
+
+**Cards sized by script.** `.deck3d` is a 5:7 playing-card portrait — right for
+a glyph that fills the face, wrong for text. Combined with a script-driven
+width, every phrase card came out at 520 × 728, so 頭悪い sat in the middle of a
+mostly empty card. The face now picks one of four sizes from its **content**;
+1,545 of 1,658 cards fall in the unchanged single-glyph bucket.
+
+**Card and options drifting apart.** The stage centred its two columns, so
+whichever was taller pushed the other's top out of line — and which is taller
+now varies. A kana card sat 23 px above the options, a phrase card 27 px below:
+the same bug in opposite directions. `.deck3d` also rotated about its centre,
+which moves the top edge by an amount proportional to card height. It now pivots
+on its top edge, which cannot move. Measured at **0 px** at every size.
+
+### Corrections made during this cycle
+
+| Issue | Resolution |
+|---|---|
+| `NameError` stopped the app booting | `db.py` used `log` with no logger. It failed loudly at startup, which is the right way to fail |
+| A placeholder shipped into content | A Cyrillic string where 新しい belonged, caught before commit |
+| A stale `build/` shipped a deleted file | setuptools reuses it; the installer now clears it first |
+| Deck titles wrapped | Phrase decks dropped the redundant "Phrases ·" prefix |
+| Catalogue headings were fine print | `.lbl` is 9.5px — right beside a shelf, wrong as a page title |
+| Recap button sat flush against the grid | 22 px separation |
+
+### Known-unfixed, carried forward
+
+| Item | Roadmap |
+|---|---|
+| **ElevenLabs API key still unrotated** — exposed in a session transcript | — |
+| 1,144 kanji have no recorded audio; they synthesise live | N3 |
+| ~30 single-reading on/kun fields statistically likely mislabelled | N6 |
+| Frontend JS untested — now 2,378 lines across six files | Q2 |
+| No test opens a real window | Q8 |
+| Open-ended phrase vocabulary still unsourced | catalogue |
+
+---
+
 ## Earlier cycles
 
 Condensed; see `changelog.md` for the full append-only log.

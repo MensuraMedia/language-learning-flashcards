@@ -4,12 +4,12 @@
 It is the single place a new session (human or agent) reads to know where the
 project stands, what is real, what is assumed, and what to do next.
 
-- **Last updated:** 2026-08-08 03:30 UTC-4
+- **Last updated:** 2026-08-10 01:30 UTC-4
 - **Updated by:** session `30934411` (Claude Opus 5)
 - **Project root:** `/home/user/projects/japanese_practice`
 - **Remote:** https://github.com/MensuraMedia/language-learning-flashcards (public)
-- **Current state:** application runs end to end; **290 tests passing**; 1,459 characters across 17 decks; profiles, save/load and reset shipped; README carries 13 real screenshots
-- **Head:** `4661b01` — pushed
+- **Current state:** installed and running as a desktop app; **341 tests passing**; **1,658 cards across 33 decks** (characters, words and phrases); sound cues, server-side preferences and the exercise catalogue shipped
+- **Head:** pushed to `origin/main`
 
 ---
 
@@ -52,6 +52,10 @@ works on this project **must**:
 | Kanji audio | ❌ **1,144 of 1,459 characters have no recorded clip** — they fall through to live VOICEVOX synthesis (roadmap N3) |
 | Frontend JS tests | ❌ 1,679 lines untested; no runner, `node` not installed (roadmap Q2) |
 | Licence & attribution | ✅ Personal-use licence with §5 attribution for derived language-learning apps; `NOTICE` ships in the distribution |
+| Words & phrases | ✅ 106 words across 6 sets · 93 phrases across 10 sets, 45 of them carrying usage notes |
+| Exercise catalogue | ✅ `/decks` — 33 working decks plus 11 designed-but-unbuilt, each stating its blocker |
+| Correct-answer sound | ✅ Seven cues on Web Audio, master toggle, verified by recording the speaker output |
+| Preferences | ✅ Server-side, per profile — survives navigation and restart |
 | Screenshots | ✅ 13 in `docs/screenshots/`, regenerable via `tools/demo_data.py` |
 | Correct-answer cues | ✅ Seven selectable sounds on Web Audio; master switch; verified by recording the speaker output |
 | Preferences | ✅ Server-side, per profile — survives navigation and restart |
@@ -218,7 +222,30 @@ board, heatmap, streak, weak characters, performance, settings.
    so a reset that tried to clear it would have raised. Plain rowids restart on
    their own once a table is empty.
 
-10. **Documented counts drift.** The docs said 1,453 characters / 1,245 kanji —
+10. **A stale `build/` ships deleted files.** setuptools reuses it across runs,
+    so a file removed from the tree survives into the wheel. It shipped a
+    removed audio asset once. The installer now clears it first.
+
+11. **`localStorage` here accepts writes and drops them.** No exception, no
+    error — the write simply does not persist. It cost three attempts on one
+    feature. Preferences go through `/api/preferences`; nothing that must be
+    read back belongs in browser storage.
+
+12. **A view boundary is a process boundary.** `/study` and `/games` are full
+    page navigations, not SPA routes. Any in-memory state on the dashboard is
+    gone by the time the study view loads.
+
+13. **Sizing by category rather than by content.** Cards were sized by *script*,
+    so a three-character phrase got the same 520×728 face as an eleven-character
+    one. The same error appeared twice more — options sized for kana did not fit
+    kanji meanings, and game tiles did not fit them either. **Size by what is
+    actually on the surface.**
+
+14. **Centring two columns that change height independently.** The card and the
+    options drifted apart in *either* direction depending on which was taller.
+    Align to an edge that does not move.
+
+15. **Documented counts drift.** The docs said 1,453 characters / 1,245 kanji —
     true when written, wrong the moment six characters were added to N5. Now
     asserted by `test_documented_totals_match_the_seed_set`. **Do not quote a
     count in prose without a test behind it.**
@@ -265,14 +292,13 @@ hook (black + ruff).
 | **Kanji audio** | 1,144 of 1,459 characters have no recorded clip and synthesise live on every press — correct, but slower and unvalidated. Which reading to record is also undecided | N3, N3b |
 | **Reading-field accuracy** | ~530 single-reading entries had on'/kun' picked by a lexicon rule measured at 94.6%, implying ~30 mislabels. Card-back annotations only — kanji are graded on meaning — but wrong | N6 |
 | **Stroke counts** | 1,138 kanji have `stroke_count = NULL`; the charts do not carry them | N7 |
-| **Frontend JS untested** | 1,679 lines across three files, no runner, `node` not installed. Three of the four bugs found this project have been in exactly this code | Q2 |
+| **Frontend JS untested** | **2,378 lines across six files**, no runner, `node` not installed. Most bugs found in this project have been in exactly this code | Q2 |
 | **No real-window test** | Everything runs through the Quart test client. Every WebKit-only defect so far — invisible `.view`, three class collisions, `localStorage` throwing — was invisible to it | Q8 |
 | **Pace timing** | Four of the five holds never measured end to end | Q7 |
 | **Below-the-fold panels** | Retention, accuracy-by-set, leeches and session history have not been visually confirmed *together* with real data. The rest have | U3 |
 | **4 of 5 challenge types** | `recall`, `timed`, `listening`, `mixed` are stored, displayed as tags, and never branched on. Only `recognition` exists | M1–M7 |
 | **Scored mode has a dominant strategy** | Flip reveals the answer and is free and unrecorded; skip is strictly dominated by guessing | D1–D4, C1 |
 | **Mastery means recognition** | At a 33% chance floor, `miss_rate ≤ 0.15` is roughly 78% true recall. The meter says "mastered" | C4 |
-| **Preferences are per-browser** | Pace, voice, volume live in `localStorage`, so two profiles on one machine share them | X2 |
 | **Inline `style=` stopgaps** | Still present in `dashboard.html` | U2 |
 | **Packaging** | Not started; an upgrade must also preserve profiles | P1–P3, P7 |
 | **`.claude/rules/` duplicate** | `memory-rules.md` and `universal-memory-rules.md` are byte-identical; kept because the standards forbid removing universal rules | S1 |
@@ -286,6 +312,9 @@ hook (black + ruff).
 - ~~`first_vs_eventual` reads 0%~~ — the demo generator now produces in-session
   repeats, so it reports a real gap.
 - ~~Detached `.btn`~~ — a class collision, not a flex problem. See §4.5.
+- ~~Preferences are per-browser~~ — moved server-side, per profile, 2026-08-09.
+- ~~No local desktop install~~ — `tools/install-desktop.sh`, 2026-08-08.
+- ~~No correct-answer feedback~~ — seven selectable cues on Web Audio.
 
 ---
 

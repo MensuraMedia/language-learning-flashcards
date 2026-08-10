@@ -3,8 +3,8 @@
 Every outstanding item in one place: what is left, why it matters, what it
 depends on, and **how to tell when it is genuinely done**.
 
-- **Last updated:** 2026-08-08
-- **Current state:** 290 tests passing · 1,459 characters seeded · 17 decks · 9 memory boards · 630 narration clips · profiles, save/load and reset shipped
+- **Last updated:** 2026-08-10
+- **Current state:** 341 tests passing · **1,658 cards across 33 decks** · 9 memory boards · 630 narration clips · installed as a desktop app · sound cues · server-side preferences
 - **Companion docs:** [HANDOFF](HANDOFF.md) (session continuity) · [TESTING](TESTING.md) (what is covered) · [ARCHITECTURE](ARCHITECTURE.md) · [VOICE-LAB](VOICE-LAB.md) · [AUDIO](AUDIO.md)
 
 ## How to read this
@@ -195,6 +195,7 @@ Shipped 2026-08-08; these are the follow-ups it created.
 | ~~X2~~ | ~~**Per-profile preferences**~~ | — | ✅ **Done 2026-08-08.** Preferences live in the profile's own database file, so they are per-profile by construction. Covered by `test_preferences_are_per_profile` |
 | **X3** | **Automatic backup before destructive actions.** Reset and replace-on-import both destroy history behind a `confirm()`. A silent snapshot first would make either recoverable | S | A timestamped copy is written before either action, and is documented |
 | **X4** | **Profile rename.** Create and delete exist; rename does not, so a typo means recreating and re-importing | S | Renaming preserves the database and its history |
+| **X7** | **Set-valued answers.** Alternate phrases, politeness registers and typed recall all need a card type that grades a *set* of correct answers. The engine has exactly one correct option per card | L | A card can accept any of several right answers, and the analytics still mean something |
 | **X5** | **Export scope.** The export is whole-profile. Sharing one deck's history, or anonymising before sharing, is not possible | M | Export accepts a difficulty-key filter |
 
 ---

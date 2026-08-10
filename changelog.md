@@ -509,3 +509,23 @@ suspends it when the window loses focus.
   amount proportional to card height, so the drift differed per size. It now
   pivots on `transform-origin: 50% 0%` — the top edge, which cannot move.
 - Measured at **0 px** on both a kana card and a phrase card.
+
+## 2026-08-10T01:40:00Z — Cycle documented
+- `docs/RELEASE-NOTES.md` gains the 2026-08-08 → 08-10 cycle: eighteen commits
+  across four unrelated pieces of work — ownership (licence, install, backup),
+  sound, content beyond single characters, and the defects that extension
+  exposed. Headline numbers before and after, the reasoning behind each
+  decision, the corrections made along the way, and the known-unfixed list.
+- `docs/HANDOFF.md` §1 and §5 brought current; §4 grew from 10 entries to 15,
+  adding the patterns that recurred this cycle: a stale `build/` shipping
+  deleted files, `localStorage` accepting writes and dropping them, a view
+  boundary being a process boundary, sizing by category rather than by content
+  (which caused the same class of bug three times), and centring two columns
+  that change height independently.
+- `docs/ROADMAP.md`: N4 closed, X2 and X6 already closed; new N8, N9 and X7 —
+  the last being the structural blocker shared by alternate phrases, politeness
+  registers and typed recall, all of which need a card type that grades a *set*
+  of correct answers.
+- Every figure quoted was checked against the tree before committing: 1,658
+  cards, 33 decks, 106 words, 93 phrases, 45 notes, 8,635 Python lines, 2,378
+  frontend lines, 36 modules, 27 endpoints, 7 cues.
