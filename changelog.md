@@ -649,3 +649,8 @@ Answering "is this applied universally?" honestly turned up two places it was no
 | 2026-08-11T00:31:00 | Option column sized for the self-grade labels in review mode — measuring absent choices collapsed it to the 96px floor and wrapped 'Missed it' onto two lines |
 | 2026-08-11T00:33:00 | どうして re-glossed 'why (everyday)' so all three why-words carry their register; a bare 'why' option read as the default and was winnable by elimination |
 | 2026-08-11T00:36:00 | Totals updated: 1,703 cards across 37 decks. Tests: content completeness, notes contain Japanese, review ships no options, question words keeps them, self-graded attempts still record. 362 passing |
+| 2026-08-11T01:05:00 | **Card width was measuring text that is not on the card.** The glyph term used 46px where a text card renders at 40, and the meaning term an implied 19.3px where .back-meaning renders at 23 and wraps at 30ch |
+| 2026-08-11T01:08:00 | Width is now `characters × the size that register actually renders at`, across four terms (glyph, reading, meaning, note), with the wrapping registers capped at their own max-width |
+| 2026-08-11T01:10:00 | Effect: Not bad 699px → 460px, Maybe 563 → 420, Question words 621 → 435, Please — てください 586 → 520. No deck is now sized for text that wraps anyway |
+| 2026-08-11T01:14:00 | Verified in the running app: ゆっくり話してください occupies 443px of its 520px card (40.3px per glyph — the constant), and the 32-char 'quite good, better than expected' fits on one line inside 460px |
+| 2026-08-11T01:17:00 | Test reads the constants back out of theme.css and fails if they drift — the failure mode is silent, since neither file is wrong on its own. 364 passing |

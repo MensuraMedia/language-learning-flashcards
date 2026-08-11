@@ -55,25 +55,61 @@ suit 15 phrase cards would trade the look of the thing for an edge case.
 A deck whose prompts are all one or two glyphs keeps the **5 : 7 playing-card
 face at 336 × 470** — that is 93% of the content and the app's visual identity.
 
-Anything longer gets a computed width, applied to every card in the session:
+Anything longer gets a computed width, applied to every card in the session.
+
+**Every term is `characters × the size that register is actually rendered at`.**
+That sounds obvious and was got wrong: the width used to measure the prompt at
+46px when a text card renders it at **40**, and the meaning at an implied 19.3px
+when `.back-meaning` renders at **23** and wraps at 30ch. Sizing a card against
+type that is not on it pushed the Not bad set to 699px — the cap — with a 40px
+glyph adrift in the middle of it.
 
 ```js
-const CARD_GLYPH_PX = 46;      // the size the type will not go below
-const CARD_SIDE_PAD = 40;      // each side
-const forGlyphs  = longestGlyph  * CARD_GLYPH_PX;
-const forAnswer  = longestAnswer * CARD_GLYPH_PX * 0.42;   // Latin is narrower
-const width  = min(700, max(340, ceil(max(forGlyphs, forAnswer))) + CARD_SIDE_PAD * 2);
-const height = anyNote ? 430 : 372;
+const CARD_GLYPH_PX        = 40;    // #glyph on a text card
+const CARD_SOUND_TYPE_PX   = 19;    // #back-sound on a text card
+const CARD_MEANING_TYPE_PX = 23;    // .back-meaning, clamp upper bound
+const CARD_NOTE_TYPE_PX    = 12;    // .mode-phrase .back-note
+const CARD_MEANING_CH      = 30;    // .back-meaning  max-width
+const CARD_NOTE_CH         = 34;    // .back-note     max-width
+const LATIN_ADVANCE        = 0.55;  // one Latin character, in em
+
+const forGlyphs  = longestGlyph * CARD_GLYPH_PX;                     // CJK is full-width
+const forSound   = longestSound * CARD_SOUND_TYPE_PX   * LATIN_ADVANCE;
+const forMeaning = min(longestAnswer, CARD_MEANING_CH) * CARD_MEANING_TYPE_PX * LATIN_ADVANCE;
+const forNote    = min(longestNote,   CARD_NOTE_CH)    * CARD_NOTE_TYPE_PX    * LATIN_ADVANCE;
+
+const width = min(700, max(340, ceil(max(forGlyphs, forSound, forMeaning, forNote))) + 40 * 2);
 ```
+
+Two things carry their weight here:
+
+- **The wrapping registers are capped at their own measure.** `.back-meaning`
+  wraps at 30ch, so widening the card for a 32-character gloss buys width for
+  text that was going to wrap anyway. Without the cap one long meaning inflated
+  the entire deck.
+- **`LATIN_ADVANCE` is deliberately generous** at 0.55em. A card a little wide
+  is unremarkable; a clipped one is a defect. Measured: the 32-character
+  "quite good, better than expected" renders on one line inside the 460px it is
+  given, so the estimate has headroom.
+
+`tests/test_ui_format.py` reads these constants back out of `theme.css` and
+fails if they drift, because the failure mode is silent — the card simply comes
+out the wrong size and nobody can tell by reading either file alone.
 
 | Longest prompt in the session | Card width | Example |
 |---|---:|---|
-| ≤ 2 glyphs | 336 × 470 (5 : 7) | any kana or kanji deck |
-| 3–6 | 420px | 頭悪い · 教えてください |
-| 9 | 494px | レシートをください |
-| 11 | 586px | ゆっくり話してください |
+| ≤ 2 glyphs, no note | 336 × 470 (5 : 7) | any kana or kanji deck |
+| up to 7 glyphs / 25-char meaning | 420px | Maybe · Seriously · Let's — ましょう |
+| 5 glyphs / 28-char meaning | 435px | Question words |
+| 9 glyphs | 440px | At the convenience store |
+| 8 glyphs / 32-char meaning | 460px | Not bad · Praising someone · Particles |
+| 11 glyphs | 520px | ゆっくり話してください · Getting by |
 
-Prompt type is a **fixed 40px**, not a clamp: the width was chosen so it fits.
+Measured in the running app: ゆっくり話してください occupies 443px of the 520px
+card — **40.3px per glyph**, which is the constant, and 38px of clear space each
+side.
+
+Prompt type is a **fixed 40px**, not a clamp: the width is computed so it fits.
 
 ## 3. Answer options
 
@@ -181,8 +217,9 @@ When a new set arrives, check it against this list before shipping:
 ### Headroom
 
 The card width is computed, so there is no bucket to outgrow — it scales until
-it hits the **700px cap**, which is reached at roughly **14 glyphs**. The longest
-prompt in the content today is ゆっくり話してください at 11, giving 586px.
+it hits the **700px cap**, which at 40px per glyph is reached at **15 glyphs**.
+The longest prompt in the content today is ゆっくり話してください at 11, giving
+520px.
 
 Past 14 glyphs the type would have to wrap, and that is the point at which a
 second line becomes the right answer rather than a wider card.

@@ -100,3 +100,70 @@ def test_card_height_constants_agree_with_the_backs_measure():
     assert js.group(1) == css.group(
         1
     ), f"study.js says {js.group(1)}ch, theme.css says {css.group(1)}ch"
+
+
+def test_card_width_constants_match_the_type_they_measure():
+    """Each width term must use the size its register is actually rendered at.
+
+    The card is sized by `characters × type size`. When those constants drift
+    from the CSS the card is sized against type that is not on it — which is how
+    the Not bad set reached the 700px cap with a 40px glyph adrift in the middle
+    of it, because the glyph term used 46px and the meaning term used an implied
+    19.3px against a 23px render.
+    """
+    study = (ROOT / "static/js/study.js").read_text()
+
+    def js(name):
+        match = re.search(rf"{name}\s*=\s*([\d.]+)", study)
+        assert match, f"{name} is not defined in study.js"
+        return float(match.group(1))
+
+    # The prompt on a text card.
+    css_glyph = re.search(
+        r'body\[data-card-size="text"\] #glyph,\s*'
+        r'body\[data-card-size="text"\] #back-glyph \{[^}]*font-size:\s*(\d+)px',
+        CSS,
+        re.S,
+    )
+    assert css_glyph, "could not find the text-card glyph size"
+    assert js("CARD_GLYPH_PX") == float(css_glyph.group(1))
+
+    # The reading line.
+    css_sound = re.search(r'body\[data-card-size="text"\] #back-sound \{ font-size: (\d+)px', CSS)
+    assert css_sound, "could not find the text-card reading size"
+    assert js("CARD_SOUND_TYPE_PX") == float(css_sound.group(1))
+
+    # The meaning: upper bound of its clamp, and the measure it wraps at.
+    css_meaning = re.search(
+        r"\.back-meaning \{[^}]*font-size:\s*clamp\([^,]+,[^,]+,\s*(\d+)px\)[^}]*"
+        r"max-width:\s*(\d+)ch",
+        CSS,
+        re.S,
+    )
+    assert css_meaning, "could not find .back-meaning's type and measure"
+    assert js("CARD_MEANING_TYPE_PX") == float(css_meaning.group(1))
+    assert js("CARD_MEANING_CH") == float(css_meaning.group(2))
+
+    # The note, in the phrase mode these sets render in.
+    css_note = re.search(
+        r"\.mode-phrase \.back-note \{ max-width: (\d+)ch; font-size: (\d+)px", CSS
+    )
+    assert css_note, "could not find .mode-phrase .back-note"
+    assert js("CARD_NOTE_CH") == float(css_note.group(1))
+    assert js("CARD_NOTE_TYPE_PX") == float(css_note.group(2))
+
+
+def test_no_deck_is_sized_against_text_that_wraps_anyway():
+    """Widening past a register's own measure buys nothing.
+
+    `.back-meaning` wraps at 30ch, so a 32-character gloss must not make the
+    card wider than a 30-character one. Without the cap, one long meaning
+    inflated the whole deck.
+    """
+    study = (ROOT / "static/js/study.js").read_text()
+    for term, cap in (("forMeaning", "CARD_MEANING_CH"), ("forNote", "CARD_NOTE_CH")):
+        line = re.search(rf"const {term} =([^;]+);", study, re.S)
+        assert line, f"{term} is not computed"
+        assert "Math.min(" in line.group(1) and cap in line.group(
+            1
+        ), f"{term} is not capped at {cap}"

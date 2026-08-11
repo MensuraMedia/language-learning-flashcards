@@ -693,7 +693,18 @@ document.addEventListener("keydown", (event) => {
 
 // The glyph size we refuse to go below, and roughly the width one CJK glyph
 // occupies at it. Latin readings are far narrower, so the glyph count dominates.
-const CARD_GLYPH_PX = 46;
+// Width constants. Every one of these is the size the register is *actually*
+// rendered at in theme.css — not a proxy. Sizing a card against a number that
+// is not the type on it is how the Not bad set reached the 700px cap while its
+// glyph sat at 40px.
+const CARD_GLYPH_PX = 40;          // body[data-card-size="text"] #glyph
+const CARD_SOUND_TYPE_PX = 19;     // body[data-card-size="text"] #back-sound
+const CARD_MEANING_TYPE_PX = 23;   // .back-meaning, clamp upper bound
+const CARD_NOTE_TYPE_PX = 12;      // .mode-phrase .back-note
+const CARD_NOTE_CH = 34;           // .mode-phrase .back-note max-width
+//: Advance of one Latin character, in em. Deliberately generous — a card a
+//: little wide is unremarkable, a clipped one is a defect.
+const LATIN_ADVANCE = 0.55;
 const CARD_SIDE_PAD = 40;          // each side
 const CARD_MAX_PX = 700;
 
@@ -762,11 +773,34 @@ function sizeCardsForSession() {
     return;
   }
 
-  // Width: the longest prompt on one line, or the longest answer, whichever needs
-  // more. The answer is Latin, so roughly half the width per character.
+  // Width: wide enough for the widest *register*, measured at the size that
+  // register is actually rendered at.
+  //
+  // The previous version measured both terms against CARD_GLYPH_PX, which is
+  // neither register's real size: the prompt on a text card renders at 40px,
+  // not 46, and the meaning at 23px, not the 19.3 implied by 46 × 0.42. It also
+  // widened for the full meaning even though `.back-meaning` wraps at 30ch, so
+  // a long gloss bought width for text that was going to wrap anyway. The Not
+  // bad set came out at 699px — the cap — with a 40px glyph adrift in the
+  // middle of it.
+  //
+  // Each term is `characters × the size that register renders at`. Capping the
+  // wrapping registers at their own measure is what keeps a long gloss from
+  // inflating the card. **These constants mirror theme.css and must move with
+  // it** — see docs/CARD-DIMENSIONS.md.
+  const longestSound = cards.reduce((n, c) => Math.max(n, (c.romaji || "").length), 0);
+  const longestNote = cards.reduce((n, c) => Math.max(n, (c.note || "").length), 0);
+
   const forGlyphs = longestGlyph * CARD_GLYPH_PX;
-  const forAnswer = longestAnswer * (CARD_GLYPH_PX * 0.42);
-  const width = Math.min(CARD_MAX_PX, Math.max(340, Math.ceil(Math.max(forGlyphs, forAnswer))) + CARD_SIDE_PAD * 2);
+  const forSound = longestSound * CARD_SOUND_TYPE_PX * LATIN_ADVANCE;
+  const forMeaning = Math.min(longestAnswer, CARD_MEANING_CH) * CARD_MEANING_TYPE_PX * LATIN_ADVANCE;
+  const forNote = Math.min(longestNote, CARD_NOTE_CH) * CARD_NOTE_TYPE_PX * LATIN_ADVANCE;
+
+  const widest = Math.max(forGlyphs, forSound, forMeaning, forNote);
+  const width = Math.min(
+    CARD_MAX_PX,
+    Math.max(340, Math.ceil(widest)) + CARD_SIDE_PAD * 2
+  );
 
   // Height is built from the registers the back will actually show, rather than
   // guessed from whether a note exists. The English translation was added to
