@@ -639,3 +639,6 @@ Answering "is this applied universally?" honestly turned up two places it was no
 | 2026-08-10T21:28:00 | Kanji accent applied to the All-exercises kanji shelves via an explicit flag rather than a title string match |
 | 2026-08-10T21:32:00 | docs/UI-FORMAT.md written — the formatting contract for dashboard, shelves, titles, padding/margin, card registers, height arithmetic and the accent system, with the known remaining inconsistencies listed |
 | 2026-08-10T21:35:00 | Tests: deck_title/script contract, drill script inference, and that meaning+romaji reach every phrase card. 350 passing |
+| 2026-08-10T22:25:00 | Local backup set `20260810-2225` taken — bundle (52 commits), worktree tarball (2,534 members), userdata tarball. Tree committed and pushed first, per the recipe |
+| 2026-08-10T22:28:00 | Backup verified by cloning the bundle to a scratch tree: 52 commits, 638 audio files, 15 content modules, 13 screenshots, clean tree, 357/357 tests passing |
+| 2026-08-10T22:30:00 | Credential scan across all three artefacts and every decompressed member — no live GitHub or ElevenLabs value present. SHA256SUMS.txt regenerated; RESTORE.md points at the new set |
