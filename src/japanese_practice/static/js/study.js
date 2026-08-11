@@ -58,6 +58,8 @@ const state = {
   flipped: false,
   shownAt: 0,
   scheme: "accuracy",
+  // False in review mode: no options are dealt and the learner self-grades.
+  dealsChoices: true,
   graded: new Set(),
   outcomes: new Map(),   // index -> {glyph, answer, correct, skipped}
   furthest: 0,           // deepest card reached; Next is live only behind it
@@ -203,6 +205,11 @@ function renderChoices(card) {
   host.innerHTML = "";
   state.locked = state.graded.has(state.index);
 
+  // Review mode: no options, so the learner grades themselves. Deliberately two
+  // buttons rather than a single "next" — a self-graded deck that never records
+  // a miss teaches nothing and feeds nothing to the weakness analytics.
+  if (!state.dealsChoices) return renderSelfGrade();
+
   const readings = card.choice_readings || {};
   (card.choices || []).forEach((option, i) => {
     const button = el("button", "choice");
@@ -221,6 +228,42 @@ function renderChoices(card) {
     button.addEventListener("click", () => choose(i));
     host.appendChild(button);
   });
+}
+
+// The two self-grade buttons, shown instead of answer options in review mode.
+//
+// Both stay disabled until the card has been flipped. Grading yourself before
+// seeing the answer is not self-assessment, it is a coin toss, and it would put
+// noise into the SRS schedule these sets are graded on.
+function renderSelfGrade() {
+  const host = $("choices");
+  const answered = state.graded.has(state.index);
+
+  [
+    { label: "Got it", key: "1", correct: true, cls: "sg-yes" },
+    { label: "Missed it", key: "2", correct: false, cls: "sg-no" },
+  ].forEach(({ label, key, correct, cls }) => {
+    const button = el("button", `choice self-grade ${cls}`);
+    button.type = "button";
+    button.innerHTML = `<span class="key">${key}</span><span class="txt">${label}</span>`;
+    button.disabled = answered || !state.flipped;
+    button.title = state.flipped ? "" : "Flip the card first";
+    button.addEventListener("click", () => selfGrade(correct));
+    host.appendChild(button);
+  });
+
+  const hint = el("p", "sg-hint");
+  hint.textContent = state.flipped
+    ? "How did you do?"
+    : "Flip the card, then grade yourself";
+  host.appendChild(hint);
+}
+
+function selfGrade(correct) {
+  if (state.locked || !state.flipped) return;
+  state.locked = true;
+  [...$("choices").querySelectorAll("button")].forEach((b) => (b.disabled = true));
+  grade(correct, { given: null });
 }
 
 function choose(index) {
@@ -250,6 +293,12 @@ function choose(index) {
 function flip() {
   state.flipped = !state.flipped;
   $("card").classList.toggle("flipped", state.flipped);
+  // The self-grade buttons are disabled until the answer has been seen, so the
+  // flip is what arms them.
+  if (!state.dealsChoices && !state.locked) {
+    $("choices").innerHTML = "";
+    renderSelfGrade();
+  }
 }
 
 // ── navigation ───────────────────────────────────────────────────────────────
@@ -583,12 +632,13 @@ function toggleHelp() {
 const KEYMAP = {
   Space: flip,
   Enter: flip,
-  Digit1: () => choose(0),
-  Digit2: () => choose(1),
-  Digit3: () => choose(2),
-  Numpad1: () => choose(0),
-  Numpad2: () => choose(1),
-  Numpad3: () => choose(2),
+  // In review mode 1 and 2 are "Got it" / "Missed it"; there is no third.
+  Digit1: () => (state.dealsChoices ? choose(0) : selfGrade(true)),
+  Digit2: () => (state.dealsChoices ? choose(1) : selfGrade(false)),
+  Digit3: () => state.dealsChoices && choose(2),
+  Numpad1: () => (state.dealsChoices ? choose(0) : selfGrade(true)),
+  Numpad2: () => (state.dealsChoices ? choose(1) : selfGrade(false)),
+  Numpad3: () => state.dealsChoices && choose(2),
   KeyS: skipCard,
   ArrowRight: goNext,
   ArrowLeft: goPrevious,
@@ -669,9 +719,22 @@ const CARD_MEANING_CH = 30;        // the back's measure — must match .back-me
 // slowly".
 const OPTION_CHAR_PX = 8.4;        // a Latin character at the option's type size
 const OPTION_SIDE_PAD = 44;
+// Wide enough for "Missed it" on one line, and for the hint beneath it. The two
+// self-grade labels are fixed, so unlike the answer column this is a constant.
+const SELF_GRADE_W = 176;
 
 function sizeOptionsForSession() {
   const cards = state.cards || [];
+  // Review mode deals no options, so measuring them yields 1 and the column
+  // collapses to its 96px floor — which wrapped "Missed it" onto two lines and
+  // the hint onto three. Size for the labels that are actually there.
+  if (!state.dealsChoices) {
+    const host = $("choices");
+    if (host) host.style.setProperty("--option-w", `${SELF_GRADE_W}px`);
+    document.body.dataset.optionSize = "roomy";
+    return;
+  }
+
   const longest = cards.reduce(
     (n, c) => Math.max(n, ...(c.choices || []).map((o) => String(o).length)),
     1
@@ -757,6 +820,8 @@ async function start() {
     state.sessionId = res.session_id;
     state.cards = res.cards;
     state.scheme = res.scoring;
+    state.dealsChoices = res.deals_choices !== false;
+    document.body.classList.toggle("mode-review", !state.dealsChoices);
     sizeCardsForSession();
     // The deck's name, as it reads on the shelf. The raw key and the mode drop
     // to the sub-line beneath it.

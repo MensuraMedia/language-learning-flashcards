@@ -18,7 +18,27 @@ from .kana import to_romaji
 from .models import Character, Session
 from .scoring import next_review, score_attempt, validate_scheme
 
-CHALLENGES = ("recognition", "recall", "timed", "listening", "mixed")
+#: ``review`` is the odd one out: it deals **no answer options**, and the
+#: learner grades themselves after flipping.
+#:
+#: It exists because multiple choice cannot test a near-synonym set. Given
+#: たぶん against options "probably / might / possibly / who knows", a learner
+#: is not being asked whether they know たぶん — they are being asked which
+#: English gloss the author happened to type, and they can often win by
+#: elimination without knowing any of the four. The distinction those sets
+#: teach is one of *degree*, and degree does not survive being turned into a
+#: four-way choice.
+CHALLENGES = ("recognition", "recall", "timed", "listening", "mixed", "review")
+
+#: Challenges that deal no options. Kept as a set so the check reads as a
+#: property of the challenge rather than a string comparison scattered about.
+NO_CHOICE_CHALLENGES = frozenset({"review"})
+
+
+def deals_choices(challenge: str) -> bool:
+    """Whether this challenge presents answer options at all."""
+    return challenge not in NO_CHOICE_CHALLENGES
+
 
 DEFAULT_DECK_LIMIT = 20
 

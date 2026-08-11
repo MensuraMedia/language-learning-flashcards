@@ -18,8 +18,8 @@ recalled. Where something is unverified or known-weak it says so.
 
 | Dimension | Count | Notes |
 |---|---:|---|
-| Cards seeded | **1,658** | 104 hiragana · 104 katakana · 1,251 kanji · 106 words · 93 phrases |
-| Study decks | **33** | 5 hiragana · 5 katakana · 5 JLPT · 2 volume · 6 word sets · 10 phrase sets |
+| Cards seeded | **1,703** | 104 hiragana · 104 katakana · 1,251 kanji · 106 words · 93 phrases · 45 general words |
+| Study decks | **37** | 5 hiragana · 5 katakana · 5 JLPT · 2 volume · 6 word sets · 10 phrase sets · 4 general words |
 | Memory boards | **9** | 3 modes × 3 scripts |
 | Confusion pairs | **84** | 21 hiragana · 24 katakana · 39 kanji |
 | Scoring schemes | **4** | accuracy · speed · streak · SRS |
@@ -46,6 +46,7 @@ one scores automatically and flips the card, so a wrong answer still teaches.
 | **Front face purity** | The glyph alone — no romaji, meaning or hint. Asserted by a test that parses the markup |
 | **True 3D flip** | `rotateY(180deg)` with `backface-visibility`, 0.55 s |
 | **Multiple choice** | 3 options, server-shuffled so the answer is never in a fixed slot |
+| **Review mode** | Some decks deal **no options** — read, flip, then grade yourself with *Got it* / *Missed it*. See [Review mode](#review-mode-self-graded) |
 | **Verdict hold** | Correct 1.9 s · wrong 2.9 s at the default pace. A wrong answer is when the learner actually studies, so it gets longer |
 | **Pace slider** | Five steps scaling the hold 1.0× → 0.2×, so a known deck moves at the learner's speed rather than beginner timing. See below |
 | **Skip** | Scores −1 and records `skipped=1` — an honest "I don't know" |
@@ -136,6 +137,28 @@ Transliteration is done by `kana.py` in wapuro romaji — long vowels written ou
 (シュウ → `shuu`) rather than macronned, matching the reference charts and
 round-tripping back to the same kana. Option readings are **display only**;
 grading still compares the option text against the answer.
+
+### Review mode (self-graded)
+
+Three of the General Words sets — Maybe, Not bad, Seriously — deal no answer
+options at all.
+
+Multiple choice cannot test a near-synonym set. Given たぶん against "probably /
+might / possibly / who knows", a learner is not being asked whether they know
+たぶん; they are being asked which English gloss the author happened to type, and
+they can often win by elimination without knowing any of the four. What those
+sets teach is a difference of *degree*, and degree does not survive being turned
+into a four-way choice.
+
+| Property | Detail |
+|---|---|
+| **No options shipped** | The API omits them entirely rather than hiding them client-side — the answer would otherwise sit in the payload for a mode whose premise is self-honesty |
+| **Grade after the reveal** | Both buttons stay disabled until the card is flipped. Grading before seeing the answer is a coin toss, and it would put noise into the SRS schedule these sets are graded on |
+| **Two outcomes, not one** | *Got it* / *Missed it*, keys `1` and `2`. A self-graded deck with only a "next" button never records a miss, so it teaches nothing and feeds nothing to the weakness analytics |
+| **Same pipeline** | A self-graded attempt is recorded exactly like any other, so SRS scheduling, streaks and the weak-character heatmap all work unchanged |
+
+Set by `challenge=review`; `session.deals_choices()` is the single place that
+decides, and the deck opens in it from the shelf.
 
 ### Distractor quality
 
@@ -493,6 +516,28 @@ deliberately still absent, and stays on the catalogue as unbuilt.
 Phrase deck titles drop the script prefix: the shelf is already called Phrase
 Sets, so "At the convenience store" says what the deck is without wrapping the
 card onto two lines.
+
+### General Words
+
+Four sets on their own shelf, for the case where **English has one word and
+Japanese has a dozen**. Every card carries an example sentence, because the
+distinction these sets teach is invisible in a gloss.
+
+| Set | Cards | Mode | What it teaches |
+|---|---:|---|---|
+| **Maybe — degrees of certainty** | 10 | review | A confidence scale, ordered: たぶん (~80%) → かもしれない (a coin toss) → さあ (declining to guess). Picking the wrong one either overstates a guess or undersells a near-certainty |
+| **Not bad — faint praise** | 10 | review | Warmest to most grudging: なかなか (better than expected) → まあまあ (the honest middle) → まし (least bad option). Japanese is rich here because direct praise can sound overbearing |
+| **Seriously — surprise and disbelief** | 11 | review | Neutral to slang: 本当に (safe anywhere) → マジで (friends only) → ガチで. **Register is the whole lesson** — the wrong one in a meeting is a real mistake |
+| **Question words** | 14 | multiple choice | 何 · どこ · 誰 · いつ · なぜ/どうして/なんで · どう · どれ/どっち/どの · いくら · いくつ. Genuinely distinct meanings, so this one is graded normally |
+
+The three near-synonym sets open in [review mode](#review-mode-self-graded).
+Question words does not, because its meanings actually differ — though the three
+"why" words are each glossed with their register (`why (formal)`, `why
+(everyday)`, `why (casual)`) so none of them reads as the safe default answer.
+
+Notes here carry the sentence in **Japanese with an English gloss**, not a
+paraphrase — a test asserts every note contains Japanese, because a note that
+only restates the meaning is the exact thing these cards exist to avoid.
 
 ### Cards that carry context
 

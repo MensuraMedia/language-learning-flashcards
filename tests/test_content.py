@@ -283,9 +283,48 @@ def test_documented_totals_match_the_seed_set():
     kanji = [s for s in ALL_SEEDS if s.script == "kanji"]
     vocab = [s for s in ALL_SEEDS if s.script == "vocab"]
     phrases = [s for s in ALL_SEEDS if s.script == "phrase"]
-    assert len(ALL_SEEDS) == 1658
+    assert len(ALL_SEEDS) == 1703
     assert len(kanji) == 1251
     assert len(vocab) == 106
-    assert len(phrases) == 93
+    # 93 phrase/social cards plus the 45 General Words cards, which reuse the
+    # phrase script — they are short expressions, graded on meaning, and need
+    # the wide card and the note that the phrase machinery already provides.
+    assert len(phrases) == 138
     by_level = Counter(s.jlpt_level for s in kanji)
     assert by_level == {"N5": 113, "N4": 169, "N3": 396, "N2": 236, "N1": 337}
+
+
+def test_general_words_sets_are_complete_and_carry_a_sentence():
+    """Every General Words card must show a word in use, not just a gloss.
+
+    These sets exist because the English gloss is the *problem*: four words all
+    glossed "maybe" are indistinguishable until you see each one working. A card
+    without its example sentence teaches nothing the gloss did not.
+    """
+    from japanese_practice.content.general import GENERAL
+
+    by_set = Counter(card.category for card in GENERAL)
+    assert by_set == {
+        "Maybe — degrees of certainty": 10,
+        "Not bad — faint praise": 10,
+        "Seriously — surprise and disbelief": 11,
+        "Question words": 14,
+    }
+
+    for card in GENERAL:
+        assert card.note, f"{card.glyph} has no example sentence"
+        assert card.romaji, f"{card.glyph} has no reading"
+        assert card.meaning, f"{card.glyph} has no meaning"
+        # The note must contain Japanese — a note that only paraphrases the
+        # gloss in English is the very thing these cards exist to avoid.
+        assert any(
+            "぀" <= ch <= "ヿ" or "一" <= ch <= "鿿" for ch in card.note
+        ), f"{card.glyph}'s note carries no Japanese example"
+
+
+def test_general_words_glyphs_are_unique_within_the_set():
+    from japanese_practice.content.general import GENERAL
+
+    glyphs = [card.glyph for card in GENERAL]
+    duplicates = [g for g, n in Counter(glyphs).items() if n > 1]
+    assert duplicates == [], f"duplicate glyphs: {duplicates}"

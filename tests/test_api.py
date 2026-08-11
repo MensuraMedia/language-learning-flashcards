@@ -70,6 +70,7 @@ async def test_segments_lists_difficulties_with_live_counts(client):
 async def test_segments_expose_all_three_axes(client):
     payload = await (await client.get("/api/segments")).get_json()
     assert set(payload["challenges"]) == {
+        "review",
         "recognition",
         "recall",
         "timed",
@@ -719,7 +720,7 @@ async def test_a_word_card_is_graded_on_meaning_against_its_own_set(client):
 
 async def test_catalogue_lists_what_works_and_what_does_not(client):
     payload = await (await client.get("/api/catalogue")).get_json()
-    assert payload["counts"]["available"] == 33
+    assert payload["counts"]["available"] == 37
     assert len(payload["planned"]) == 11
     names = {item["name"] for item in payload["planned"]}
     assert "Alternate phrases" in names
@@ -953,3 +954,54 @@ async def test_meaning_reaches_the_card_so_the_back_can_show_english(client):
     cards = (await res.get_json())["cards"]
     assert all(c["meaning"] for c in cards), "a phrase card with no English"
     assert all(c["romaji"] for c in cards), "a phrase card with no reading"
+
+
+async def test_review_mode_deals_no_options(client):
+    """The near-synonym sets are self-graded, and must ship no answers.
+
+    Building choices and hiding them client-side would leave the answer sitting
+    in the payload for a mode whose entire premise is self-honesty — and would
+    make an empty deck indistinguishable from a deliberate one.
+    """
+    res = await client.post(
+        "/api/session",
+        json={"difficulty": "phrase:maybe", "challenge": "review", "limit": 5},
+    )
+    assert res.status_code == 200
+    body = await res.get_json()
+    assert body["deals_choices"] is False
+    assert body["deck_title"] == "Maybe — degrees of certainty"
+    for card in body["cards"]:
+        assert card["choices"] == [], "review mode shipped answer options"
+        assert card["note"], "a review card with no example sentence"
+
+
+async def test_question_words_still_get_multiple_choice(client):
+    """The one General Words set whose meanings are genuinely distinct."""
+    res = await client.post(
+        "/api/session",
+        json={"difficulty": "phrase:question", "challenge": "recognition", "limit": 5},
+    )
+    body = await res.get_json()
+    assert body["deals_choices"] is True
+    assert body["deck_title"] == "Question words"
+    for card in body["cards"]:
+        assert len(card["choices"]) >= 2, "question words lost their options"
+        assert card["answer"] in card["choices"]
+
+
+async def test_a_review_session_still_records_attempts(client):
+    """Self-grading must feed the same analytics as any other answer."""
+    res = await client.post(
+        "/api/session",
+        json={"difficulty": "phrase:seriously", "challenge": "review", "limit": 3},
+    )
+    body = await res.get_json()
+    session_id, card = body["session_id"], body["cards"][0]
+
+    res = await client.post(
+        f"/api/session/{session_id}/attempt",
+        json={"character_id": card["id"], "correct": True},
+    )
+    assert res.status_code == 200
+    assert (await res.get_json())["total"] == 1

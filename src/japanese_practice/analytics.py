@@ -662,6 +662,39 @@ DECK_META: dict[str, dict[str, str]] = {
         "challenge": "recall",
         "scoring": "streak",
     },
+    # ── General words ───────────────────────────────────────────────────────
+    # Three near-synonym sets open in `review`: with every option meaning
+    # roughly the same thing, multiple choice would grade a learner's knack for
+    # spotting which gloss was typed rather than whether they know the word.
+    # Question words are genuinely distinct, so that set is graded normally.
+    "phrase:maybe": {
+        "shelf": "general",
+        "rung": "MAYBE",
+        "jp": "たぶん・かも",
+        "challenge": "review",
+        "scoring": "srs",
+    },
+    "phrase:notbad": {
+        "shelf": "general",
+        "rung": "NOT BAD",
+        "jp": "悪くない",
+        "challenge": "review",
+        "scoring": "srs",
+    },
+    "phrase:seriously": {
+        "shelf": "general",
+        "rung": "SERIOUSLY",
+        "jp": "本当に・マジで",
+        "challenge": "review",
+        "scoring": "srs",
+    },
+    "phrase:question": {
+        "shelf": "general",
+        "rung": "QUESTION WORDS",
+        "jp": "疑問詞",
+        "challenge": "recognition",
+        "scoring": "accuracy",
+    },
     "kanji:top500": {
         "shelf": "vol",
         "rung": "TOP 500",

@@ -133,10 +133,18 @@ async def create_session() -> Any:
     if not cards:
         return _error("empty_deck", f"no characters for {difficulty!r}", 404)
 
+    # `review` deals no options — the learner reads, flips and grades themselves.
+    # Building choices anyway and hiding them client-side would be worse than
+    # pointless: the answer would sit in the payload, visible to anyone who
+    # opened the network tab, for a mode whose whole premise is self-honesty.
+    deals_choices = session_engine.deals_choices(challenge)
     payload = []
     for card in cards:
-        choices = await session_engine.build_choices(db, card)
-        readings = await session_engine.choice_readings(db, card.script, choices)
+        if deals_choices:
+            choices = await session_engine.build_choices(db, card)
+            readings = await session_engine.choice_readings(db, card.script, choices)
+        else:
+            choices, readings = [], {}
         payload.append(_card(card, choices, readings))
 
     return jsonify(
@@ -145,6 +153,10 @@ async def create_session() -> Any:
             "challenge": challenge,
             "scoring": scoring,
             "difficulty": difficulty,
+            # Lets the study view choose its grading UI without inferring it
+            # from an empty choices array, which would be indistinguishable
+            # from a deck that simply failed to build any.
+            "deals_choices": deals_choices,
             # The deck's name as a learner knows it — "Please — てください", not
             # "phrase:requests". The study view titles itself with this, so the
             # deck you picked on the shelf is still named on the table.

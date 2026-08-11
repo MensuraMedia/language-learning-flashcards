@@ -2,6 +2,17 @@
 
 Architectural and design decisions with rationale. Newest first.
 
+## 2026-08-11: Near-synonym sets are self-graded, not multiple choice
+- **Reason:** Multiple choice cannot test a set whose members all mean roughly the same thing. Given たぶん against "probably / might / possibly / who knows", the learner is asked which English gloss the author typed, not whether they know たぶん — and elimination often wins without any knowledge. The lesson in these sets is a difference of *degree*, which does not survive being turned into a four-way choice.
+- **Decision:** A new `review` challenge that deals no options; the learner flips and grades themselves with Got it / Missed it. `session.deals_choices()` is the single place that decides. Options are **omitted from the API payload**, not hidden client-side — the answer would otherwise be sitting in the response for a mode whose whole premise is self-honesty.
+- **Alternatives considered:** Typed recall (the right long-term answer, already on the roadmap as M1, but the input mode does not exist yet); drawing distractors from *other* sets (makes the card trivially easy — "probably" against "chopsticks, please"); shipping them as MC anyway (tests the gloss, not the word).
+- **Impact:** Both buttons stay disabled until the flip, so a grade is always given after seeing the answer. Self-graded attempts flow through the same `record_attempt` path, so SRS, streaks and the weakness heatmap are unaffected. Question words keeps MC because its meanings genuinely differ.
+
+## 2026-08-11: General Words reuses the phrase script rather than adding one
+- **Reason:** These are short expressions, graded on meaning, needing the wide card and a note — every one of which the phrase machinery already provides. A new script would have touched the audio clip path, `MEANING_SCRIPTS`, the heatmap and the seed uniqueness constraint for no gain.
+- **Decision:** `script="phrase"` with new categories; the shelf is decided by `DECK_META`, which is keyed by difficulty rather than script, so a separate shelf costs nothing.
+- **Impact:** The phrase count in the documented totals now includes 45 General Words cards — noted at the assertion so the figure is not read as a phrase-set regression.
+
 ## 2026-08-10: Headings are named by role, not styled by specificity
 - **Reason:** `.lbl` served as both a gauge label and a section title. `#dashboard .lbl { font-size: 12px }`, added to lift chrome text, out-specified the heading rule by an ID and silently captured every shelf heading. The heading rule was correct and lost anyway.
 - **Decision:** Headings use `.sec-title` / `.sec-desc`, which no gauge rule can match. Every size derives from a token on `:root`; per-view overrides may change *rhythm* (margins) but never *type*. Three ranks only — section 19/13.5, panel 15/12.5, chrome 9.5–12.

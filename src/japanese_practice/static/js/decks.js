@@ -26,12 +26,16 @@ const SHELVES = [
   { id: "jlpt", title: "Kanji — proficiency", note: "JLPT N5 → N1", kanji: true },
   { id: "vol", title: "Kanji — volume", note: "Top 200 → Top 500 by teaching frequency", kanji: true },
   { id: "words", title: "Words & grammar", note: "whole words rather than single characters" },
+  { id: "general", title: "General words", note: "one English word, many Japanese ones — each card carries an example sentence" },
   { id: "phrases", title: "Phrase sets", note: "one pattern, many phrases — learn the shape and the set follows" },
 ];
 
 function deckNode(deck) {
   const pct = deck.count ? Math.round((deck.mastered / deck.count) * 100) : 0;
-  const wide = deck.shelf === "words" ? " deck-wide" : deck.shelf === "phrases" ? " deck-phrase" : "";
+  const wide =
+    deck.shelf === "words" ? " deck-wide"
+    : deck.shelf === "phrases" || deck.shelf === "general" ? " deck-phrase"
+    : "";
   const node = el("button", `deck${wide}`);
   node.type = "button";
   node.setAttribute(

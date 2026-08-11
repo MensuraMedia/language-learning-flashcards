@@ -8,7 +8,7 @@ project stands, what is real, what is assumed, and what to do next.
 - **Updated by:** session `30934411` (Claude Opus 5)
 - **Project root:** `/home/user/projects/japanese_practice`
 - **Remote:** https://github.com/MensuraMedia/language-learning-flashcards (public)
-- **Current state:** installed and running as a desktop app; **341 tests passing**; **1,658 cards across 33 decks** (characters, words and phrases); sound cues, server-side preferences and the exercise catalogue shipped
+- **Current state:** installed and running as a desktop app; **362 tests passing**; **1,703 cards across 37 decks** (characters, words, phrases and general words); sound cues, server-side preferences, the exercise catalogue and self-graded review mode shipped
 - **Head:** pushed to `origin/main`
 
 ---

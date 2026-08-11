@@ -3698,3 +3698,41 @@ body[data-option-size="roomy"].theme-kanji .choice { min-height: 92px; }
 .vol-inline { margin-top: 10px; }
 .vol-inline::-webkit-slider-runnable-track { background: var(--panel-2); }
 .vol-inline::-moz-range-track { background: var(--panel-2); }
+
+/* ==========================================================================
+   REVIEW MODE — self-graded, no answer options
+   Used by the near-synonym sets on the General Words shelf, where a four-way
+   choice between words that all mean "probably" tests nothing.
+   ========================================================================== */
+
+/* The two buttons replace the option column, so they inherit its width but read
+   as a verdict rather than a choice: wider, shorter, and colour-coded. */
+.self-grade {
+  min-height: 62px;
+  justify-content: flex-start;
+  gap: 12px;
+}
+.self-grade .txt { font-size: 15px; font-weight: 600; }
+
+/* Disabled until the card is flipped. The dimming has to be obvious — a learner
+   who cannot see why a button is inert will click it repeatedly. */
+.self-grade:disabled { opacity: .38; cursor: not-allowed; }
+
+.sg-yes:not(:disabled) { border-color: var(--amber-line); }
+.sg-yes:not(:disabled):hover { background: var(--amber-soft); }
+.sg-no:not(:disabled) { border-color: rgba(239, 68, 68, .34); }
+.sg-no:not(:disabled):hover { background: rgba(239, 68, 68, .12); }
+
+.sg-hint {
+  margin: 4px 0 0;
+  width: var(--option-w);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-4);
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* The prompt column is the whole exercise in review mode, so give the card the
+   room the options are no longer using. */
+.mode-review .choices { gap: 10px; }

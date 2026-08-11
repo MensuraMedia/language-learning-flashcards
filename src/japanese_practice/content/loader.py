@@ -13,6 +13,7 @@ from typing import Any
 from ..db import Database
 from ..models import CharacterSeed
 from .expressions import EXPRESSIONS
+from .general import GENERAL
 from .hiragana import HIRAGANA
 from .kanji_frequency import KANJI_BY_FREQUENCY
 from .kanji_n1 import KANJI_N1
@@ -41,6 +42,7 @@ ALL_SEEDS: tuple[CharacterSeed, ...] = (
     *EXPRESSIONS,
     *PHRASES,
     *SOCIAL,
+    *GENERAL,
 )
 
 _UPSERT = """

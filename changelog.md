@@ -642,3 +642,10 @@ Answering "is this applied universally?" honestly turned up two places it was no
 | 2026-08-10T22:25:00 | Local backup set `20260810-2225` taken — bundle (52 commits), worktree tarball (2,534 members), userdata tarball. Tree committed and pushed first, per the recipe |
 | 2026-08-10T22:28:00 | Backup verified by cloning the bundle to a scratch tree: 52 commits, 638 audio files, 15 content modules, 13 screenshots, clean tree, 357/357 tests passing |
 | 2026-08-10T22:30:00 | Credential scan across all three artefacts and every decompressed member — no live GitHub or ElevenLabs value present. SHA256SUMS.txt regenerated; RESTORE.md points at the new set |
+| 2026-08-11T00:20:00 | New **General Words** shelf with four sets (45 cards): Maybe (10), Not bad (10), Seriously (11), Question words (14). Every card carries an example sentence in Japanese with a gloss |
+| 2026-08-11T00:24:00 | New `review` challenge — deals **no multiple choice**. The learner reads, flips, then self-grades with Got it / Missed it. Options are omitted from the payload rather than hidden client-side |
+| 2026-08-11T00:26:00 | Maybe / Not bad / Seriously open in review mode: MC cannot test a near-synonym set, since every option means roughly the same thing and elimination wins without knowledge. Question words keeps MC — its meanings genuinely differ |
+| 2026-08-11T00:29:00 | Self-grade buttons stay disabled until the card is flipped; grading before the reveal is a coin toss and would put noise into the SRS schedule these sets use |
+| 2026-08-11T00:31:00 | Option column sized for the self-grade labels in review mode — measuring absent choices collapsed it to the 96px floor and wrapped 'Missed it' onto two lines |
+| 2026-08-11T00:33:00 | どうして re-glossed 'why (everyday)' so all three why-words carry their register; a bare 'why' option read as the default and was winnable by elimination |
+| 2026-08-11T00:36:00 | Totals updated: 1,703 cards across 37 decks. Tests: content completeness, notes contain Japanese, review ships no options, question words keeps them, self-graded attempts still record. 362 passing |

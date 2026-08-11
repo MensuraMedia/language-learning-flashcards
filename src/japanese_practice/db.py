@@ -92,6 +92,14 @@ DIFFICULTY_KEYS: tuple[str, ...] = (
     "phrase:describe",
     "phrase:rough",
     "phrase:gari",
+    # General words — English gives one word where Japanese gives a dozen.
+    # The near-synonym sets open in `review` (no multiple choice): every option
+    # would mean roughly the same thing, so choosing between them tests nothing.
+    # See content/general.py.
+    "phrase:maybe",
+    "phrase:notbad",
+    "phrase:seriously",
+    "phrase:question",
 )
 
 #: Difficulty-key group -> the `characters.category` it selects.
@@ -106,6 +114,10 @@ PHRASE_CATEGORIES: dict[str, str] = {
     "describe": "Describing things",
     "rough": "Rough language",
     "gari": "Personality — がり",
+    "maybe": "Maybe — degrees of certainty",
+    "notbad": "Not bad — faint praise",
+    "seriously": "Seriously — surprise and disbelief",
+    "question": "Question words",
 }
 
 VOCAB_CATEGORIES: dict[str, str] = {
@@ -128,6 +140,10 @@ _GROUP_LABELS: dict[str, str] = {
     "describe": "Describing things",
     "rough": "Rough language",
     "gari": "Personality — がり",
+    "maybe": "Maybe — degrees of certainty",
+    "notbad": "Not bad — faint praise",
+    "seriously": "Seriously — surprise and disbelief",
+    "question": "Question words",
     "days": "Days of the week",
     "months": "Months",
     "numbers": "Numbers",

@@ -46,7 +46,10 @@ function node(name, attrs) {
 
 function deckNode(deck) {
   const pct = deck.count ? Math.round((deck.mastered / deck.count) * 100) : 0;
-  const node = el("button", `deck${deck.shelf === "phrases" ? " deck-phrase" : ""}`);
+  // General-words decks carry the same wide face as phrases: their glyphs are
+  // expressions (もしかしたら, そんなに悪くない), not single characters.
+  const wide = deck.shelf === "phrases" || deck.shelf === "general" ? " deck-phrase" : "";
+  const node = el("button", `deck${wide}`);
   node.type = "button";
   node.setAttribute(
     "aria-label",
@@ -108,7 +111,7 @@ function moreNode(shelf) {
 }
 
 function renderShelves(decks) {
-  for (const shelf of ["hiragana", "katakana", "jlpt", "vol", "words", "phrases"]) {
+  for (const shelf of ["hiragana", "katakana", "jlpt", "vol", "words", "general", "phrases"]) {
     const host = $(`shelf-${shelf}`);
     if (!host) continue;
     host.innerHTML = "";
