@@ -9,9 +9,12 @@ fine on the content that existed when it was written, and broke as soon as
 longer content arrived. This document exists so the fifth surface does not
 repeat it.
 
-- **Current as of** 2026-08-10 · 342 tests passing
+- **Current as of** 2026-08-10 · 350 tests passing
 - **Applies to** the study card, its answer options, the session recap tiles,
   the deck faces on a shelf, and the memory-game board tiles
+- **Companion** [UI-FORMAT.md](UI-FORMAT.md) — type ranks, section headings,
+  padding and the accent system. This document covers *measurement*; that one
+  covers *format*.
 
 ---
 

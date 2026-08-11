@@ -630,3 +630,12 @@ Answering "is this applied universally?" honestly turned up two places it was no
 | 2026-08-10T00:28:00 | hiragana/female/あ.mp3 was shipping at peak 0.0009 (inaudible) and listed as validated; re-rendered at peak 0.4864. Cause: ElevenLabs renders a bare vowel as near-silence ~1 in 3, unnoticed because MP3s were never measured |
 | 2026-08-10T00:31:00 | Tests: cue loudness-match assertion; MP3 silence-gate regression; a shipped-library guard. test_voicelab's MP3 stub replaced with genuine audio — its ID3+zeroes stub only passed because of the same hole. 347 passing |
 | 2026-08-10T00:34:00 | Docs updated: INTERFACE-SOUND.md §4 (peak vs loudness, crest factor), AUDIO.md (the gate that was not running), FEATURES.md, sounds/README.md |
+| 2026-08-10T21:05:00 | Card back now shows the English translation on every script, not kanji alone — a phrase card revealed the reading and never said what it meant |
+| 2026-08-10T21:08:00 | Card height is computed from the registers the back will render (glyph/sound/meaning/readings/note) instead of a fixed 372/430; calibrated so both old heights are reproduced exactly |
+| 2026-08-10T21:12:00 | POST /api/session returns deck_title and script; study view shows the deck's name as a title above the exercise |
+| 2026-08-10T21:15:00 | session.deck_script() is now the single answer to 'is this a kanji exercise?' — the accent is applied once per session, not per card, so mixed decks no longer flicker and kanji drills are themed |
+| 2026-08-10T21:20:00 | **Root-cause fix**: .lbl meant both 'gauge label' and 'section title', so #dashboard .lbl (ID specificity) silently captured every shelf heading. Headings now use .sec-title/.sec-desc and cannot be captured |
+| 2026-08-10T21:24:00 | Section headings unified across dashboard, All exercises, study, games and settings: one token scale (19px/13.5px, panels 15px/12.5px) with consistent inset, margin above and below |
+| 2026-08-10T21:28:00 | Kanji accent applied to the All-exercises kanji shelves via an explicit flag rather than a title string match |
+| 2026-08-10T21:32:00 | docs/UI-FORMAT.md written — the formatting contract for dashboard, shelves, titles, padding/margin, card registers, height arithmetic and the accent system, with the known remaining inconsistencies listed |
+| 2026-08-10T21:35:00 | Tests: deck_title/script contract, drill script inference, and that meaning+romaji reach every phrase card. 350 passing |

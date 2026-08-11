@@ -271,6 +271,7 @@ frontend.
 | [FEATURES.md](docs/FEATURES.md) | Complete feature and function reference |
 | [INTERFACE-SOUND.md](docs/INTERFACE-SOUND.md) | The correct-answer cue system, and the preference layer behind it |
 | [CARD-DIMENSIONS.md](docs/CARD-DIMENSIONS.md) | How every surface showing Japanese is sized, and how to extend it |
+| [UI-FORMAT.md](docs/UI-FORMAT.md) | The formatting contract — type ranks, section headings, padding, margins, the card back's registers and the kanji accent |
 | [RELEASE-NOTES.md](docs/RELEASE-NOTES.md) | What changed each cycle, why, and what it cost |
 | [STACK-VERIFICATION.md](docs/STACK-VERIFICATION.md) | Stack, modularity and universality audit |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the system works; supportability |

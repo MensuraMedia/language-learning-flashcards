@@ -333,26 +333,91 @@ html { scrollbar-color: var(--line-2) var(--bg-deep); scrollbar-width: thin; }
 
 
 /* ==========================================================================
-   5. SECTION HEADINGS
+   5. SECTION HEADINGS — one system, every view
+
+   A section heading is a **title** plus a **description**, and it must look the
+   same on the dashboard, on All exercises and above a study table. It did not:
+   the dashboard ran its titles at 9.5px with an 8.5px description in
+   letter-spaced uppercase, while /decks ran 17px and 11px in sentence case,
+   because each was styled when it was built rather than against a shared scale.
+   The description in particular was set at a size meant for a label on a gauge,
+   which is why it read as unimportant next to the shelf it introduces.
+
+   Everything below derives from these tokens. Change the token, not the rule —
+   a per-view override is how the drift started. Documented in docs/UI-FORMAT.md.
    ========================================================================== */
+:root {
+  --title-size: 19px;        /* section title */
+  --title-desc-size: 13.5px; /* the description beside it */
+  --title-gap: 14px;         /* title → description, on one line */
+  --title-inset: 6px;        /* left inset, aligning with the cards beneath */
+  --title-space-above: 38px; /* from the previous block */
+  --title-space-below: 14px; /* to the rail this heading introduces */
+  --panel-title-size: 15px;  /* a heading one rank down, inside a panel */
+  --panel-desc-size: 12.5px;
+  --panel-pad: 14px 16px;    /* the padding of a panel heading area */
+}
+
 .sec {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0 0 12px;
+  align-items: baseline;     /* not center: a 19px title and a 13.5px
+                                description centred leaves the description
+                                floating; baseline sits them on one line */
+  gap: var(--title-gap);
+  margin: 0 0 var(--title-space-below);
+  padding: 0 var(--title-inset);
   flex-wrap: wrap;
 }
-.sec h2 {
-  font-size: 12px;
+/* Headings get their own classes rather than reusing `.lbl`.
+   `.lbl` had come to mean two unrelated things — the label on a gauge and the
+   title of a section — and once `#dashboard .lbl { font-size: 12px }` was added
+   to lift the chrome text, that ID-level rule silently captured every shelf
+   heading on the page. Sizing a heading then meant out-specifying a rule that
+   was never about headings. Separate names make the collision impossible. */
+.sec-title {
+  font-size: var(--title-size);
+  line-height: 1.25;
+  letter-spacing: .01em;
   font-weight: 650;
-  letter-spacing: .13em;
-  text-transform: uppercase;
-  color: var(--ink-2);
+  color: var(--ink);
+}
+/* The description. Sentence case and readable contrast — it is the sentence
+   that tells a learner what the shelf is for, not a caption on a dial. */
+.sec-desc {
+  font-size: var(--title-desc-size);
+  line-height: 1.45;
+  letter-spacing: .01em;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+/* A panel sits inside a section, so its heading steps down one rank — the
+   hierarchy has to be visible or everything reads as equally important. */
+.panel-h .sec-title, .set-h .sec-title, .hm-head .sec-title,
+.streak-head .sec-title, .weak-head .sec-title {
+  font-size: var(--panel-title-size);
+}
+.panel-h .sec-desc, .set-h .sec-desc, .hm-head .sec-desc,
+.streak-head .sec-desc, .weak-head .sec-desc {
+  font-size: var(--panel-desc-size);
+}
+.sec h2 {
+  font-size: var(--title-size);
+  font-weight: 650;
+  letter-spacing: .01em;
+  color: var(--ink);
   white-space: nowrap;
 }
-.sec .sec-jp { font-family: var(--jp); font-size: 11px; color: var(--ink-4); }
+.sec .sec-jp { font-family: var(--jp); font-size: 13px; color: var(--ink-4); }
 .sec .rule { flex: 1; height: 1px; background: linear-gradient(90deg, var(--line), transparent); }
 .sec .sec-act { display: flex; gap: 5px; }
+
+/* Narrow windows: the description drops below the title rather than being
+   squeezed to a column two words wide. */
+@media (max-width: 720px) {
+  :root { --title-size: 17px; --title-desc-size: 12.5px; }
+  .sec { gap: 4px var(--title-gap); }
+  .sec .sec-title { flex: 1 0 100%; }
+}
 
 /* small square icon button — shelf nudges, panel actions */
 .nudge {
@@ -1416,18 +1481,42 @@ td .jp { font-family: var(--jp); font-size: 16px; color: var(--ink); line-height
   background: repeating-linear-gradient(45deg, rgba(255, 255, 255, .008) 0 2px, transparent 2px 5px);
 }
 
+/* The head of the study table. Two registers, stacked: the deck's name, then
+   the key and mode that qualify it. Previously there was no title at all —
+   only the raw difficulty key in letter-spaced uppercase — so the deck you
+   chose off the shelf went unnamed the moment you started studying it. */
 .felt-head {
   width: 100%;
   position: relative;
   z-index: 2;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding-bottom: 14px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 0 var(--title-inset) 14px;
   margin-bottom: 6px;
   border-bottom: 1px solid var(--line);
 }
+/* Matches a dashboard section title exactly — same token, same weight — so the
+   shelf heading and the table heading are recognisably the same object. */
+.deck-title {
+  margin: 0;
+  font-size: var(--title-size);
+  line-height: 1.25;
+  font-weight: 650;
+  letter-spacing: .01em;
+  color: var(--ink);
+}
+.felt-sub {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+/* The key and the scoring mode are machine detail — they keep the small
+   letter-spaced form, which is what that form is actually for. */
+.felt-sub .lbl { font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+.felt-sub .lbl-sm { font-size: 9.5px; letter-spacing: .1em; color: var(--ink-4); }
 .felt-head h2 { font-size: 13px; font-weight: 640; }
 .felt-head .jp { font-size: 12px; color: var(--ink-3); }
 .felt-head .spacer { flex: 1; }
@@ -1681,7 +1770,21 @@ td .jp { font-family: var(--jp); font-size: 16px; color: var(--ink); line-height
   line-height: 1.1;
   margin-top: 10px;
 }
-.back-meaning { font-size: 19px; font-weight: 600; color: var(--ink); line-height: 1.25; margin-top: 8px; }
+/* The English. Third register on every back, below the sound.
+   Distinguished from the reading by colour and weight rather than size: it is
+   the answer to "what does this mean", which is exactly as important as the
+   reading, so shrinking it would be wrong. --ink against the reading's amber
+   keeps the two readable as separate answers to separate questions. */
+.back-meaning {
+  font-size: clamp(17px, 2.0vw, 23px);
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+  margin-top: 10px;
+  max-width: 30ch;
+  text-wrap: balance;
+}
+.back-meaning[hidden], .back-sound[hidden] { display: none; }
 
 /* on'yomi / kun'yomi rows */
 .readings { width: 100%; margin-top: 18px; display: flex; flex-direction: column; gap: 9px; }
@@ -2962,9 +3065,7 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
    almost no room to do it in. Give them air above, a gap below, and a little
    inset so the label is not flush with the card edges beneath it. */
 #dashboard > .sec {
-  margin: 34px 0 6px;
-  padding: 0 6px;
-  gap: 14px;
+  margin: var(--title-space-above) 0 var(--title-space-below);
 }
 /* the first heading follows the instrument row, which already has its own gap */
 #dashboard > .stats + .sec { margin-top: 26px; }
@@ -3412,28 +3513,11 @@ tbody tr:focus-visible { outline: 1px solid var(--amber); outline-offset: -1px; 
   color: var(--ink-3);
 }
 
-#decks .sec {
-  align-items: baseline;
-  gap: 14px;
-  margin: 46px 0 0;
-  padding: 0 4px;
-}
-/* A little more air before the second half of the page. */
+/* All exercises is a catalogue rather than a working surface, so it breathes
+   more between sections. Type comes from the shared tokens — only the rhythm
+   is page-specific. */
+#decks .sec { margin: 46px 0 0; }
 #decks .sec-major { margin-top: 58px; }
-
-#decks .sec .lbl {
-  font-size: 17px;
-  letter-spacing: .04em;
-  text-transform: none;
-  font-weight: 650;
-  color: var(--ink);
-}
-#decks .sec .lbl-sm {
-  font-size: 11px;
-  letter-spacing: .04em;
-  text-transform: none;
-  color: var(--ink-4);
-}
 
 /* The rail below a heading brings its own top padding; without this the gap
    above a title and the gap below it are visibly different. */

@@ -8,6 +8,7 @@ ordering policy.
 from __future__ import annotations
 
 import random
+from collections.abc import Sequence
 from datetime import datetime, timezone
 from typing import Any
 
@@ -231,6 +232,26 @@ def answer_text(character: Character) -> str:
     if character.script in MEANING_SCRIPTS:
         return character.meaning or character.glyph
     return character.romaji or character.glyph
+
+
+def deck_script(difficulty: str, cards: Sequence[Character]) -> str:
+    """The script a deck belongs to, for the interface's accent colour.
+
+    Taken from the difficulty key where there is one, because that is what the
+    learner clicked. A drill has no key — it is assembled from whatever is weak
+    — so it falls back to what the cards actually are, and a drill that is
+    entirely kanji is a kanji exercise and should look like one.
+
+    One function so that "is this a kanji exercise?" is answered the same way
+    everywhere. It was previously decided per-card in the study view, which is
+    why a kanji *drill* and a kanji *deck* did not match.
+    """
+    if difficulty and ":" in difficulty:
+        script = difficulty.split(":", 1)[0]
+        if script != "drill":
+            return script
+    scripts = {c.script for c in cards}
+    return scripts.pop() if len(scripts) == 1 else "mixed"
 
 
 async def choice_readings(db: Database, script: str, options: list[str]) -> dict[str, str]:

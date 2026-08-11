@@ -14,7 +14,7 @@ from quart import Blueprint, Response, current_app, jsonify, request
 
 from .. import analytics, audio, games, profiles, tts_voicevox, userdata
 from .. import session as session_engine
-from ..db import Database, available_segments, get_character
+from ..db import Database, available_segments, difficulty_label, get_character
 from ..kana import to_romaji
 
 log = logging.getLogger(__name__)
@@ -145,6 +145,15 @@ async def create_session() -> Any:
             "challenge": challenge,
             "scoring": scoring,
             "difficulty": difficulty,
+            # The deck's name as a learner knows it — "Please — てください", not
+            # "phrase:requests". The study view titles itself with this, so the
+            # deck you picked on the shelf is still named on the table.
+            "deck_title": (
+                f"{len(cards)} weak characters" if character_ids else difficulty_label(difficulty)
+            ),
+            # Which shelf it came from, so the view can adopt that shelf's accent
+            # (kanji is green) without re-deriving it from the cards.
+            "script": session_engine.deck_script(difficulty, cards),
             "cards": payload,
         }
     )

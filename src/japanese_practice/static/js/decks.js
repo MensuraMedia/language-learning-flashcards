@@ -17,11 +17,14 @@ const el = (tag, cls, html) => {
 const pct2 = (v) => `${Math.round((v || 0) * 100)}%`;
 
 // Shelf order and titles, matching the dashboard so the two read as one app.
+// `kanji: true` carries the green accent. Marked on the shelf rather than
+// inferred from the title, so a future kanji shelf cannot be missed by a string
+// match on "Kanji".
 const SHELVES = [
   { id: "hiragana", title: "Hiragana", note: "gojuon → dakuon → han-dakuon → yoon → 104 mixed" },
   { id: "katakana", title: "Katakana", note: "the same five rungs, in the script used for loanwords" },
-  { id: "jlpt", title: "Kanji — proficiency", note: "JLPT N5 → N1" },
-  { id: "vol", title: "Kanji — volume", note: "Top 200 → Top 500 by teaching frequency" },
+  { id: "jlpt", title: "Kanji — proficiency", note: "JLPT N5 → N1", kanji: true },
+  { id: "vol", title: "Kanji — volume", note: "Top 200 → Top 500 by teaching frequency", kanji: true },
   { id: "words", title: "Words & grammar", note: "whole words rather than single characters" },
   { id: "phrases", title: "Phrase sets", note: "one pattern, many phrases — learn the shape and the set follows" },
 ];
@@ -97,11 +100,11 @@ async function main() {
   for (const shelf of SHELVES) {
     const mine = decks.filter((d) => d.shelf === shelf.id);
     if (!mine.length) continue;      // a shelf with nothing on it is not a heading
-    const head = el("section", "sec");
+    const head = el("section", `sec${shelf.kanji ? " theme-kanji" : ""}`);
     head.innerHTML =
-      `<span class="lbl">${shelf.title}</span><span class="lbl-sm">${shelf.note}</span>`;
+      `<span class="sec-title">${shelf.title}</span><span class="sec-desc">${shelf.note}</span>`;
     host.appendChild(head);
-    const rail = el("div", "shelf-wrap");
+    const rail = el("div", `shelf-wrap${shelf.kanji ? " theme-kanji" : ""}`);
     mine.forEach((d) => rail.appendChild(deckNode(d)));
     host.appendChild(rail);
   }

@@ -12,9 +12,15 @@
 <main class="view on" id="study">
   <!-- the felt table -->
   <section class="felt">
+    <!-- The deck's own name heads the table, so the thing you picked off the
+         shelf is still named in front of you. The key ("phrase:requests") and
+         the mode sit beneath it as supporting detail, not as the title. -->
     <div class="felt-head">
-      <span class="lbl" id="breadcrumb">—</span>
-      <span class="lbl-sm" id="scheme-note"></span>
+      <h1 class="deck-title" id="deck-title">—</h1>
+      <div class="felt-sub">
+        <span class="lbl" id="breadcrumb">—</span>
+        <span class="lbl-sm" id="scheme-note"></span>
+      </div>
     </div>
 
     <!-- .stage carries the perspective; .deck3d gives the card its box -->
@@ -35,7 +41,11 @@
                 <div class="glyph" id="glyph"></div>
               </div>
 
-              <!-- BACK: the sound written out -->
+              <!-- BACK: all three registers, always in the same order —
+                   the glyph, how it sounds, and what it means. A learner
+                   checking their recall needs to see the character they
+                   just failed to read, the reading they were reaching for,
+                   and the meaning that makes it worth knowing. -->
               <div class="face back">
                 <div class="back-in">
                   <div class="back-mini jp" id="back-glyph"></div>
@@ -132,7 +142,7 @@
   <div class="help" id="help" hidden role="dialog" aria-label="Keyboard shortcuts">
     <div class="help-card">
       <div class="panel-h">
-        <span class="lbl">Keyboard shortcuts</span>
+        <span class="sec-title">Keyboard shortcuts</span>
         <button class="btn btn-ghost" id="help-close" type="button">Close</button>
       </div>
       <table class="help-table">
@@ -162,7 +172,7 @@
         <div class="recap-grid" id="recap-grid"></div>
 
         <div class="sec" style="margin-top:18px">
-          <span class="lbl">This session</span>
+          <span class="sec-title">This session</span>
           <span class="lbl-sm" id="recap-cards-note"></span>
         </div>
         <div class="recap-cards" id="recap-cards"></div>

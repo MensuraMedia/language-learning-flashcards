@@ -127,9 +127,23 @@ function render() {
   $("glyph").textContent = card.glyph;
   $("back-glyph").textContent = card.glyph;
 
+  // Every card back carries the same three registers in the same order —
+  // glyph, sound, meaning — so a learner always knows where to look. Only the
+  // *source* of the sound differs by script.
+  //
+  // The English used to appear on kanji cards alone, so a phrase card revealed
+  // 見せてください / misete kudasai and never said it meant "please show me".
+  // Flipping is the reveal; withholding the translation made the reveal
+  // incomplete for the four scripts that need it most.
+  const meaning = card.meaning && card.meaning !== card.romaji ? card.meaning : "";
+  $("back-meaning").textContent = meaning;
+  $("back-meaning").hidden = !meaning;
+
   if (card.script === "kanji") {
+    // A kanji has no single romaji — it has readings, several of them, and they
+    // carry their own transliteration below.
     $("back-sound").textContent = "";
-    $("back-meaning").textContent = card.meaning || "";
+    $("back-sound").hidden = true;
     // Readings carry their romaji: the options on a kanji card are English, so
     // the kana are reference material, and reference you cannot read is not.
     const krow = (label, kana, romaji) =>
@@ -143,7 +157,7 @@ function render() {
     $("back-readings").innerHTML = rows.join("");
   } else {
     $("back-sound").textContent = card.romaji || "";
-    $("back-meaning").textContent = "";
+    $("back-sound").hidden = !card.romaji;
     $("back-readings").innerHTML = "";
   }
 
@@ -158,7 +172,10 @@ function render() {
   // per-card, so the face does not resize between cards.
   $("choices").classList.toggle("wide", isKanji || isWord || isPhrase);
   $("choices").classList.toggle("wider", isWord || isPhrase);
-  document.body.classList.toggle("theme-kanji", isKanji);
+  // theme-kanji is NOT set here. The accent belongs to the *exercise*, not the
+  // card — toggling it per card made a mixed deck flash between palettes, and
+  // left a kanji drill un-themed because the drill path has no kanji in its
+  // difficulty key. It is applied once per session from the deck's script.
   document.body.classList.toggle("mode-word", isWord || isPhrase);
   document.body.classList.toggle("mode-phrase", isPhrase);
 
@@ -630,6 +647,21 @@ const CARD_GLYPH_PX = 46;
 const CARD_SIDE_PAD = 40;          // each side
 const CARD_MAX_PX = 700;
 
+// Height is the sum of the registers the back will show. Named separately so a
+// new register is one constant plus one term, and so the reason for the number
+// survives — a single opaque 372 could not say what it was paying for.
+//
+// Calibrated against the two heights that were known good: a text card with a
+// reading and no note was 372 (BASE + SOUND) and with a note was 430
+// (BASE + SOUND + NOTE). Those still come out identical; the meaning and
+// readings terms are what is new.
+const CARD_BASE_PX = 310;          // frame, glyph, speaker foot
+const CARD_SOUND_PX = 62;          // the reading line
+const CARD_MEANING_PX = 36;        // per wrapped line of English
+const CARD_NOTE_PX = 58;           // the context note, when a set carries one
+const CARD_READINGS_PX = 96;       // kanji's on/kun rows, which carry romaji too
+const CARD_MEANING_CH = 30;        // the back's measure — must match .back-meaning
+
 // Options follow the card's rule: one width for the session, wide enough for the
 // longest answer it will offer. Sizing them by script instead meant every kanji
 // deck got the same column whether its answers read "sun" or "world/generation",
@@ -673,8 +705,26 @@ function sizeCardsForSession() {
   const forAnswer = longestAnswer * (CARD_GLYPH_PX * 0.42);
   const width = Math.min(CARD_MAX_PX, Math.max(340, Math.ceil(Math.max(forGlyphs, forAnswer))) + CARD_SIDE_PAD * 2);
 
-  // Height holds prompt + reading + meaning, plus the note when the set has one.
-  const height = anyNote ? 430 : 372;
+  // Height is built from the registers the back will actually show, rather than
+  // guessed from whether a note exists. The English translation was added to
+  // every back, not just kanji's, and a fixed 372px silently clipped it on the
+  // phrase sets — where the meaning is the longest text on the card.
+  //
+  // Each term is a register: the glyph, the reading, the meaning, the note. A
+  // register that will not render contributes nothing.
+  const anyKanji = cards.some((c) => c.script === "kanji");
+  const anyMeaning = cards.some((c) => c.meaning && c.meaning !== c.romaji);
+  // A kanji card shows its readings instead of a single romaji line.
+  const anySound = !anyKanji && cards.some((c) => c.romaji);
+  // A meaning wraps at the back's measure, so a long one costs a line.
+  const longestMeaning = cards.reduce((n, c) => Math.max(n, (c.meaning || "").length), 0);
+  const meaningLines = Math.min(3, Math.ceil(longestMeaning / CARD_MEANING_CH)) || 0;
+  const height =
+    CARD_BASE_PX +
+    (anySound ? CARD_SOUND_PX : 0) +
+    (anyKanji ? CARD_READINGS_PX : 0) +
+    (anyMeaning ? CARD_MEANING_PX * meaningLines : 0) +
+    (anyNote ? CARD_NOTE_PX : 0);
 
   sizeOptionsForSession();
 
@@ -708,12 +758,20 @@ async function start() {
     state.cards = res.cards;
     state.scheme = res.scoring;
     sizeCardsForSession();
+    // The deck's name, as it reads on the shelf. The raw key and the mode drop
+    // to the sub-line beneath it.
+    $("deck-title").textContent = drill
+      ? `Drill — ${res.deck_title}`
+      : res.deck_title || res.difficulty;
     $("breadcrumb").textContent = drill
       ? `Drill · ${res.cards.length} weak characters`
       : `${res.difficulty} · ${res.challenge}`;
     $("scheme-note").textContent = `scoring: ${res.scoring}`;
+    // One decision, taken once, from the deck rather than the card in hand.
+    document.body.classList.toggle("theme-kanji", res.script === "kanji");
     render();
   } catch (err) {
+    $("deck-title").textContent = "Could not start";
     $("breadcrumb").textContent = `Could not start: ${err.message}`;
   }
 }

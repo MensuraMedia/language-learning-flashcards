@@ -15,38 +15,38 @@
   <section class="stats" id="stats"></section>
 
   <!-- ── shelves: every difficulty key as a physical deck ─────────────── -->
-  <section class="sec"><span class="lbl">Hiragana Shelf</span>
-    <span class="lbl-sm">gojuon → dakuon → han-dakuon → yoon → 104 mixed</span></section>
+  <section class="sec"><span class="sec-title">Hiragana Shelf</span>
+    <span class="sec-desc">gojuon → dakuon → han-dakuon → yoon → 104 mixed</span></section>
   <div class="shelf-scroll" id="shelf-hiragana"></div>
   <div class="game-shelf" id="games-hiragana"></div>
 
-  <section class="sec"><span class="lbl">Katakana Shelf</span>
-    <span class="lbl-sm">the same five rungs, in the script used for loanwords</span></section>
+  <section class="sec"><span class="sec-title">Katakana Shelf</span>
+    <span class="sec-desc">the same five rungs, in the script used for loanwords</span></section>
   <div class="shelf-scroll" id="shelf-katakana"></div>
   <div class="game-shelf" id="games-katakana"></div>
 
-  <section class="sec"><span class="lbl">Kanji Shelf — Proficiency</span>
-    <span class="lbl-sm">JLPT N5 → N1 · 1,251 characters</span></section>
+  <section class="sec theme-kanji"><span class="sec-title">Kanji Shelf — Proficiency</span>
+    <span class="sec-desc">JLPT N5 → N1 · 1,251 characters</span></section>
   <div class="shelf-scroll theme-kanji" id="shelf-jlpt"></div>
   <div class="game-shelf theme-kanji" id="games-kanji"></div>
 
-  <section class="sec" id="sec-vol"><span class="lbl">Kanji Shelf — Volume</span>
-    <span class="lbl-sm">Top 200 → Top 500</span></section>
+  <section class="sec theme-kanji" id="sec-vol"><span class="sec-title">Kanji Shelf — Volume</span>
+    <span class="sec-desc">Top 200 → Top 500</span></section>
   <div class="shelf-scroll theme-kanji" id="shelf-vol"></div>
 
-  <section class="sec"><span class="lbl">Words &amp; Grammar</span>
-    <span class="lbl-sm">whole words rather than single characters</span></section>
+  <section class="sec"><span class="sec-title">Words &amp; Grammar</span>
+    <span class="sec-desc">whole words rather than single characters</span></section>
   <div class="shelf-scroll" id="shelf-words"></div>
 
-  <section class="sec"><span class="lbl">Phrase Sets</span>
-    <span class="lbl-sm">one pattern, many phrases — learn the shape and the set follows</span></section>
+  <section class="sec"><span class="sec-title">Phrase Sets</span>
+    <span class="sec-desc">one pattern, many phrases — learn the shape and the set follows</span></section>
   <div class="shelf-scroll" id="shelf-phrases"></div>
 
   <!-- ── the diagnostic surface ───────────────────────────────────────── -->
   <section class="panel hm-panel">
     <div class="hm-head">
-      <span class="lbl">Per-character miss rate</span>
-      <span class="lbl-sm">brighter = weaker · click a character to drill it</span>
+      <span class="sec-title">Per-character miss rate</span>
+      <span class="sec-desc">brighter = weaker · click a character to drill it</span>
       <span class="hm-sets">
         <span class="lbl-sm">set</span>
         <span class="seg" id="hm-sets"></span>
@@ -68,34 +68,34 @@
     </div>
   </section>
 
-  <section class="sec" style="margin-top:22px"><span class="lbl">Performance</span></section>
+  <section class="sec"><span class="sec-title">Performance</span></section>
 
   <div class="grid">
     <section class="panel span-2">
-      <div class="panel-h"><span class="lbl">Accuracy per session</span>
+      <div class="panel-h"><span class="sec-title">Accuracy per session</span>
         <span class="lbl-sm" id="trend-note"></span></div>
       <div class="chart-wrap" id="trend" style="padding:12px"></div>
     </section>
 
     <section class="panel">
-      <div class="panel-h"><span class="lbl">Accuracy by set</span></div>
+      <div class="panel-h"><span class="sec-title">Accuracy by set</span></div>
       <div class="bars" id="by-set" style="padding:14px"></div>
     </section>
 
     <section class="panel">
-      <div class="panel-h"><span class="lbl">Retention curve</span></div>
+      <div class="panel-h"><span class="sec-title">Retention curve</span></div>
       <div class="chart-wrap" id="retention" style="padding:12px"></div>
     </section>
 
     <section class="panel">
-      <div class="panel-h"><span class="lbl">Leeches</span><span class="lbl-sm">re-forgotten</span></div>
+      <div class="panel-h"><span class="sec-title">Leeches</span><span class="sec-desc">re-forgotten</span></div>
       <div class="log-list" id="leeches" style="padding:6px 12px"></div>
     </section>
 
     <section class="panel span-all mod-panel">
       <div class="panel-h">
         <span class="mod-dot"></span>
-        <span class="lbl">Streak</span><span class="lbl-sm">28-day activity</span>
+        <span class="sec-title">Streak</span><span class="sec-desc">28-day activity</span>
         <span class="mod-id">MOD/STRK-04</span>
       </div>
       <div class="streak-body">
@@ -115,7 +115,7 @@
   </div>
 
   <!-- ── session history ──────────────────────────────────────────────── -->
-  <section class="sec" style="margin-top:22px"><span class="lbl">Session history</span>
+  <section class="sec"><span class="sec-title">Session history</span>
     <span class="lbl-sm" id="history-note"></span></section>
   <section class="panel">
     <div class="tbl-scroll">
@@ -127,7 +127,7 @@
   <section class="panel mod-panel" style="margin-top:26px">
     <div class="panel-h">
       <span class="mod-dot"></span>
-      <span class="lbl">Weak characters</span><span class="lbl-sm">error rate</span>
+      <span class="sec-title">Weak characters</span><span class="sec-desc">error rate</span>
       <span class="mod-id">MOD/WEAK-05</span>
     </div>
     <div class="weak-grid" id="weak"></div>
@@ -150,14 +150,14 @@
   <div class="help" id="settings" hidden role="dialog" aria-label="Settings">
     <div class="help-card settings-card">
       <div class="panel-h">
-        <span class="lbl">Settings</span>
-        <span class="lbl-sm">profiles &amp; data</span>
+        <span class="sec-title">Settings</span>
+        <span class="sec-desc">profiles &amp; data</span>
         <button class="btn btn-ghost" id="settings-close" type="button">Close</button>
       </div>
 
       <section class="set-sec">
-        <div class="set-h"><span class="lbl">Profiles</span>
-          <span class="lbl-sm">each keeps its own history</span></div>
+        <div class="set-h"><span class="sec-title">Profiles</span>
+          <span class="sec-desc">each keeps its own history</span></div>
         <div class="prof-list" id="prof-list"></div>
         <form class="prof-new" id="prof-new">
           <input class="fld" id="prof-name" type="text" maxlength="40"
@@ -167,8 +167,8 @@
       </section>
 
       <section class="set-sec">
-        <div class="set-h"><span class="lbl">Audio</span>
-          <span class="lbl-sm">cues and pronunciation</span></div>
+        <div class="set-h"><span class="sec-title">Audio</span>
+          <span class="sec-desc">cues and pronunciation</span></div>
         <div class="set-row">
           <label class="set-label" for="snd-toggle">
             <span class="set-label-t">Sound</span>
@@ -201,8 +201,8 @@
       </section>
 
       <section class="set-sec">
-        <div class="set-h"><span class="lbl">Save &amp; load</span>
-          <span class="lbl-sm">a portable file, keyed by character</span></div>
+        <div class="set-h"><span class="sec-title">Save &amp; load</span>
+          <span class="sec-desc">a portable file, keyed by character</span></div>
         <p class="set-note" id="data-note">—</p>
         <div class="set-actions">
           <button class="btn btn-sm amber" id="data-export" type="button">Save progress</button>
@@ -212,8 +212,8 @@
       </section>
 
       <section class="set-sec danger">
-        <div class="set-h"><span class="lbl">Reset</span>
-          <span class="lbl-sm">clears this profile's progress — the characters stay</span></div>
+        <div class="set-h"><span class="sec-title">Reset</span>
+          <span class="sec-desc">clears this profile's progress — the characters stay</span></div>
         <p class="set-note" id="reset-note">—</p>
         <div class="set-actions">
           <button class="btn btn-sm btn-danger" id="data-reset" type="button">Reset this profile</button>

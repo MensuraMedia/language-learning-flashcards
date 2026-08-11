@@ -905,3 +905,51 @@ async def test_a_weak_character_drill_also_reshuffles(client):
         assert sorted(got) == sorted(ids), "a repeat changed which characters are drilled"
         orders.add(tuple(got))
     assert len(orders) > 1, "every shuffled drill dealt the same order"
+
+
+async def test_a_session_names_its_deck_and_its_script(client):
+    """The study view titles itself from these two fields.
+
+    ``deck_title`` is what the learner picked off the shelf — the view used to
+    show only the raw key ("phrase:requests"), so the deck went unnamed the
+    moment you started studying it. ``script`` decides the accent colour, and it
+    comes from the deck rather than the card in hand: deciding per card made a
+    mixed deck flicker between palettes.
+    """
+    res = await client.post("/api/session", json={"difficulty": "kanji:N5", "limit": 3})
+    assert res.status_code == 200
+    body = await res.get_json()
+    assert body["deck_title"] == "Kanji · N5"
+    assert body["script"] == "kanji"  # drives the green accent
+
+    res = await client.post("/api/session", json={"difficulty": "phrase:requests", "limit": 3})
+    body = await res.get_json()
+    assert body["deck_title"] == "Please — てください"
+    assert body["script"] == "phrase"
+
+
+async def test_a_drill_is_named_and_takes_its_script_from_its_cards(client):
+    """A drill has no difficulty key, so the script comes from what it contains.
+
+    A drill made entirely of kanji is a kanji exercise and has to look like one;
+    keying the accent off the difficulty string alone left it un-themed.
+    """
+    res = await client.post("/api/session", json={"difficulty": "kanji:N5", "limit": 3})
+    ids = [c["id"] for c in (await res.get_json())["cards"]]
+
+    res = await client.post("/api/session", json={"character_ids": ids})
+    body = await res.get_json()
+    assert body["script"] == "kanji"
+    assert "weak characters" in body["deck_title"]
+
+
+async def test_meaning_reaches_the_card_so_the_back_can_show_english(client):
+    """The card back shows glyph, reading and English for every script.
+
+    The English was previously rendered on kanji cards alone, so a phrase card
+    revealed 見せてください / misete kudasai and never said what it meant.
+    """
+    res = await client.post("/api/session", json={"difficulty": "phrase:requests", "limit": 8})
+    cards = (await res.get_json())["cards"]
+    assert all(c["meaning"] for c in cards), "a phrase card with no English"
+    assert all(c["romaji"] for c in cards), "a phrase card with no reading"
