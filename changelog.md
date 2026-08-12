@@ -654,3 +654,9 @@ Answering "is this applied universally?" honestly turned up two places it was no
 | 2026-08-11T01:10:00 | Effect: Not bad 699px → 460px, Maybe 563 → 420, Question words 621 → 435, Please — てください 586 → 520. No deck is now sized for text that wraps anyway |
 | 2026-08-11T01:14:00 | Verified in the running app: ゆっくり話してください occupies 443px of its 520px card (40.3px per glyph — the constant), and the 32-char 'quite good, better than expected' fits on one line inside 460px |
 | 2026-08-11T01:17:00 | Test reads the constants back out of theme.css and fails if they drift — the failure mode is silent, since neither file is wrong on its own. 364 passing |
+| 2026-08-12T00:20:00 | Four new General Words sets (40 cards): Sorry — degrees of contrition, Thanks — degrees of gratitude, Very — degrees of intensity, Saying no without saying no. All review mode, all carrying an example sentence |
+| 2026-08-12T00:23:00 | Collision check run before authoring: すみません, ありがとうございます, 大丈夫です and なかなか are already seeded elsewhere and a glyph is unique per script, so each set names the absent relative in a note rather than duplicating it |
+| 2026-08-12T00:26:00 | Replaced the card 「すみません、ありがとう」 with ごちそうさまでした — the former was a teaching device rather than a real expression; the apologetic-thanks lesson moved into the ありがとう note where it belongs |
+| 2026-08-12T00:30:00 | Dimensions checked before shipping: Thanks is 600px (13 glyphs — どうもありがとうございます), now the widest deck in the app and still inside the 700px / 15-glyph cap. Sorry / Saying no 460px, Very 420px |
+| 2026-08-12T00:33:00 | CARD-DIMENSIONS.md width table extended with the new sets, plus the crossover note: below ~8 glyphs the meaning drives width, above it the glyph does |
+| 2026-08-12T00:35:00 | Totals: 1,743 cards across 41 decks; General Words is now 8 sets / 85 cards, 7 of them review mode. 364 tests passing |

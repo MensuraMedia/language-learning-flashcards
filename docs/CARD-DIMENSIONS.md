@@ -99,11 +99,18 @@ out the wrong size and nobody can tell by reading either file alone.
 | Longest prompt in the session | Card width | Example |
 |---|---:|---|
 | ≤ 2 glyphs, no note | 336 × 470 (5 : 7) | any kana or kanji deck |
-| up to 7 glyphs / 25-char meaning | 420px | Maybe · Seriously · Let's — ましょう |
+| up to 7 glyphs / 25-char meaning | 420px | Maybe · Seriously · Very · Let's — ましょう |
 | 5 glyphs / 28-char meaning | 435px | Question words |
 | 9 glyphs | 440px | At the convenience store |
-| 8 glyphs / 32-char meaning | 460px | Not bad · Praising someone · Particles |
+| 8 glyphs / 32-char meaning | 460px | Not bad · Sorry · Saying no · Praising someone |
 | 11 glyphs | 520px | ゆっくり話してください · Getting by |
+| 13 glyphs | 600px | **Thanks** — どうもありがとうございます. The widest deck in the app |
+
+Note which term drives each row. Everything up to 460px is driven by the
+**meaning**, and everything above it by the **glyph** — the crossover is around
+8 glyphs, where a CJK prompt at 40px overtakes a 30-character gloss at 23px.
+A set of long expressions is therefore much more expensive than a set of long
+glosses, because the gloss stops mattering once it wraps.
 
 Measured in the running app: ゆっくり話してください occupies 443px of the 520px
 card — **40.3px per glyph**, which is the constant, and 38px of clear space each

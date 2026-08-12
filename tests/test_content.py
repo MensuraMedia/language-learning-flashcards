@@ -283,13 +283,13 @@ def test_documented_totals_match_the_seed_set():
     kanji = [s for s in ALL_SEEDS if s.script == "kanji"]
     vocab = [s for s in ALL_SEEDS if s.script == "vocab"]
     phrases = [s for s in ALL_SEEDS if s.script == "phrase"]
-    assert len(ALL_SEEDS) == 1703
+    assert len(ALL_SEEDS) == 1743
     assert len(kanji) == 1251
     assert len(vocab) == 106
-    # 93 phrase/social cards plus the 45 General Words cards, which reuse the
+    # 93 phrase/social cards plus the 85 General Words cards, which reuse the
     # phrase script — they are short expressions, graded on meaning, and need
     # the wide card and the note that the phrase machinery already provides.
-    assert len(phrases) == 138
+    assert len(phrases) == 178
     by_level = Counter(s.jlpt_level for s in kanji)
     assert by_level == {"N5": 113, "N4": 169, "N3": 396, "N2": 236, "N1": 337}
 
@@ -309,6 +309,10 @@ def test_general_words_sets_are_complete_and_carry_a_sentence():
         "Not bad — faint praise": 10,
         "Seriously — surprise and disbelief": 11,
         "Question words": 14,
+        "Sorry — degrees of contrition": 10,
+        "Thanks — degrees of gratitude": 10,
+        "Very — degrees of intensity": 10,
+        "Saying no without saying no": 10,
     }
 
     for card in GENERAL:

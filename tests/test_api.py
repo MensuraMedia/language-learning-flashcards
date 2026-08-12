@@ -720,7 +720,7 @@ async def test_a_word_card_is_graded_on_meaning_against_its_own_set(client):
 
 async def test_catalogue_lists_what_works_and_what_does_not(client):
     payload = await (await client.get("/api/catalogue")).get_json()
-    assert payload["counts"]["available"] == 37
+    assert payload["counts"]["available"] == 41
     assert len(payload["planned"]) == 11
     names = {item["name"] for item in payload["planned"]}
     assert "Alternate phrases" in names

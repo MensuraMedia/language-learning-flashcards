@@ -100,6 +100,12 @@ DIFFICULTY_KEYS: tuple[str, ...] = (
     "phrase:notbad",
     "phrase:seriously",
     "phrase:question",
+    # Register scales — same shape as the three above, and review mode for the
+    # same reason: every member is a correct translation of the headword.
+    "phrase:sorry",
+    "phrase:thanks",
+    "phrase:very",
+    "phrase:no",
 )
 
 #: Difficulty-key group -> the `characters.category` it selects.
@@ -118,6 +124,10 @@ PHRASE_CATEGORIES: dict[str, str] = {
     "notbad": "Not bad — faint praise",
     "seriously": "Seriously — surprise and disbelief",
     "question": "Question words",
+    "sorry": "Sorry — degrees of contrition",
+    "thanks": "Thanks — degrees of gratitude",
+    "very": "Very — degrees of intensity",
+    "no": "Saying no without saying no",
 }
 
 VOCAB_CATEGORIES: dict[str, str] = {
@@ -144,6 +154,10 @@ _GROUP_LABELS: dict[str, str] = {
     "notbad": "Not bad — faint praise",
     "seriously": "Seriously — surprise and disbelief",
     "question": "Question words",
+    "sorry": "Sorry — degrees of contrition",
+    "thanks": "Thanks — degrees of gratitude",
+    "very": "Very — degrees of intensity",
+    "no": "Saying no without saying no",
     "days": "Days of the week",
     "months": "Months",
     "numbers": "Numbers",

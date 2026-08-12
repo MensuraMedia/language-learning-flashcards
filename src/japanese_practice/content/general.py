@@ -7,9 +7,11 @@ either overstates a guess or undersells a near-certainty. That distinction is
 invisible in a gloss, so every card here carries **an example sentence** showing
 the word doing its job in context.
 
-Four sets, and one of them behaves differently from everything else in the app:
+Eight sets. Seven are near-synonym sets and behave differently from everything
+else in the app:
 
-* **Maybe**, **Not bad** and **Seriously** are *near-synonym* sets. Multiple
+* **Maybe**, **Not bad**, **Seriously**, **Sorry**, **Thanks**, **Very** and
+  **Saying no** are *near-synonym* sets. Multiple
   choice cannot test them, because every option means roughly the same thing —
   a learner picking "probably" from a list of four words that all mean
   "probably" learns nothing, and the exercise grades their ability to spot
@@ -376,10 +378,337 @@ _QUESTION_CARDS = (
     ),
 )
 
-#: 45 cards across four sets.
+
+# ── Register scales ─────────────────────────────────────────────────────────
+# The four sets below all teach the same kind of thing: **how formal, how
+# strong, how blunt**. Every member is a correct translation of the English
+# headword, so the only question a card can usefully ask is *which one belongs
+# here* — which is why they are review sets like the three above.
+#
+# A few obvious members are missing because they are already seeded elsewhere,
+# and a glyph is unique per script: すみません and ありがとうございます live in
+# Getting by, 大丈夫です in At the convenience store, なかなか in Not bad. Each
+# note names the absent relative rather than pretending it does not exist.
+
+_SORRY = "Sorry — degrees of contrition"
+_THANKS = "Thanks — degrees of gratitude"
+_VERY = "Very — degrees of intensity"
+_NO = "Saying no without saying no"
+
+#: Casual to formal. Getting this wrong is the expensive mistake in this file:
+#: ごめん to a manager is not a small error, and no gloss of "sorry" shows it.
+_SORRY_CARDS = (
+    (
+        "悪い",
+        "warui",
+        "my bad",
+        "The most casual, and mostly male. Only for friends. " "「悪い、遅れた」 My bad, I'm late.",
+    ),
+    (
+        "ごめん",
+        "gomen",
+        "sorry",
+        "Friends and family. Warm, but far too light for a stranger or a "
+        "manager. 「ごめん、忘れてた」 Sorry, I forgot.",
+    ),
+    (
+        "ごめんなさい",
+        "gomen nasai",
+        "I'm sorry",
+        "The full form — more sincere than ごめん and usable with people you "
+        "know. 「ごめんなさい、私のミスです」 I'm sorry, it was my mistake.",
+    ),
+    (
+        "すいません",
+        "suimasen",
+        "sorry / excuse me (spoken)",
+        "The everyday spoken form of すみません, which is the written standard "
+        "and appears in Getting by. 「すいません、これお願いします」 Excuse me, "
+        "this please.",
+    ),
+    (
+        "どうもすみません",
+        "doumo sumimasen",
+        "I'm really sorry",
+        "どうも intensifies it. Still polite rather than formal. "
+        "「どうもすみません、お待たせしました」 I'm so sorry to have kept you.",
+    ),
+    (
+        "失礼しました",
+        "shitsurei shimashita",
+        "my apologies",
+        "For a lapse in *manners* — an interruption, a wrong number. Also said "
+        "on leaving a room. 「失礼しました、間違えました」 My apologies, I had it "
+        "wrong.",
+    ),
+    (
+        "申し訳ありません",
+        "moushiwake arimasen",
+        "I'm terribly sorry",
+        "The business standard, and a real step up. Literally 'there is no "
+        "excuse'. 「ご迷惑をおかけして申し訳ありません」 I'm terribly sorry for "
+        "the trouble.",
+    ),
+    (
+        "申し訳ございません",
+        "moushiwake gozaimasen",
+        "I am profoundly sorry",
+        "The most formal in ordinary use — staff to customers. Anything heavier "
+        "belongs to a press conference. 「申し訳ございません、ただいま確認します」",
+    ),
+    (
+        "お待たせしました",
+        "omatase shimashita",
+        "sorry to have kept you waiting",
+        "Said on arriving late *and* routinely when serving — an apology by "
+        "form rather than by fault. 「お待たせしました、こちらへどうぞ」",
+    ),
+    (
+        "反省しています",
+        "hansei shite imasu",
+        "I regret it",
+        "Accepts fault rather than expressing sympathy. Weighty — it says you "
+        "have thought about what you did. 「反省しています。二度としません」",
+    ),
+)
+
+#: Casual to formal, plus the one that catches everybody: thanking someone by
+#: apologising to them.
+_THANKS_CARDS = (
+    (
+        "サンキュー",
+        "sankyuu",
+        "thanks",
+        "From English, and very casual — friends only. "
+        "「サンキュー、助かる」 Thanks, that helps.",
+    ),
+    (
+        "どうも",
+        "doumo",
+        "thanks (clipped)",
+        "Light and slightly brusque on its own. Does duty as a greeting too. "
+        "「どうも、また明日」 Thanks, see you tomorrow.",
+    ),
+    (
+        "ありがとう",
+        "arigatou",
+        "thank you",
+        "The neutral casual form. Add ございます for anyone senior — that form "
+        "is seeded in Getting by. Note that Japanese also thanks by "
+        "*apologising*: すみません means thank you when the favour cost the "
+        "other person something. 「本当にありがとう」 Thank you, really.",
+    ),
+    (
+        "どうもありがとうございます",
+        "doumo arigatou gozaimasu",
+        "thank you very much",
+        "どうも intensifies the polite form. Safe anywhere. "
+        "「どうもありがとうございます、助かりました」",
+    ),
+    (
+        "ありがとうございました",
+        "arigatou gozaimashita",
+        "thank you (for what is now done)",
+        "**Past tense, and it matters**: ございます thanks for something "
+        "ongoing, ございました for something finished. Said on leaving a shop.",
+    ),
+    (
+        "助かりました",
+        "tasukarimashita",
+        "you saved me",
+        "Thanks *for the effect* — it acknowledges you were in trouble. Warmer "
+        "than a bare thank you. 「助かりました、ありがとう」",
+    ),
+    (
+        "恐れ入ります",
+        "osoreirimasu",
+        "much obliged",
+        "Formal business thanks, with a note of deference. Also softens a "
+        "request. 「恐れ入りますが、少々お待ちください」",
+    ),
+    (
+        "感謝しています",
+        "kansha shite imasu",
+        "I'm grateful",
+        "Heartfelt and weighty — for something that mattered, not for a held "
+        "door. 「いつも感謝しています」 I'm always grateful.",
+    ),
+    (
+        "お世話になりました",
+        "osewa ni narimashita",
+        "thank you for everything",
+        "Thanks for a period of care — leaving a job, a school, a host family. "
+        "No English single-word equivalent. 「大変お世話になりました」",
+    ),
+    (
+        "ごちそうさまでした",
+        "gochisousama deshita",
+        "thank you for the meal",
+        "Said after eating, always — at home, in a restaurant, to whoever paid. "
+        "Omitting it is noticeable. 「ごちそうさまでした、おいしかったです」",
+    ),
+)
+
+#: A ladder, weakest to strongest, with the register noted at each rung.
+_VERY_CARDS = (
+    (
+        "ちょっと",
+        "chotto",
+        "a little",
+        "The bottom of the ladder. Also the standard softener — and, left "
+        "unfinished, a refusal. 「ちょっと高い」 It's a bit expensive.",
+    ),
+    (
+        "わりと",
+        "warito",
+        "fairly, relatively",
+        "Mild, and carries mild surprise. 「わりと簡単だった」 It was fairly " "easy, actually.",
+    ),
+    (
+        "けっこう",
+        "kekkou",
+        "quite, rather",
+        "More than expected. Note けっこうです is a *refusal* — same word, "
+        "different job. 「けっこう歩いたね」 We walked quite a way.",
+    ),
+    (
+        "かなり",
+        "kanari",
+        "considerably",
+        "Objectively a lot; neutral in register. "
+        "「かなり時間がかかる」 It takes considerably longer.",
+    ),
+    (
+        "とても",
+        "totemo",
+        "very",
+        "The safe default — polite, neutral, never wrong. "
+        "「とても面白かったです」 It was very interesting.",
+    ),
+    (
+        "すごく",
+        "sugoku",
+        "really",
+        "Slightly more casual than とても and far more common in speech. "
+        "「すごく嬉しい」 I'm really happy.",
+    ),
+    (
+        "めっちゃ",
+        "meccha",
+        "super, dead",
+        "Kansai in origin, now general slang. Friends only. "
+        "「めっちゃおいしい」 This is super tasty.",
+    ),
+    (
+        "超",
+        "chou",
+        "ultra, mega",
+        "Youth slang, attached directly to the word. Wrong in any formal "
+        "setting. 「超楽しかった」 It was mega fun.",
+    ),
+    (
+        "非常に",
+        "hijou ni",
+        "extremely (formal)",
+        "Writing, reports and speeches — stilted in conversation. "
+        "「非常に重要な問題です」 It is an extremely important matter.",
+    ),
+    (
+        "全然",
+        "zenzen",
+        "not at all — or totally",
+        "**Two opposite jobs.** With a negative it means 'not at all'; in "
+        "casual speech it also means 'totally'. 「全然分からない」 I don't "
+        "understand at all. 「全然大丈夫」 Totally fine.",
+    ),
+)
+
+#: Japanese rarely refuses outright, so the refusal is carried by form. A
+#: learner who only knows いいえ will both miss refusals aimed at them and
+#: sound harsh giving their own.
+_NO_CARDS = (
+    (
+        "ちょっと…",
+        "chotto...",
+        "that's a bit…",
+        "**The sentence is left unfinished on purpose** — trailing off is the "
+        "refusal. The same ちょっと as 'a little'. 「明日はちょっと…」 Tomorrow "
+        "is a bit… (= no).",
+    ),
+    (
+        "結構です",
+        "kekkou desu",
+        "no thank you",
+        "**A trap: it can also mean 'that's fine'.** Tone and context decide. "
+        "Offered a bag, it declines. 「袋は結構です」 No bag, thanks.",
+    ),
+    (
+        "いいです",
+        "ii desu",
+        "I'm good (declining)",
+        "The same ambiguity — literally 'it's good', usually meaning 'no "
+        "need'. 「いいです、自分でやります」 It's fine, I'll do it myself.",
+    ),
+    (
+        "遠慮しておきます",
+        "enryo shite okimasu",
+        "I'll pass",
+        "A polite, unmistakable decline. 遠慮 is holding back out of "
+        "consideration. 「今回は遠慮しておきます」 I'll pass this time.",
+    ),
+    (
+        "難しいです",
+        "muzukashii desu",
+        "that would be difficult (= no)",
+        "Almost never about difficulty. Business Japanese for no. "
+        "「その日程は難しいです」 That schedule would be difficult.",
+    ),
+    (
+        "考えておきます",
+        "kangaete okimasu",
+        "I'll think about it",
+        "Usually a soft no, not a maybe. Read it as a closed door unless they "
+        "follow up. 「考えておきます」 I'll give it some thought.",
+    ),
+    (
+        "また今度",
+        "mata kondo",
+        "some other time",
+        "Declines an invitation while keeping the relationship. Rarely names a "
+        "date. 「また今度にしましょう」 Let's make it another time.",
+    ),
+    (
+        "やめておきます",
+        "yamete okimasu",
+        "I'll give it a miss",
+        "Declines a choice you were offered — a dish, a plan. "
+        "「今日はやめておきます」 I'll give it a miss today.",
+    ),
+    (
+        "できません",
+        "dekimasen",
+        "I can't",
+        "Direct and neutral — states inability rather than unwillingness. "
+        "「それはできません」 I can't do that.",
+    ),
+    (
+        "無理",
+        "muri",
+        "no way, not happening",
+        "Blunt and casual. Fine with friends, harsh upward. "
+        "「明日までは無理」 By tomorrow is not happening.",
+    ),
+)
+
+
+#: 85 cards across eight sets.
 GENERAL: tuple[CharacterSeed, ...] = (
     *(_g(g, r, m, n, _MAYBE) for g, r, m, n in _MAYBE_CARDS),
     *(_g(g, r, m, n, _NOTBAD) for g, r, m, n in _NOTBAD_CARDS),
     *(_g(g, r, m, n, _SERIOUSLY) for g, r, m, n in _SERIOUSLY_CARDS),
     *(_g(g, r, m, n, _QUESTION) for g, r, m, n in _QUESTION_CARDS),
+    *(_g(g, r, m, n, _SORRY) for g, r, m, n in _SORRY_CARDS),
+    *(_g(g, r, m, n, _THANKS) for g, r, m, n in _THANKS_CARDS),
+    *(_g(g, r, m, n, _VERY) for g, r, m, n in _VERY_CARDS),
+    *(_g(g, r, m, n, _NO) for g, r, m, n in _NO_CARDS),
 )

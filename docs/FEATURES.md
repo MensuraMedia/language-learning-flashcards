@@ -18,8 +18,8 @@ recalled. Where something is unverified or known-weak it says so.
 
 | Dimension | Count | Notes |
 |---|---:|---|
-| Cards seeded | **1,703** | 104 hiragana · 104 katakana · 1,251 kanji · 106 words · 93 phrases · 45 general words |
-| Study decks | **37** | 5 hiragana · 5 katakana · 5 JLPT · 2 volume · 6 word sets · 10 phrase sets · 4 general words |
+| Cards seeded | **1,743** | 104 hiragana · 104 katakana · 1,251 kanji · 106 words · 93 phrases · 85 general words |
+| Study decks | **41** | 5 hiragana · 5 katakana · 5 JLPT · 2 volume · 6 word sets · 10 phrase sets · 8 general words |
 | Memory boards | **9** | 3 modes × 3 scripts |
 | Confusion pairs | **84** | 21 hiragana · 24 katakana · 39 kanji |
 | Scoring schemes | **4** | accuracy · speed · streak · SRS |
@@ -519,7 +519,7 @@ card onto two lines.
 
 ### General Words
 
-Four sets on their own shelf, for the case where **English has one word and
+Eight sets on their own shelf, for the case where **English has one word and
 Japanese has a dozen**. Every card carries an example sentence, because the
 distinction these sets teach is invisible in a gloss.
 
@@ -528,9 +528,13 @@ distinction these sets teach is invisible in a gloss.
 | **Maybe — degrees of certainty** | 10 | review | A confidence scale, ordered: たぶん (~80%) → かもしれない (a coin toss) → さあ (declining to guess). Picking the wrong one either overstates a guess or undersells a near-certainty |
 | **Not bad — faint praise** | 10 | review | Warmest to most grudging: なかなか (better than expected) → まあまあ (the honest middle) → まし (least bad option). Japanese is rich here because direct praise can sound overbearing |
 | **Seriously — surprise and disbelief** | 11 | review | Neutral to slang: 本当に (safe anywhere) → マジで (friends only) → ガチで. **Register is the whole lesson** — the wrong one in a meeting is a real mistake |
+| **Sorry — degrees of contrition** | 10 | review | 悪い → ごめん → すいません → 失礼しました → 申し訳ございません. The highest-stakes scale here: ごめん to a manager is not a small error, and no gloss of "sorry" shows it |
+| **Thanks — degrees of gratitude** | 10 | review | サンキュー → どうも → ありがとう → 恐れ入ります → お世話になりました. Includes ありがとうございます **vs** ございました — present for ongoing, past for finished |
+| **Very — degrees of intensity** | 10 | review | A ladder: ちょっと → わりと → けっこう → かなり → とても → すごく → めっちゃ → 超 → 非常に, plus 全然, which means *both* "not at all" and "totally" |
+| **Saying no without saying no** | 10 | review | ちょっと… → 結構です → 遠慮しておきます → 難しいです → 無理. Japanese rarely refuses outright; 結構です and いいです can each mean **yes or no** depending on context |
 | **Question words** | 14 | multiple choice | 何 · どこ · 誰 · いつ · なぜ/どうして/なんで · どう · どれ/どっち/どの · いくら · いくつ. Genuinely distinct meanings, so this one is graded normally |
 
-The three near-synonym sets open in [review mode](#review-mode-self-graded).
+The seven near-synonym sets open in [review mode](#review-mode-self-graded).
 Question words does not, because its meanings actually differ — though the three
 "why" words are each glossed with their register (`why (formal)`, `why
 (everyday)`, `why (casual)`) so none of them reads as the safe default answer.
