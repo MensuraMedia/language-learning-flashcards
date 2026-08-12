@@ -258,6 +258,63 @@ key where there is one and from the cards otherwise.
 
 ---
 
+## 6a. Overlays: the session recap and its siblings
+
+An overlay centres a panel in a viewport-sized parent. That shape has one
+failure mode, and the recap hit it: the panel had no `max-height`, so it sized
+to its content, and centring pushed the overflow off **both** ends — where
+nothing scrolls. On a ten-card deck the last cards and, worse, the two buttons
+that close the session were simply unreachable.
+
+Three properties must hold **together**:
+
+| # | Property | Rule |
+|---|---|---|
+| 1 | The panel may never exceed the overlay | `max-height: 100%` (or `calc(100vh - 48px)` for fixed overlays) |
+| 2 | The scroll area must be allowed to shrink | `flex: 1 1 auto; min-height: 0` |
+| 3 | Leaving must never require scrolling | the actions are a **sibling** of the scroll area, not a child |
+
+**`min-height: 0` is the easy miss.** A flex item's default minimum size is its
+content, so without it the scroll area refuses to shrink and overflows its
+parent no matter what `overflow-y` says. `overflow-y: auto` on its own does
+nothing here.
+
+Property 3 is a design rule, not a layout one: a summary can be twenty cards
+long, and pinning the actions means the way out is always one click away rather
+than one scroll-to-the-bottom away.
+
+### Width buys rows back
+
+The recap panel is `min(980px, 100%)`, not the 400px it started at. Both tile
+grids are `auto-fill`, so **width converts directly into columns**: a ten-card
+review deck was ten rows deep at 400px and is five rows in two columns at 980px,
+which fits without scrolling at all. The four session metrics use `auto-fit`
+and collapse onto one row at that width, buying back the vertical space the
+wider panel is meant to spend on cards.
+
+Scrolling is the fallback, not the normal case. Measured: **10 cards fits, 14
+scrolls** — and when it scrolls the actions stay pinned, so nothing is ever out
+of reach.
+
+### Which overlays this applies to
+
+| Overlay | Bound |
+|---|---|
+| `.recap-card` — session recap | `max-height: 100%`, scrolling body, pinned actions |
+| `.settings-card` | `max-height: 88vh`, sticky header |
+| `.help-card` — shortcuts | `max-height: calc(100vh - 48px)`, sticky header |
+| `.game-done-card` — cleared board | `max-height: calc(100vh - 48px)` |
+
+`tests/test_ui_format.py` asserts all four are bounded, and asserts the recap's
+three properties individually — the nesting one by **parsing** the template
+rather than counting tags in a string, which is how a check like that quietly
+stops meaning anything.
+
+This is a property of the panel, not of any deck, so it holds for **every**
+session: 10 cards or 20, text tiles or glyph tiles, any window size.
+
+---
+
 ## 7. Adding a surface
 
 1. **Heading?** Use `.sec-title` / `.sec-desc`. Do not use `.lbl`.
@@ -271,6 +328,8 @@ key where there is one and from the cards otherwise.
    recap.
 6. **Check the three ranks read as three ranks.** If a new heading competes with
    the section above it, it is at the wrong rank — not the wrong size.
+7. **An overlay?** Bound it to the window and give it a scrolling body — see
+   §6a. Put any action that closes it outside the scroll area.
 
 ---
 

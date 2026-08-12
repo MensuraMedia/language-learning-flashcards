@@ -170,6 +170,11 @@ which is what the reported defect looked like.
 Side padding is **22px** — text running to the tile edge reads as cramped even
 when it technically fits.
 
+The grid sits in a **980px** panel and is `auto-fill`, so the tile width decides
+the column count rather than the panel forcing a single stack: a 278px tile
+(the Sorry set's 申し訳ございません) gives three columns, an 84px glyph tile gives
+ten. See [UI-FORMAT.md](UI-FORMAT.md) §6a for the panel's scroll contract.
+
 ---
 
 ## 5. Deck faces and game tiles

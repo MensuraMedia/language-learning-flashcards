@@ -3736,3 +3736,75 @@ body[data-option-size="roomy"].theme-kanji .choice { min-height: 92px; }
 /* The prompt column is the whole exercise in review mode, so give the card the
    room the options are no longer using. */
 .mode-review .choices { gap: 10px; }
+
+/* ==========================================================================
+   OVERLAYS THAT OUTGROW THE WINDOW
+
+   A summary is worthless if you cannot reach the end of it. The session recap
+   grew past the viewport on a ten-card deck: `.recap-card` had no max-height,
+   so it sized to its content, and the overlay centres its child — which pushes
+   the overflow off *both* ends, out of reach in a direction nothing scrolls.
+   The last cards and, worse, the two buttons that close the session were
+   simply unreachable.
+
+   Three things are needed together, and the middle one is the easy miss:
+     1. the panel may not exceed the overlay        max-height: 100%
+     2. the scroll area must be allowed to shrink   flex: 1 1 auto; min-height: 0
+     3. the actions sit outside it, so leaving never requires scrolling
+
+   `min-height: 0` is the non-obvious one: a flex item's default minimum size is
+   its content, so without it the scroll area refuses to shrink and overflows
+   its parent no matter what `overflow-y` says.
+   ========================================================================== */
+
+/* Wide enough to lay the session out in columns rather than a single stack.
+   The tile grids are `auto-fill`, so width converts directly into columns: at
+   400px a ten-card review deck was ten rows deep and always needed scrolling;
+   at 980px it is three or four rows and usually does not. Scrolling stays
+   supported for the sessions that still overflow — a 20-card deck, a short
+   window — it is simply no longer the normal case. */
+.recap-card {
+  max-height: 100%;
+  width: min(980px, 100%);
+  max-width: min(980px, 100%);
+}
+/* The four session metrics. `auto-fit` puts them on one row once there is room,
+   which buys back the vertical space the wider panel is meant to spend on
+   cards. */
+.recap-card .recap-grid {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+/* Beats `.recap-card > * { flex: 0 0 auto }` above, which is right for the
+   header and the action bar and wrong for the part that has to scroll. */
+.recap-card > .recap-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overscroll-behavior: contain;     /* don't chain the scroll to the page */
+}
+
+/* Pinned footer. Reads as the floor of the panel rather than the last item in
+   the list, so it is obvious the summary continues above it.
+   Scoped to the recap panel: `.recap-act` is reused by the games overlay,
+   which is not a scrolling panel and should keep its plain action row. */
+.recap-card > .recap-act {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 14px 18px;
+  border-top: 1px solid var(--line);
+  background: var(--card-lo);
+}
+
+/* The same guard for the other two full-screen overlays. Neither has outgrown
+   its window yet — the shortcuts table is short and a cleared board is four
+   rows — but both centre a child in a viewport-sized parent, which is exactly
+   the shape that failed here, and both grow if a row is ever added. */
+.help-card,
+.game-done-card {
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+/* The heading stays put while the rows beneath it scroll. */
+.help-card > .panel-h { position: sticky; top: 0; z-index: 2; background: var(--panel); }

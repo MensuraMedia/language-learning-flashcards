@@ -167,3 +167,65 @@ def test_no_deck_is_sized_against_text_that_wraps_anyway():
         assert "Math.min(" in line.group(1) and cap in line.group(
             1
         ), f"{term} is not capped at {cap}"
+
+
+def test_the_session_recap_can_always_be_scrolled_and_left():
+    """A summary is worthless if you cannot reach the end of it.
+
+    The recap grew past the viewport on a ten-card deck: the panel had no
+    max-height, so it sized to its content, and the overlay centres its child —
+    pushing the overflow off *both* ends where nothing scrolls. The last cards
+    and the two buttons that close the session were unreachable.
+
+    Three properties have to hold together, and they hold for **every** session
+    because they are properties of the panel, not of any deck.
+    """
+    # 1. The panel may never exceed the overlay.
+    assert re.search(
+        r"\.recap-card \{[^}]*max-height:\s*100%", CSS, re.S
+    ), "the recap panel has no max-height, so it will size to its content"
+
+    # 2. The scroll area must be allowed to shrink. `min-height: 0` is the easy
+    #    miss — a flex item's default minimum size is its content, so without it
+    #    the area refuses to shrink and overflows whatever overflow-y says.
+    scroll = re.search(r"\.recap-card > \.recap-scroll \{([^}]*)\}", CSS, re.S)
+    assert scroll, "nothing overrides the `flex: 0 0 auto` on the recap's children"
+    assert "min-height: 0" in scroll.group(1), "the scroll area cannot shrink"
+    assert "flex: 1 1 auto" in scroll.group(1), "the scroll area cannot grow"
+
+    # 3. Leaving must never require scrolling: the actions are a sibling of the
+    #    scroll area, not a child of it. Parsed rather than pattern-matched —
+    #    counting tags in a string is how a check like this quietly stops
+    #    meaning anything the next time the markup is indented differently.
+    from html.parser import HTMLParser
+
+    class Nesting(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.stack = []
+            self.inside_scroll = None
+
+        def handle_starttag(self, tag, attrs):
+            classes = dict(attrs).get("class", "").split()
+            if "recap-act" in classes and self.inside_scroll is None:
+                self.inside_scroll = "recap-scroll" in self.stack
+            if tag not in ("input", "img", "br", "hr", "meta", "link"):
+                self.stack.append(classes[0] if classes else tag)
+
+        def handle_endtag(self, tag):
+            if self.stack:
+                self.stack.pop()
+
+    parser = Nesting()
+    parser.feed((ROOT / "templates/study.html").read_text())
+    assert (
+        parser.inside_scroll is False
+    ), "the recap actions are inside the scroll area and can scroll out of reach"
+
+
+def test_every_full_screen_overlay_is_bounded_by_the_window():
+    """The recap's failure shape — centre a child in a viewport-sized parent —
+    is shared by the other overlays, so all of them carry the same guard."""
+    for selector in (".recap-card", ".help-card", ".game-done-card", ".settings-card"):
+        pattern = rf"{re.escape(selector)}[^{{]*\{{[^}}]*max-height:"
+        assert re.search(pattern, CSS, re.S), f"{selector} is not bounded by the window"

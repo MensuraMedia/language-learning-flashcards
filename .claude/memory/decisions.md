@@ -2,6 +2,17 @@
 
 Architectural and design decisions with rationale. Newest first.
 
+## 2026-08-12: An overlay is bounded by the window, and the way out is pinned
+- **Reason:** The session recap centred a panel with no `max-height` in a viewport-sized overlay, so a ten-card deck overflowed both ends in a direction nothing scrolls. The closing buttons were unreachable — the summary could not be left.
+- **Decision:** Three properties, together: `max-height` on the panel; `flex: 1 1 auto; min-height: 0` on the scroll area; and any action that closes an overlay lives **outside** the scroll area. Applied to all four full-screen overlays, since they share the failure shape.
+- **Note:** `min-height: 0` is the one that gets missed — a flex item's default minimum size is its content, so `overflow-y: auto` on its own does nothing.
+- **Impact:** Holds for every session regardless of deck, card count or window size, because it is a property of the panel. Asserted by tests, with the nesting check parsing the template rather than counting tags.
+
+## 2026-08-12: The recap is wide so that scrolling is the exception
+- **Reason:** At 400px a ten-card review deck was ten rows deep and always needed scrolling, even though the content easily fits a normal window.
+- **Decision:** 980px. Both tile grids are `auto-fill`, so width converts directly into columns; the metrics row uses `auto-fit` and collapses onto one line to return vertical space.
+- **Impact:** 10 cards fits without scrolling; 14 and 20 still scroll, with the actions pinned. Scrolling is the fallback, not the normal case.
+
 ## 2026-08-11: Near-synonym sets are self-graded, not multiple choice
 - **Reason:** Multiple choice cannot test a set whose members all mean roughly the same thing. Given たぶん against "probably / might / possibly / who knows", the learner is asked which English gloss the author typed, not whether they know たぶん — and elimination often wins without any knowledge. The lesson in these sets is a difference of *degree*, which does not survive being turned into a four-way choice.
 - **Decision:** A new `review` challenge that deals no options; the learner flips and grades themselves with Got it / Missed it. `session.deals_choices()` is the single place that decides. Options are **omitted from the API payload**, not hidden client-side — the answer would otherwise be sitting in the response for a mode whose whole premise is self-honesty.
