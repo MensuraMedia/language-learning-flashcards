@@ -266,15 +266,26 @@ to its content, and centring pushed the overflow off **both** ends — where
 nothing scrolls. On a ten-card deck the last cards and, worse, the two buttons
 that close the session were simply unreachable.
 
-Three properties must hold **together**:
+Four properties must hold **together**:
 
 | # | Property | Rule |
 |---|---|---|
-| 1 | The panel may never exceed the overlay | `max-height: 100%` (or `calc(100vh - 48px)` for fixed overlays) |
-| 2 | The scroll area must be allowed to shrink | `flex: 1 1 auto; min-height: 0` |
-| 3 | Leaving must never require scrolling | the actions are a **sibling** of the scroll area, not a child |
+| 1 | The overlay outranks all chrome | `z-index: var(--z-modal)` — above `--z-topbar` |
+| 2 | The panel may never exceed the overlay | `max-height: 100%` (or `calc(100vh - 48px)` for fixed overlays) |
+| 3 | The scroll area must be allowed to shrink | `flex: 1 1 auto; min-height: 0` |
+| 4 | Leaving must never require scrolling | the actions are a **sibling** of the scroll area, not a child |
 
-**`min-height: 0` is the easy miss.** A flex item's default minimum size is its
+**Property 1 is not cosmetic.** The overlays were at z-index 6, 30 and 40
+against the topbar's 60, so a panel tall enough to reach the top of the window
+slid *under* the topbar — which sheared the first row off the session recap.
+Scrolling could not recover it, because those pixels were not clipped, they were
+**covered**. A modal the chrome can paint over is not a modal.
+
+Raising the overlay is the right fix rather than padding it down: the panel then
+gets the whole window, `max-height: 100%` means what it says, and the recap
+already shows the score, streak and accuracy the topbar was contributing.
+
+**`min-height: 0` is the other easy miss.** A flex item's default minimum size is its
 content, so without it the scroll area refuses to shrink and overflows its
 parent no matter what `overflow-y` says. `overflow-y: auto` on its own does
 nothing here.

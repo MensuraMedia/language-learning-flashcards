@@ -18,13 +18,23 @@ could not be closed from the summary at all.
 A `.recap-scroll` wrapper already existed and did nothing, because
 `.recap-card > * { flex: 0 0 auto }` forbade it from shrinking.
 
-## 2. Three properties, and they only work together
+## 2. Four properties, and they only work together
+
+**Stacking came last and mattered most.** After the scroll fix the panel still
+looked sheared at the top, and the cause was not layout: the modal overlays sat
+at z-index 6, 30 and 40 against the topbar's 60, so a full-height panel slid
+*under* the chrome. Scrolling could not recover those pixels because they were
+not overflowing — they were painted over. `--z-topbar` and `--z-modal` tokens
+now exist and every overlay uses them. Settings had escaped notice only because
+`.settings-card`'s 88vh kept it small; it shares the same overlay and was
+equally at risk.
 
 | # | Property | Rule |
 |---|---|---|
-| 1 | The panel may not exceed the overlay | `max-height: 100%` |
-| 2 | The scroll area must be allowed to shrink | `flex: 1 1 auto; min-height: 0` |
-| 3 | Leaving must not require scrolling | actions are a **sibling** of the scroll area |
+| 1 | The overlay outranks all chrome | `z-index: var(--z-modal)` |
+| 2 | The panel may not exceed the overlay | `max-height: 100%` |
+| 3 | The scroll area must be allowed to shrink | `flex: 1 1 auto; min-height: 0` |
+| 4 | Leaving must not require scrolling | actions are a **sibling** of the scroll area |
 
 **`min-height: 0` is the non-obvious one.** A flex item's default minimum size is
 its content, so without it the area refuses to shrink and overflows regardless
@@ -88,4 +98,4 @@ docs/CARD-DIMENSIONS.md                       recap grid sits in a 980px panel
 changelog.md
 ```
 
-**366 tests passing**, ruff and black clean.
+**367 tests passing**, ruff and black clean.

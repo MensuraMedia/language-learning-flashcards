@@ -356,6 +356,14 @@ html { scrollbar-color: var(--line-2) var(--bg-deep); scrollbar-width: thin; }
   --panel-title-size: 15px;  /* a heading one rank down, inside a panel */
   --panel-desc-size: 12.5px;
   --panel-pad: 14px 16px;    /* the padding of a panel heading area */
+
+  /* Modal overlays sit above ALL chrome. The topbar is sticky at z-index 60,
+     and every modal was below it — so a panel tall enough to reach the top of
+     the window slid *under* the topbar, which sheared the first row off the
+     session recap and put it out of reach of the scroll area. A modal that the
+     chrome can paint over is not a modal. */
+  --z-topbar: 60;
+  --z-modal: 200;
 }
 
 .sec {
@@ -3808,3 +3816,18 @@ body[data-option-size="roomy"].theme-kanji .choice { min-height: 92px; }
 }
 /* The heading stays put while the rows beneath it scroll. */
 .help-card > .panel-h { position: sticky; top: 0; z-index: 2; background: var(--panel); }
+
+
+/* ── modal stacking ──────────────────────────────────────────────────────────
+   Every full-screen overlay is above the topbar. They were at 6, 30 and 40
+   against the topbar's 60, so the top of a full-height panel was painted over
+   by the chrome: the recap's metrics row was sheared in half and could not be
+   scrolled into view, because the pixels were not clipped — they were covered.
+
+   Raising the overlay rather than padding it down is the right fix: the panel
+   then gets the whole window, `max-height: 100%` means what it says, and the
+   recap already shows the score, streak and accuracy that the topbar was
+   contributing. */
+.recap,
+.help,
+.game-done { z-index: var(--z-modal); }

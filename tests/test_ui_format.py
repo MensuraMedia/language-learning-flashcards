@@ -229,3 +229,27 @@ def test_every_full_screen_overlay_is_bounded_by_the_window():
     for selector in (".recap-card", ".help-card", ".game-done-card", ".settings-card"):
         pattern = rf"{re.escape(selector)}[^{{]*\{{[^}}]*max-height:"
         assert re.search(pattern, CSS, re.S), f"{selector} is not bounded by the window"
+
+
+def test_every_modal_overlay_sits_above_the_chrome():
+    """A modal the topbar can paint over is not a modal.
+
+    The recap, help and game-done overlays were at z-index 6, 30 and 40 against
+    the topbar's 60. A panel tall enough to reach the top of the window slid
+    *under* the topbar, which sheared the first row off the session recap — and
+    scrolling could not recover it, because those pixels were not clipped, they
+    were covered.
+    """
+    tokens = re.search(r":root \{[^}]*--z-modal:\s*(\d+)", CSS, re.S)
+    assert tokens, "--z-modal is not declared"
+    modal = int(tokens.group(1))
+
+    topbar = re.search(r"\.topbar \{[^}]*z-index:\s*(\d+)", CSS, re.S)
+    assert topbar, "could not find the topbar's z-index"
+    assert modal > int(
+        topbar.group(1)
+    ), f"modals at {modal} are below the topbar at {topbar.group(1)}"
+
+    # And every overlay actually uses the token rather than its own number.
+    rule = re.search(r"\.recap,\s*\.help,\s*\.game-done \{ z-index: var\(--z-modal\); \}", CSS)
+    assert rule, "not every full-screen overlay is raised to --z-modal"
